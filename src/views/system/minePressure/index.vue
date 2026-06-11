@@ -75,7 +75,7 @@ const queryParams = reactive({
 
 async function getInstallSites() {
   try {
-    const res = await installNameSelect('')
+    const res = await installNameSelect()
     siteOptions.value = res.data || []
   } catch (e) {
     console.error('获取安装位置失败', e)

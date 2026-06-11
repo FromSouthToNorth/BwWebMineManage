@@ -1,5 +1,5 @@
-import { requestStrategyData } from './helpers'
+import { requestStrategyData, getMineName } from './helpers'
 
-export function getData(mineName: string) {
-  return requestStrategyData(1942, [{ name: 'MineName', value: mineName }])
+export function getData() {
+  return requestStrategyData(1942, [{ name: 'MineName', value: getMineName() }])
 }

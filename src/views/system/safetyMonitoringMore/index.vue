@@ -5,14 +5,16 @@
     <el-card shadow="hover" class="query-card">
       <el-form :model="queryParams" inline size="small">
         <el-form-item label="报警状态">
-          <el-select v-model="queryParams.isCallThePolice" placeholder="全部" style="width: 100px" clearable @change="handleQuery">
+          <el-select v-model="queryParams.isCallThePolice" placeholder="全部" style="width: 100px" clearable
+            @change="handleQuery">
             <el-option label="全部" value="" />
             <el-option label="报警" value="1" />
             <el-option label="正常" value="0" />
           </el-select>
         </el-form-item>
         <el-form-item label="分站">
-          <el-select v-model="queryParams.substation" placeholder="全部" style="width: 140px" clearable @change="handleQuery">
+          <el-select v-model="queryParams.substation" placeholder="全部" style="width: 140px" clearable
+            @change="handleQuery">
             <el-option v-for="item in substationOptions" :key="item.txt" :label="item.txt" :value="item.txt" />
           </el-select>
         </el-form-item>
@@ -22,7 +24,8 @@
           </el-select>
         </el-form-item>
         <el-form-item label="类别">
-          <el-select v-model="queryParams.category" placeholder="全部" style="width: 140px" clearable multiple collapse-tags @change="handleQuery">
+          <el-select v-model="queryParams.category" placeholder="全部" style="width: 140px" clearable multiple
+            collapse-tags @change="handleQuery">
             <el-option v-for="item in categoryOptions" :key="item.txt" :label="item.txt" :value="item.txt" />
           </el-select>
         </el-form-item>
@@ -47,7 +50,8 @@
       <el-col :span="12">
         <el-card shadow="hover">
           <template #header><span>左区列表</span></template>
-          <el-table v-loading="loading" :data="leftList" stripe size="small" max-height="500" @row-click="handleRowClick">
+          <el-table v-loading="loading" :data="leftList" stripe size="small" max-height="500"
+            @row-click="handleRowClick">
             <el-table-column type="index" label="#" width="40" />
             <el-table-column prop="devName" label="名称" min-width="100" show-overflow-tooltip />
             <el-table-column prop="devValue" label="数值" width="80" />
@@ -68,7 +72,8 @@
       <el-col :span="12">
         <el-card shadow="hover">
           <template #header><span>右区列表</span></template>
-          <el-table v-loading="loading" :data="rightList" stripe size="small" max-height="500" @row-click="handleRowClick">
+          <el-table v-loading="loading" :data="rightList" stripe size="small" max-height="500"
+            @row-click="handleRowClick">
             <el-table-column type="index" label="#" width="40" />
             <el-table-column prop="devName" label="名称" min-width="100" show-overflow-tooltip />
             <el-table-column prop="devValue" label="数值" width="80" />
@@ -89,13 +94,8 @@
     </el-row>
 
     <div class="pagination-wrapper">
-      <pagination
-        v-if="total > 0"
-        :total="total"
-        :page="queryParams.pageNum"
-        :limit="queryParams.pageSize"
-        @pagination="handlePagination"
-      />
+      <pagination v-if="total > 0" :total="total" :page="queryParams.pageNum" :limit="queryParams.pageSize"
+        @pagination="handlePagination" />
     </div>
 
     <!-- 详情弹窗 -->
@@ -104,7 +104,8 @@
         <el-form-item label="名称">{{ currentRow.devName }}</el-form-item>
         <el-form-item label="数值">{{ currentRow.devValue }}</el-form-item>
         <el-form-item label="状态">
-          <el-tag :type="currentRow.devStatus === '正常' ? 'success' : 'danger'" size="small">{{ currentRow.devStatus }}</el-tag>
+          <el-tag :type="currentRow.devStatus === '正常' ? 'success' : 'danger'" size="small">{{ currentRow.devStatus
+            }}</el-tag>
         </el-form-item>
         <el-form-item label="分站">{{ currentRow.substation }}</el-form-item>
         <el-form-item label="类别">{{ currentRow.category }}</el-form-item>
@@ -164,11 +165,11 @@ const historySrc = ref('')
 async function getSelectOptions() {
   try {
     const [subRes, typeRes, catRes, areaRes, siteRes] = await Promise.all([
-      substationSelect(''),
-      typeSelect(''),
-      categorySelect(''),
-      areaSelect(''),
-      siteSelect(''),
+      substationSelect(),
+      typeSelect(),
+      categorySelect(),
+      areaSelect(),
+      siteSelect(),
     ])
     substationOptions.value = subRes.data || []
     typeOptions.value = typeRes.data || []
@@ -184,12 +185,22 @@ async function getData() {
   loading.value = true
   try {
     const res = await listSafetyMonitoring(queryParams)
-    const result = res.data || {}
-    const rows = result.rows || []
-    const mid = Math.ceil(rows.length / 2)
-    leftList.value = rows.slice(0, mid)
-    rightList.value = rows.slice(mid)
-    total.value = result.total || 0
+    const { items, total: totalCount } = res.data || {}
+    const mapped = (items || []).map((item: any) => ({
+      devName: item.devAddress,
+      devValue: item.value,
+      devStatus: item.statusTxt,
+      alarmStatus: item.alarmType === 1 ? '报警' : '',
+      substation: item.stationNo,
+      category: item.categoryName,
+      area: item.devArea,
+      site: item.devAddress,
+      alarmThreshold: item.maxVal,
+    }))
+    const mid = Math.ceil(mapped.length / 2)
+    leftList.value = mapped.slice(0, mid)
+    rightList.value = mapped.slice(mid)
+    total.value = totalCount || 0
   } catch (e) {
     console.error('获取监测数据失败', e)
   } finally {
@@ -237,12 +248,21 @@ onMounted(() => {
 </script>
 
 <style scoped>
-.page-title { margin-bottom: 16px; }
-.query-card { margin-bottom: 16px; }
+.page-title {
+  margin-bottom: 16px;
+}
+
+.query-card {
+  margin-bottom: 16px;
+}
+
 .pagination-wrapper {
   display: flex;
   justify-content: center;
   padding: 16px 0;
 }
-.no-alarm { color: var(--text-muted); }
+
+.no-alarm {
+  color: var(--text-muted);
+}
 </style>

@@ -22,7 +22,8 @@
         </el-select>
       </el-form-item>
       <el-form-item label="分站">
-        <el-select v-model="queryParams.substation" placeholder="全部" style="width: 120px" clearable @change="handleQuery">
+        <el-select v-model="queryParams.substation" placeholder="全部" style="width: 120px" clearable
+          @change="handleQuery">
           <el-option v-for="item in substationOptions" :key="item.txt" :label="item.txt" :value="item.txt" />
         </el-select>
       </el-form-item>
@@ -32,7 +33,8 @@
         </el-select>
       </el-form-item>
       <el-form-item label="类别">
-        <el-select v-model="queryParams.category" placeholder="全部" style="width: 120px" clearable multiple collapse-tags @change="handleQuery">
+        <el-select v-model="queryParams.category" placeholder="全部" style="width: 120px" clearable multiple collapse-tags
+          @change="handleQuery">
           <el-option v-for="item in categoryOptions" :key="item.txt" :label="item.txt" :value="item.txt" />
         </el-select>
       </el-form-item>
@@ -52,14 +54,8 @@
     <SafetyMonitoringStatistics v-if="statisticsHtml" :html="statisticsHtml" :is-show-total="true" :total="total" />
 
     <!-- 数据表格 -->
-    <el-table
-      v-loading="loading"
-      :data="tableData"
-      stripe
-      :max-height="maxHeight"
-      style="width: 100%"
-      @row-click="handleRowClick"
-    >
+    <el-table v-loading="loading" :data="tableData" stripe :max-height="maxHeight" style="width: 100%"
+      @row-click="handleRowClick">
       <el-table-column type="index" label="#" width="50" fixed />
       <el-table-column prop="devName" label="名称" min-width="140" show-overflow-tooltip />
       <el-table-column prop="devValue" label="数值" width="100">
@@ -94,13 +90,8 @@
     </el-table>
 
     <!-- 分页 -->
-    <pagination
-      v-if="total > 0"
-      :total="total"
-      :page="queryParams.pageNum"
-      :limit="queryParams.pageSize"
-      @pagination="handlePagination"
-    />
+    <pagination v-if="total > 0" :total="total" :page="queryParams.pageNum" :limit="queryParams.pageSize"
+      @pagination="handlePagination" />
 
     <!-- 详情弹窗 -->
     <el-dialog v-model="detailVisible" title="监测点详情" width="600px">
@@ -194,10 +185,21 @@ async function getData() {
       site: queryParams.site,
     }
     const res = await listSafetyMonitoring(params)
-    const result = res.data || {}
-    tableData.value = result.rows || []
-    total.value = result.total || 0
-    statisticsHtml.value = result.statistics || ''
+    const { items, total: totalCount, statistics } = res.data || {}
+    tableData.value = (items || []).map((item: any) => ({
+      devName: item.devAddress,
+      devValue: item.value,
+      devStatus: item.statusTxt,
+      alarmStatus: item.alarmType === 1 ? '报警' : '',
+      substation: item.stationNo,
+      category: item.categoryName,
+      area: item.devArea,
+      site: item.devAddress,
+      alarmThreshold: item.maxVal,
+      devLabel: item.devLabel,
+    }))
+    total.value = totalCount || 0
+    statisticsHtml.value = statistics || ''
   } catch (e) {
     console.error('获取安全监测数据失败', e)
   } finally {
@@ -208,13 +210,12 @@ async function getData() {
 /** 获取筛选项 */
 async function getSelectOptions() {
   try {
-    const mineName = ''
     const [subRes, typeRes, catRes, areaRes, siteRes] = await Promise.all([
-      substationSelect(mineName),
-      typeSelect(mineName),
-      categorySelect(mineName),
-      areaSelect(mineName),
-      siteSelect(mineName),
+      substationSelect(),
+      typeSelect(),
+      categorySelect(),
+      areaSelect(),
+      siteSelect(),
     ])
     substationOptions.value = subRes.data || []
     typeOptions.value = typeRes.data || []

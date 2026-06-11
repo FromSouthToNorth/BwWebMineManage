@@ -64,10 +64,21 @@ async function onLoad() {
   listLoading.value = true
   try {
     const res = await listSafetyMonitoring({ pageNum: pageNum.value, pageSize: 20 })
-    const rows = (res.data?.rows || []) as any[]
-    list.value.push(...rows)
+    const items = (res.data?.items || []) as any[]
+    const mapped = items.map((item: any) => ({
+      devName: item.devAddress,
+      devValue: item.value,
+      devStatus: item.statusTxt,
+      alarmStatus: item.alarmType === 1 ? '报警' : '',
+      substation: item.stationNo,
+      category: item.categoryName,
+      area: item.devArea,
+      site: item.devAddress,
+      id: item.devLabel,
+    }))
+    list.value.push(...mapped)
     pageNum.value++
-    if (rows.length < 20) finished.value = true
+    if (items.length < 20) finished.value = true
   } catch (e) {
     console.error(e)
   } finally {

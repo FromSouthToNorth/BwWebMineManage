@@ -10,14 +10,7 @@
       </div>
     </template>
 
-    <el-table
-      v-loading="loading"
-      :data="alarmData"
-      stripe
-      max-height="300"
-      style="width: 100%"
-      size="small"
-    >
+    <el-table v-loading="loading" :data="alarmData" stripe max-height="300" style="width: 100%" size="small">
       <el-table-column prop="alarmType" label="类型" width="80">
         <template #default="{ row }">
           <el-tag v-if="row.alarmType === '报警'" type="danger" size="small" effect="dark">报警</el-tag>
@@ -45,15 +38,8 @@
           </el-select>
         </el-form-item>
         <el-form-item label="时间范围">
-          <el-date-picker
-            v-model="historyDateRange"
-            type="datetimerange"
-            range-separator="至"
-            start-placeholder="开始"
-            end-placeholder="结束"
-            value-format="YYYY-MM-DD HH:mm:ss"
-            style="width: 300px"
-          />
+          <el-date-picker v-model="historyDateRange" type="datetimerange" range-separator="至" start-placeholder="开始"
+            end-placeholder="结束" value-format="YYYY-MM-DD HH:mm:ss" style="width: 300px" />
         </el-form-item>
         <el-form-item>
           <el-button type="primary" size="small" @click="searchHistory">查询</el-button>
@@ -74,13 +60,8 @@
         </el-table-column>
       </el-table>
 
-      <pagination
-        v-if="historyTotal > 0"
-        :total="historyTotal"
-        :page="historyQuery.pageNum"
-        :limit="historyQuery.pageSize"
-        @pagination="handleHistoryPagination"
-      />
+      <pagination v-if="historyTotal > 0" :total="historyTotal" :page="historyQuery.pageNum"
+        :limit="historyQuery.pageSize" @pagination="handleHistoryPagination" />
     </el-dialog>
   </el-card>
 </template>
@@ -113,8 +94,14 @@ let timer: ReturnType<typeof setInterval> | null = null
 async function getData() {
   loading.value = true
   try {
-    const res = await listEalTimeAlarm('')
-    alarmData.value = res.data?.rows || res.data || []
+    const res = await listEalTimeAlarm()
+    const { items } = res.data || {}
+    alarmData.value = (items || []).map((item: any) => ({
+      alarmType: item.alarmType,
+      alarmContent: item.devAddress,
+      devName: item.devLabel,
+      alarmTime: item.alarmBeginDT || item.valueUpdateDT,
+    }))
   } catch (e) {
     console.error('获取实时报警失败', e)
   } finally {
@@ -131,7 +118,6 @@ async function searchHistory() {
   historyLoading.value = true
   try {
     const res = await listHistoricalAlarm({
-      mineName: '',
       pageNum: historyQuery.pageNum,
       pageSize: historyQuery.pageSize,
       address: historyQuery.address,
@@ -140,8 +126,15 @@ async function searchHistory() {
       startTime: historyDateRange.value?.[0] || '',
       endTime: historyDateRange.value?.[1] || '',
     })
-    historyData.value = res.data?.rows || []
-    historyTotal.value = res.data?.total || 0
+    const { items, total: totalCount } = res.data || {}
+    historyData.value = (items || []).map((item: any) => ({
+      alarmType: item.alarmType,
+      alarmContent: item.devAddress,
+      devName: item.devLabel,
+      alarmTime: item.alarmBeginDT || item.valueUpdateDT,
+      severity: item.severity,
+    }))
+    historyTotal.value = totalCount || 0
   } catch (e) {
     console.error('获取历史报警失败', e)
   } finally {

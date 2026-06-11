@@ -1,11 +1,11 @@
-import { requestStrategyData, type StrategyParam } from './helpers'
+import { requestStrategyData, getMineName, type StrategyParam } from './helpers'
 
-export function deiveceName(mineName = '骆驼山选煤厂') {
-  return requestStrategyData(2382, [{ name: 'MineName', value: mineName }])
+export function deiveceName() {
+  return requestStrategyData(2382, [{ name: 'MineName', value: getMineName() }])
 }
 
-export function deiveceData(mineName = '骆驼山选煤厂') {
-  return requestStrategyData(2383, [{ name: 'MineName', value: mineName }])
+export function deiveceData() {
+  return requestStrategyData(2383, [{ name: 'MineName', value: getMineName() }])
 }
 
 export function densityaData(sdtime1: string, sdtime2: string) {

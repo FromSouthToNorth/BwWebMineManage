@@ -1,26 +1,26 @@
-import { requestStrategyData, type StrategyParam } from './helpers'
+import { requestStrategyData, getMineName, type StrategyParam } from './helpers'
 
-export function listEalTimeAlarm(mineName: string) {
+export function listEalTimeAlarm() {
   const params: StrategyParam[] = [
-    { name: 'MineName', value: mineName },
+    { name: 'MineName', value: getMineName() },
     { name: 'StartRow', value: 1 },
     { name: 'PageRowNums', value: 10 },
   ]
   return requestStrategyData(1960, params, 'page')
 }
 
-export function listMoreEalTimeAlarm(query: { mineName: string; pageNum: number; pageSize: number }) {
+export function listMoreEalTimeAlarm(query: { pageNum: number; pageSize: number }) {
   const params: StrategyParam[] = [
-    { name: 'MineName', value: query.mineName },
+    { name: 'MineName', value: getMineName() },
     { name: 'StartRow', value: query.pageNum },
     { name: 'PageRowNums', value: query.pageSize },
   ]
   return requestStrategyData(1960, params, 'page')
 }
 
-export function listHistoricalAlarm(query: { mineName: string; pageNum: number; pageSize: number; address: string; typeName: string; category: string; startTime: string; endTime: string }) {
+export function listHistoricalAlarm(query: { pageNum: number; pageSize: number; address: string; typeName: string; category: string; startTime: string; endTime: string }) {
   const params: StrategyParam[] = [
-    { name: 'MineName', value: query.mineName },
+    { name: 'MineName', value: getMineName() },
     { name: 'StartRow', value: query.pageNum },
     { name: 'PageRowNums', value: query.pageSize },
     { name: 'Address', value: query.address },

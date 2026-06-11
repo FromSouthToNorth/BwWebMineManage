@@ -17,13 +17,13 @@ async function initChart() {
   chart = echarts.init(chartRef.value)
 
   try {
-    const res = await getData('')
+    const res = await getData()
     const data = res.data || []
     chart.setOption({
       tooltip: { trigger: 'axis' },
-      xAxis: { type: 'category', data: data.map((d: any) => d.name || '') },
+      xAxis: { type: 'category', data: data.map((d: any) => d.txt || '') },
       yAxis: { type: 'value' },
-      series: [{ type: 'bar', data: data.map((d: any) => d.value || 0), itemStyle: { color: 'var(--color-primary)' } }],
+      series: [{ type: 'bar', data: data.map((d: any) => d.num || 0), itemStyle: { color: 'var(--color-primary)' } }],
     })
   } catch {
     chart.setOption({

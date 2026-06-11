@@ -58,13 +58,13 @@ const queryParams = reactive({
 })
 
 async function getDeiviceClassfy() {
-  const res = await deiveceClassSelect('')
+  const res = await deiveceClassSelect()
   classfyOptions.value = res.data || []
 }
 
 async function getDeiviceNameSelect() {
   if (!queryParams.deiviceClassfy) return
-  const res = await deiviceNameSelect({ mineName: '', deiviceClassfy: queryParams.deiviceClassfy })
+  const res = await deiviceNameSelect({ deiviceClassfy: queryParams.deiviceClassfy })
   nameOptions.value = res.data || []
 }
 
