@@ -1,0 +1,9 @@
+<template>
+  <div class="login-page">
+    <h1>登录</h1>
+  </div>
+</template>
+
+<script setup lang="ts">
+defineOptions({ name: 'Login' })
+</script>
