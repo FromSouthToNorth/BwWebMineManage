@@ -1,5 +1,5 @@
 import router from './router'
-import { getToken } from './utils/auth'
+import { getToken } from './utils/cookie'
 import { decode, encode } from 'js-base64'
 import { useUserStore } from './stores/user'
 
@@ -11,7 +11,6 @@ router.beforeEach(async (to, from, next) => {
   if (mine_key) {
     const query = { ...to.query }
     delete query.mine_key
-
     try {
       const key = decode(mine_key)
       const number = key.indexOf(';')

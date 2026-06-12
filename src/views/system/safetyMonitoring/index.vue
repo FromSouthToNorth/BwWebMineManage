@@ -66,7 +66,7 @@
       <div class="right-col">
         <TimerAlarmTable />
         <div class="right-chart">
-          <BarChart @chart-click="onChartClick" />
+          <BarChart class="right-chart__bar" @chart-click="onChartClick" />
         </div>
       </div>
     </div>
@@ -168,12 +168,20 @@ function onTotalUpdate(val: number) {
 }
 
 .right-chart {
+  flex: 1;
+  min-height: 0;
   background: rgba(20, 29, 47, 0.35);
   backdrop-filter: blur(8px);
   border: 1px solid rgba(148, 163, 184, 0.08);
   border-radius: 10px;
   overflow: hidden;
-  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.right-chart :deep(.right-chart__bar) {
+  height: 100% !important;
+  min-height: 200px;
 }
 
 </style>

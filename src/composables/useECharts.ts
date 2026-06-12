@@ -1,4 +1,4 @@
-import { ref, onMounted, onBeforeUnmount, type Ref } from 'vue'
+import { shallowRef, type Ref } from 'vue'
 import * as echarts from 'echarts'
 import type { EChartsOption } from 'echarts'
 
@@ -68,26 +68,26 @@ export function darkChartTheme(): EChartsOption {
  * - 自动 dispose
  */
 export function useECharts(chartRef: Ref<HTMLDivElement | undefined>) {
-  let chart: echarts.ECharts | null = null
+  const chart = shallowRef<echarts.ECharts | null>(null)
 
   function init() {
     if (!chartRef.value) return
-    chart = echarts.init(chartRef.value, undefined, { renderer: 'canvas' })
-    return chart
+    chart.value = echarts.init(chartRef.value, undefined, { renderer: 'canvas' })
+    return chart.value
   }
 
   function setOption(option: EChartsOption) {
-    if (!chart) return
-    chart.setOption(option, { notMerge: true })
+    if (!chart.value) return
+    chart.value.setOption(option, { notMerge: true })
   }
 
   function resize() {
-    chart?.resize()
+    chart.value?.resize()
   }
 
   function dispose() {
-    chart?.dispose()
-    chart = null
+    chart.value?.dispose()
+    chart.value = null
   }
 
   return { chart, init, setOption, resize, dispose }

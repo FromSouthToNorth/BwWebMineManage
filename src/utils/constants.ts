@@ -1,5 +1,2 @@
-export const MINE_NAME = 'MINE_NAME'
-export const STATION = 'STATION'
 export const DATA_THEME = 'data-theme'
 export const TOKEN_KEY = 'token'
-export const APP_BASE_PATH = '/WebMineManage'

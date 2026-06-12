@@ -5,17 +5,26 @@
 <script setup lang="ts">
 defineOptions({ name: 'MinePressureHeatmap' })
 
-import { ref, onMounted, onBeforeUnmount } from 'vue'
+import { ref, onMounted } from 'vue'
 import * as echarts from 'echarts'
-import { darkChartTheme } from '@/composables/useECharts'
+import { useECharts, darkChartTheme } from '@/composables/useECharts'
+
+const props = defineProps<{
+  installSiteName?: string
+  type?: string
+}>()
 
 const chartRef = ref<HTMLDivElement>()
-let chart: echarts.ECharts | null = null
+const { chart, init, setOption } = useECharts(chartRef)
 
-onMounted(() => {
-  if (!chartRef.value) return
-  chart = echarts.init(chartRef.value)
-  chart.setOption({
+/** 从 CSS 变量读取色值 */
+function cssVar(name: string): string {
+  return getComputedStyle(document.documentElement).getPropertyValue(name).trim()
+}
+
+function renderChart() {
+  if (!chart.value) return
+  setOption({
     ...darkChartTheme(),
     tooltip: { trigger: 'axis' },
     grid: { top: 16, bottom: 28, left: 44, right: 16 },
@@ -36,7 +45,14 @@ onMounted(() => {
       left: 'center',
       bottom: 0,
       inRange: {
-        color: ['#1a365d', '#2563eb', '#22c55e', '#facc15', '#ef4444', '#991b1b'],
+        color: [
+          cssVar('--chart-1') || '#1a365d',
+          cssVar('--color-primary') || '#2563eb',
+          cssVar('--chart-2') || '#22c55e',
+          cssVar('--chart-3') || '#facc15',
+          cssVar('--chart-4') || '#ef4444',
+          '#991b1b',
+        ],
       },
       textStyle: { color: '#64748b', fontSize: 10 },
     },
@@ -47,12 +63,10 @@ onMounted(() => {
       itemStyle: { borderColor: 'rgba(15,23,42,0.4)', borderWidth: 1 },
     }],
   })
+}
 
-  const handler = () => chart?.resize()
-  window.addEventListener('resize', handler)
-  onBeforeUnmount(() => {
-    window.removeEventListener('resize', handler)
-    chart?.dispose()
-  })
+onMounted(() => {
+  if (!init()) return
+  renderChart()
 })
 </script>

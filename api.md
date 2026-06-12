@@ -1,0 +1,48 @@
+错误消息格式
+```
+{
+    "code": 101,
+    "mesg": "1990:提示:列名 'AreaName' 无效。",
+    "mesgInfo": {
+        "level": 16
+    },
+    "timestamp": 1781234329439
+}
+```
+正确返回格式
+```
+{
+    "code": 100,
+    "data": {
+        "total": 2,
+        "items": [
+            {
+                "devLabel": "014D09",
+                "devAddress": "150114高抽巷掘进面主用风机一级局部通风机",
+                "devType": "开关量",
+                "categoryName": "局扇",
+                "categoryStateText": "0态报警",
+                "alarmType": "0态报警",
+                "valueUpdateDT": "2026-05-30 17:51:13.000",
+                "alarmBeginDT": "2026-05-30 17:51:13.000",
+                "unit": null,
+                "valueText": "停"
+            },
+            {
+                "devLabel": "014D10",
+                "devAddress": "150114高抽巷掘进面主用风机二级局部通风机",
+                "devType": "开关量",
+                "categoryName": "局扇",
+                "categoryStateText": "0态报警",
+                "alarmType": "0态报警",
+                "valueUpdateDT": "2026-05-30 17:51:13.000",
+                "alarmBeginDT": "2026-05-30 17:51:13.000",
+                "unit": null,
+                "valueText": "停"
+            }
+        ],
+        "pageIndex": 0
+    },
+    "timestamp": 1781234403980
+}
+```

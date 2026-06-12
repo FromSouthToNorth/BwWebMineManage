@@ -19,7 +19,8 @@
     <div v-if="activeCategory" class="category-filter-bar">
       <span class="category-filter-label">分类筛选：</span>
       <span class="category-filter-tag">{{ activeCategory }}</span>
-      <el-button text size="small" @click="clearCategoryFilter" style="color: var(--text-muted); font-size: 12px; margin-left: 4px;">✕ 清除</el-button>
+      <el-button text size="small" @click="clearCategoryFilter"
+        style="color: var(--text-muted); font-size: 12px; margin-left: 4px;">✕ 清除</el-button>
     </div>
 
     <!-- 监测点卡片网格 -->
@@ -28,24 +29,20 @@
       <span style="color: var(--text-muted); font-size: 13px;">加载监测数据...</span>
     </div>
     <div v-else class="monitor-grid">
-      <div
-        v-for="(item, idx) in tableData"
-        :key="idx"
-        class="monitor-card"
+      <div v-for="(item, idx) in tableData" :key="idx" class="monitor-card"
         :class="{ 'is-alarm': item.alarmStatus === '报警', 'is-normal': item.alarmStatus !== '报警' }"
-        @click="showDetail(item)"
-      >
+        @click="showDetail(item)">
         <div class="card-top">
           <span class="card-name text-ellipsis" :title="item.devName">{{ item.devName }}</span>
           <span v-if="item.alarmStatus === '报警'" class="alarm-badge pulse">报警</span>
         </div>
         <div class="card-value" :class="item.alarmStatus === '报警' ? 'text-danger' : 'text-success'">
-          {{ item.devValue }}
+          <span v-html="item.devValue"></span>
         </div>
         <div class="card-tags">
           <span class="card-tag" v-if="item.category">{{ item.category }}</span>
-          <span class="card-tag" v-if="item.area">{{ item.area }}</span>
-          <span class="card-tag" v-if="item.substation">分站#{{ item.substation }}</span>
+          <span class="card-tag" :class="item.devLabel.indexOf('F') !== -1 ? 'label-f' : 'label-normal'">{{
+            item.devLabel }}</span>
         </div>
         <div class="card-overlay">
           <div class="card-overlay-btns">
@@ -65,7 +62,8 @@
 
     <!-- 分页 -->
     <div v-if="total > 0" class="monitor-pagination">
-      <pagination :total="total" :page="queryParams.pageNum" :limit="queryParams.pageSize" @pagination="handlePagination" />
+      <pagination :total="total" :page="queryParams.pageNum" :limit="queryParams.pageSize"
+        @pagination="handlePagination" />
     </div>
 
   </div>
@@ -76,7 +74,9 @@
       <div class="dialog-header">
         <div class="dialog-header-icon">
           <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2">
-            <circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/>
+            <circle cx="12" cy="12" r="10" />
+            <line x1="12" y1="16" x2="12" y2="12" />
+            <line x1="12" y1="8" x2="12.01" y2="8" />
           </svg>
         </div>
         <div>
@@ -88,12 +88,13 @@
     <div v-if="currentRow" class="detail-body">
       <!-- 主数值区 -->
       <div class="detail-hero" :class="currentRow.alarmStatus === '报警' ? 'is-alarm' : 'is-normal'">
-        <div class="detail-hero-value">{{ currentRow.devValue }}</div>
+        <div class="detail-hero-value" v-html="currentRow.devValue"></div>
         <div class="detail-hero-status">
           <span class="status-dot" :class="currentRow.alarmStatus === '报警' ? 'alarm' : 'normal'"></span>
           {{ currentRow.alarmStatus === '报警' ? '报警中' : '正常' }}
         </div>
       </div>
+
       <!-- 信息网格 -->
       <div class="detail-grid">
         <div class="detail-field">
@@ -118,7 +119,8 @@
         </div>
         <div class="detail-field">
           <span class="detail-label">设备标识</span>
-          <span class="detail-val" style="font-family: var(--font-mono); font-size: 12px;">{{ currentRow.devLabel || '-' }}</span>
+          <span class="detail-val" style="font-family: var(--font-mono); font-size: 12px;">{{ currentRow.devLabel || '-'
+          }}</span>
         </div>
       </div>
     </div>
@@ -130,7 +132,7 @@
       <div class="dialog-header">
         <div class="dialog-header-icon" style="color: var(--color-primary);">
           <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2">
-            <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/>
+            <polyline points="22 12 18 12 15 21 9 3 6 12 2 12" />
           </svg>
         </div>
         <div>
@@ -232,7 +234,7 @@ async function getData() {
     const { items, total: totalCount, statistics } = res.data || {}
     tableData.value = (items || []).map((item: any) => ({
       devName: item.devAddress,
-      devValue: item.value,
+      devValue: item.detectionVal,
       devStatus: item.statusTxt,
       alarmStatus: item.alarmType === 1 ? '报警' : '',
       substation: item.stationNo,
@@ -374,8 +376,15 @@ onBeforeUnmount(() => {
 }
 
 @keyframes live-pulse {
-  0%, 100% { opacity: 1; }
-  50% { opacity: 0.5; }
+
+  0%,
+  100% {
+    opacity: 1;
+  }
+
+  50% {
+    opacity: 0.5;
+  }
 }
 
 .monitor-actions {
@@ -483,8 +492,19 @@ onBeforeUnmount(() => {
   gap: 8px;
 }
 
-.card-name {
+.card-label {
   font-size: 13px;
+  font-weight: 600;
+  padding: 0 8px;
+  border-radius: 4px;
+  line-height: 22px;
+  display: inline-block;
+}
+
+
+
+.card-name {
+  font-size: 16px;
   font-weight: 500;
   color: var(--text-primary);
   flex: 1;
@@ -507,8 +527,15 @@ onBeforeUnmount(() => {
 }
 
 @keyframes alarm-badge-pulse {
-  0%, 100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.3); }
-  50% { box-shadow: 0 0 8px 2px rgba(239, 68, 68, 0.1); }
+
+  0%,
+  100% {
+    box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.3);
+  }
+
+  50% {
+    box-shadow: 0 0 8px 2px rgba(239, 68, 68, 0.1);
+  }
 }
 
 /* 数值 */
@@ -518,10 +545,13 @@ onBeforeUnmount(() => {
   font-weight: 700;
   letter-spacing: 1px;
   line-height: 1.2;
-  margin: 2px 0;
+  margin: 6px 0;
 }
 
-.card-value.text-success { color: var(--color-success); }
+.card-value.text-success {
+  color: var(--color-success);
+}
+
 .card-value.text-danger {
   color: var(--color-danger);
   text-shadow: 0 0 20px var(--color-danger-glow);
@@ -535,12 +565,22 @@ onBeforeUnmount(() => {
 }
 
 .card-tag {
-  font-size: 11px;
+  font-size: 13px;
   color: var(--text-muted);
   background: rgba(148, 163, 184, 0.1);
   padding: 1px 8px;
   border-radius: 4px;
   white-space: nowrap;
+}
+
+.card-tag.label-f {
+  background: var(--color-primary, #3b82f6);
+  color: #fff;
+}
+
+.card-tag.label-normal {
+  color: var(--color-success, #22c55e);
+  background: rgba(34, 197, 94, 0.1);
 }
 
 /* 悬浮毛玻璃浮层 — 从下到上渐变显示 */
@@ -553,7 +593,7 @@ onBeforeUnmount(() => {
   display: flex;
   align-items: flex-end;
   justify-content: center;
-  background: linear-gradient(to top, rgba(20,29,47,0.85) 0%, rgba(20,29,47,0.4) 60%, transparent 100%);
+  background: linear-gradient(to top, rgba(20, 29, 47, 0.85) 0%, rgba(20, 29, 47, 0.4) 60%, transparent 100%);
   backdrop-filter: blur(8px);
   -webkit-backdrop-filter: blur(8px);
   border-radius: 0 0 var(--radius-md) var(--radius-md);
@@ -585,11 +625,11 @@ onBeforeUnmount(() => {
 
 .overlay-btn:hover {
   color: var(--color-primary-light) !important;
-  background: rgba(255,255,255,0.1) !important;
+  background: rgba(255, 255, 255, 0.1) !important;
 }
 
 .overlay-divider {
-  color: rgba(255,255,255,0.15);
+  color: rgba(255, 255, 255, 0.15);
   font-size: 12px;
 }
 
@@ -646,7 +686,9 @@ onBeforeUnmount(() => {
 }
 
 @keyframes spin {
-  to { transform: rotate(360deg); }
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 /* 空状态 */
@@ -667,5 +709,168 @@ onBeforeUnmount(() => {
   padding: 8px 16px;
   border-top: 1px solid var(--border-color);
   flex-shrink: 0;
+}
+
+/* ── 详情弹窗 ── */
+.glass-dialog :deep(.el-dialog) {
+  border-radius: 12px;
+  background: var(--bg-card, #1e293b);
+  border: 1px solid rgba(148, 163, 184, 0.1);
+}
+
+.glass-dialog :deep(.el-dialog__header) {
+  padding: 16px 20px 0;
+  border-bottom: 1px solid rgba(148, 163, 184, 0.08);
+  margin: 0;
+}
+
+.glass-dialog :deep(.el-dialog__body) {
+  padding: 20px;
+}
+
+.dialog-header {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding-bottom: 14px;
+}
+
+.dialog-header-icon {
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  background: rgba(239, 68, 68, 0.1);
+  color: var(--color-danger);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.dialog-header-title {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.dialog-header-sub {
+  font-size: 12px;
+  color: var(--text-muted);
+  margin-top: 2px;
+}
+
+.detail-body {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+/* 主数值区 */
+.detail-hero {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 20px 24px;
+  border-radius: 10px;
+  background: rgba(20, 29, 47, 0.4);
+  border: 1px solid rgba(148, 163, 184, 0.1);
+}
+
+.detail-hero.is-alarm {
+  border-color: rgba(239, 68, 68, 0.3);
+  background: rgba(239, 68, 68, 0.06);
+}
+
+.detail-hero.is-normal {
+  border-color: rgba(34, 197, 94, 0.2);
+  background: rgba(34, 197, 94, 0.04);
+}
+
+.detail-hero-value {
+  font-family: var(--font-mono, monospace);
+  font-size: 18px;
+  font-weight: 700;
+  line-height: 1.4;
+  letter-spacing: 0.5px;
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.detail-hero.is-alarm .detail-hero-value {
+  color: var(--color-danger, #ef4444);
+  text-shadow: 0 0 24px rgba(239, 68, 68, 0.25);
+}
+
+.detail-hero.is-normal .detail-hero-value {
+  color: var(--color-success, #22c55e);
+}
+
+/* 覆盖 v-html 内联标签（font/span/b 等） */
+.detail-hero-value :deep(*) {
+  font-family: var(--font-mono, monospace) !important;
+  font-size: 18px !important;
+  font-weight: 700 !important;
+  color: inherit !important;
+  line-height: 1.4 !important;
+}
+
+.detail-hero-status {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text-muted);
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.status-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.status-dot.alarm {
+  background: var(--color-danger, #ef4444);
+  box-shadow: 0 0 8px rgba(239, 68, 68, 0.5);
+  animation: live-pulse 2s ease-in-out infinite;
+}
+
+.status-dot.normal {
+  background: var(--color-success, #22c55e);
+  box-shadow: 0 0 6px rgba(34, 197, 94, 0.3);
+}
+
+/* 信息网格 */
+.detail-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+.detail-field {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 10px 12px;
+  background: rgba(20, 29, 47, 0.3);
+  border-radius: 8px;
+  border: 1px solid rgba(148, 163, 184, 0.06);
+}
+
+.detail-label {
+  font-size: 11px;
+  color: var(--text-muted);
+  font-weight: 500;
+}
+
+.detail-val {
+  font-size: 14px;
+  color: var(--text-primary);
+  font-weight: 500;
 }
 </style>

@@ -5,9 +5,9 @@
 <script setup lang="ts">
 defineOptions({ name: 'MinePressureChart' })
 
-import { ref, onMounted, onBeforeUnmount, watch } from 'vue'
+import { ref, onMounted, watch } from 'vue'
 import * as echarts from 'echarts'
-import { darkChartTheme } from '@/composables/useECharts'
+import { useECharts, darkChartTheme } from '@/composables/useECharts'
 
 const props = defineProps<{
   installSiteName?: string
@@ -15,16 +15,24 @@ const props = defineProps<{
 }>()
 
 const chartRef = ref<HTMLDivElement>()
-let chart: echarts.ECharts | null = null
+const { chart, init, setOption } = useECharts(chartRef)
 
-function initChart() {
-  if (!chartRef.value) return
-  chart = echarts.init(chartRef.value)
-  chart.setOption({
+/** 从 CSS 变量读取色值 */
+function cssVar(name: string): string {
+  return getComputedStyle(document.documentElement).getPropertyValue(name).trim()
+}
+
+function renderChart() {
+  if (!chart.value) return
+  setOption({
     ...darkChartTheme(),
     tooltip: {
       trigger: 'axis',
-      formatter: '{b}<br/>{a}: {c} MPa',
+      formatter: (params: any) => {
+        if (!params || params.length === 0) return '无数据'
+        const p = Array.isArray(params) ? params[0] : params
+        return `${p.axisValue}<br/>压力: ${p.value ?? '--'} MPa`
+      },
     },
     grid: { top: 16, bottom: 28, left: 44, right: 16 },
     xAxis: {
@@ -46,22 +54,22 @@ function initChart() {
       symbol: 'circle',
       symbolSize: 4,
       lineStyle: {
-        color: '#3b82f6',
+        color: cssVar('--color-primary') || '#3b82f6',
         width: 2,
       },
       itemStyle: {
-        color: '#3b82f6',
+        color: cssVar('--color-primary') || '#3b82f6',
       },
       areaStyle: {
         color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
-          { offset: 0, color: 'rgba(59,130,246,0.25)' },
-          { offset: 1, color: 'rgba(59,130,246,0.02)' },
+          { offset: 0, color: `${cssVar('--color-primary') || '#3b82f6'}40` },
+          { offset: 1, color: `${cssVar('--color-primary') || '#3b82f6'}05` },
         ]),
       },
       markLine: {
         silent: true,
-        lineStyle: { color: '#ef4444', type: 'dashed', width: 1 },
-        label: { color: '#ef4444', fontSize: 10, formatter: '报警线' },
+        lineStyle: { color: cssVar('--color-danger') || '#ef4444', type: 'dashed', width: 1 },
+        label: { color: cssVar('--color-danger') || '#ef4444', fontSize: 10, formatter: '报警线' },
         data: [{ yAxis: 40 }],
       },
     }],
@@ -69,16 +77,11 @@ function initChart() {
 }
 
 watch(() => [props.installSiteName, props.type], () => {
-  if (chart) initChart()
+  if (chart.value) renderChart()
 })
 
 onMounted(() => {
-  initChart()
-  const handler = () => chart?.resize()
-  window.addEventListener('resize', handler)
-  onBeforeUnmount(() => {
-    window.removeEventListener('resize', handler)
-    chart?.dispose()
-  })
+  if (!init()) return
+  renderChart()
 })
 </script>

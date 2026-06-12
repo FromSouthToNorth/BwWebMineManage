@@ -8,22 +8,18 @@ export const constantRoutes: RouteRecordRaw[] = [
   {
     path: '/login',
     component: () => import('@/views/login.vue'),
-    hidden: true,
   },
   {
     path: '/safetyMonitoring',
     component: () => import('@/views/system/newSafetyMonitoring/index.vue'),
-    hidden: true,
   },
   {
     path: '/newAppsSafetyMonitoring',
     component: () => import('@/views/system/newSafetyMonitoring/app.vue'),
-    hidden: true,
   },
   {
     path: '/index_phone.cpt',
     component: () => import('@/views/system/safetyMonitoring/app/index.vue'),
-    hidden: true,
     redirect: '/index_phone.cpt/safety',
     children: [
       {
@@ -39,49 +35,41 @@ export const constantRoutes: RouteRecordRaw[] = [
       {
         path: 'chart',
         name: '统计图',
-        component: () => import('@/views/dashboard/BarChart.vue'),
+        component: () => import('@/views/dashboard/AppCharts.vue'),
       },
     ],
   },
   {
     path: '/statisticalGraph',
     component: () => import('@/views/system/statisticalGraph/index.vue'),
-    hidden: true,
   },
   {
     path: '/yieldMonitor',
     component: () => import('@/views/system/yieldMonitor/index.vue'),
-    hidden: true,
   },
   {
     path: '/index.cpt',
     component: () => import('@/views/system/safetyMonitoring/index.vue'),
-    hidden: true,
   },
   {
     path: '/safetyMonitoringMore',
     component: () => import('@/views/system/safetyMonitoringMore/index.vue'),
-    hidden: true,
   },
   {
     path: '/appSafetyMonitoringMore',
     component: () => import('@/views/system/safetyMonitoringMore/app.vue'),
-    hidden: true,
   },
   {
     path: '/appAlarmList',
     component: () => import('@/views/system/appAlarmList/index.vue'),
-    hidden: true,
   },
   {
     path: '/minePressure',
     component: () => import('@/views/system/minePressure/index.vue'),
-    hidden: true,
   },
   {
     path: '/production',
     component: () => import('@/views/system/production/index.vue'),
-    hidden: true,
   },
   /* 移动端人员定位 */
   {
@@ -145,51 +133,42 @@ export const constantRoutes: RouteRecordRaw[] = [
         component: () => import('@/views/personnel_location/app/deviceHisState_app.vue'),
       },
     ],
-    hidden: true,
   },
   /* PC 端人员定位 */
   {
     path: '/personnelLocation.cpt',
     component: () => import('@/views/personnel_location/index.vue'),
-    hidden: true,
   },
   {
     path: '/downholeinfo',
     component: () => import('@/views/personnel_location/downholeInfo.vue'),
-    hidden: true,
   },
   {
     path: '/personalCount',
     component: () => import('@/views/personnel_location/personnelCount/personalCount.vue'),
-    hidden: true,
   },
   {
     path: '/userinfo',
     name: 'userinfo',
     component: () => import('@/views/personnel_location/personnelCount/userInfo.vue'),
-    hidden: true,
   },
   {
     path: '/downholepersonNum/:year/:month/:day/:total',
     name: 'downholepersonNum',
     component: () => import('@/views/personnel_location/downholepersonNum.vue'),
-    hidden: true,
   },
   {
     path: '/turnOutInfo/:year/:month/:day/:type/:name',
     name: 'turnOutInfo',
     component: () => import('@/views/personnel_location/turnOutInfo.vue'),
-    hidden: true,
   },
   {
     path: '/401',
     component: () => import('@/views/error/401.vue'),
-    hidden: true,
   },
   {
     path: '/:pathMatch(.*)*',
     component: () => import('@/views/error/404.vue'),
-    hidden: true,
   },
 ]
 

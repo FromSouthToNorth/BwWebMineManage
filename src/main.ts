@@ -2,6 +2,7 @@ import { createApp } from 'vue'
 import { createPinia } from 'pinia'
 import ElementPlus from 'element-plus'
 import 'element-plus/dist/index.css'
+import zhCn from 'element-plus/dist/locale/zh-cn.mjs'
 import Vant from 'vant'
 import 'vant/lib/index.css'
 import 'normalize.css/normalize.css'
@@ -29,7 +30,7 @@ bwSSOSDKLogin(() => {
   import('./permission')
 
   app.use(router)
-  app.use(ElementPlus, { size: 'small' })
+  app.use(ElementPlus, { size: 'small', locale: zhCn })
   app.use(Vant)
 
   // 全局注册组件
