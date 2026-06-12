@@ -1,6 +1,8 @@
 <template>
-  <div class="yield-monitor-page page-container">
-    <h2 class="page-title">产量监测</h2>
+  <div class="page-container">
+    <div class="page-header flex-between">
+      <h2 class="gradient-title" style="font-size: 20px; font-weight: 700;">产量监测</h2>
+    </div>
     <el-card shadow="hover">
       <el-table :data="tableData" stripe style="width: 100%">
         <el-table-column prop="deviceName" label="设备名称" min-width="120" />

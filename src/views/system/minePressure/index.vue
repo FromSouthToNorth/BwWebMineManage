@@ -1,8 +1,10 @@
 <template>
   <div class="mine-pressure-page page-container">
-    <h2 class="page-title">矿压监测</h2>
+    <div class="page-header flex-between">
+      <h2 class="gradient-title" style="font-size: 20px; font-weight: 700;">矿压监测</h2>
+    </div>
 
-    <el-card shadow="hover" class="query-card">
+    <div class="query-card">
       <el-form :model="queryParams" inline size="small">
         <el-form-item label="安装位置">
           <el-select v-model="queryParams.installSiteName" placeholder="请选择" @change="getList">

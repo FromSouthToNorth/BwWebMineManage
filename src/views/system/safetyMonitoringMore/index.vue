@@ -1,8 +1,10 @@
 <template>
   <div class="safety-more-page page-container">
-    <h2 class="page-title">安全监测详情</h2>
+    <div class="page-header flex-between">
+      <h2 class="gradient-title" style="font-size: 20px; font-weight: 700;">安全监测详情</h2>
+    </div>
 
-    <el-card shadow="hover" class="query-card">
+    <div class="query-card">
       <el-form :model="queryParams" inline size="small">
         <el-form-item label="报警状态">
           <el-select v-model="queryParams.isCallThePolice" placeholder="全部" style="width: 100px" clearable
@@ -44,7 +46,7 @@
           <el-button @click="resetQuery">重置</el-button>
         </el-form-item>
       </el-form>
-    </el-card>
+    </div>
 
     <el-row :gutter="16">
       <el-col :span="12">
@@ -248,14 +250,6 @@ onMounted(() => {
 </script>
 
 <style scoped>
-.page-title {
-  margin-bottom: 16px;
-}
-
-.query-card {
-  margin-bottom: 16px;
-}
-
 .pagination-wrapper {
   display: flex;
   justify-content: center;

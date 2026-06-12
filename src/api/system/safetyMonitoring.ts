@@ -8,6 +8,7 @@ export interface SafetyMonitoringQuery {
   isCallThePolice?: string
   substation?: string
   type?: string
+  category?: string[]
   area?: string
   site?: string
 }
@@ -21,7 +22,9 @@ export function listSafetyMonitoring(query: SafetyMonitoringQuery) {
     { name: 'AlarmType', value: praseStrZero(query.isCallThePolice) },
     { name: 'Station', value: praseStrZero(query.substation) },
     { name: 'DevType', value: praseStrZero(query.type) },
-    { name: 'CategoryName', value: 0 },
+    {
+      name: 'CategoryName', value: query.category?.join(',') || 0
+    },
     { name: 'Area', value: praseStrEmpty(query.area) },
     { name: 'Address', value: praseStrEmpty(query.site) },
   ]

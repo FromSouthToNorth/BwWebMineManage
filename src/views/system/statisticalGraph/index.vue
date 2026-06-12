@@ -1,8 +1,10 @@
 <template>
-  <div class="statistical-graph-page page-container">
-    <h2 class="page-title">统计图</h2>
+  <div class="page-container">
+    <div class="page-header flex-between">
+      <h2 class="gradient-title" style="font-size: 20px; font-weight: 700;">统计图</h2>
+    </div>
 
-    <el-card shadow="hover" class="query-card">
+    <div class="query-card">
       <el-form :model="queryParams" inline size="small">
         <el-form-item label="计量器具">
           <el-select v-model="queryParams.deiviceClassfy" placeholder="请选择">

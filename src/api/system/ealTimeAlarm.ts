@@ -25,7 +25,7 @@ export function listHistoricalAlarm(query: { pageNum: number; pageSize: number; 
     { name: 'PageRowNums', value: query.pageSize },
     { name: 'Address', value: query.address },
     { name: 'DevType', value: query.typeName },
-    { name: 'CategoryName', value: query.category },
+    { name: 'CategoryName', value: query.category || '0' },
     { name: 'startTime', value: query.startTime },
     { name: 'endTime', value: query.endTime },
   ]

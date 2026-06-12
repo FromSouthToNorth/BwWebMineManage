@@ -1,6 +1,8 @@
 <template>
-  <div class="new-safety-page page-container">
-    <h2 class="page-title">分站安全监测</h2>
+  <div class="page-container">
+    <div class="page-header flex-between">
+      <h2 class="gradient-title" style="font-size: 20px; font-weight: 700;">分站安全监测</h2>
+    </div>
     <el-row :gutter="16">
       <el-col :span="6">
         <el-card shadow="hover">

@@ -1,121 +1,146 @@
 <template>
-  <el-card shadow="hover" class="safety-table-card">
+  <div class="safety-monitor">
+    <!-- 头部 -->
+    <div class="monitor-header">
+      <div class="monitor-title">
+        <span class="live-indicator" :class="{ active: autoRefresh }"></span>
+        <span style="font-weight: 600; font-size: 15px;">安全监控</span>
+      </div>
+      <div class="monitor-actions">
+        <span class="monitor-count">{{ total }} 个监测点</span>
+        <el-tag v-if="loading" type="info" size="small" effect="dark">刷新中...</el-tag>
+        <el-button text size="small" @click="toggleAutoRefresh" style="font-weight: 500;">
+          {{ autoRefresh ? '⏸ 暂停' : '▶ 自动刷新' }}
+        </el-button>
+      </div>
+    </div>
+
+    <!-- 分类筛选指示 -->
+    <div v-if="activeCategory" class="category-filter-bar">
+      <span class="category-filter-label">分类筛选：</span>
+      <span class="category-filter-tag">{{ activeCategory }}</span>
+      <el-button text size="small" @click="clearCategoryFilter" style="color: var(--text-muted); font-size: 12px; margin-left: 4px;">✕ 清除</el-button>
+    </div>
+
+    <!-- 监测点卡片网格 -->
+    <div v-if="loading && tableData.length === 0" class="monitor-loading-wrap">
+      <div class="loading-pulse"></div>
+      <span style="color: var(--text-muted); font-size: 13px;">加载监测数据...</span>
+    </div>
+    <div v-else class="monitor-grid">
+      <div
+        v-for="(item, idx) in tableData"
+        :key="idx"
+        class="monitor-card"
+        :class="{ 'is-alarm': item.alarmStatus === '报警', 'is-normal': item.alarmStatus !== '报警' }"
+        @click="showDetail(item)"
+      >
+        <div class="card-top">
+          <span class="card-name text-ellipsis" :title="item.devName">{{ item.devName }}</span>
+          <span v-if="item.alarmStatus === '报警'" class="alarm-badge pulse">报警</span>
+        </div>
+        <div class="card-value" :class="item.alarmStatus === '报警' ? 'text-danger' : 'text-success'">
+          {{ item.devValue }}
+        </div>
+        <div class="card-tags">
+          <span class="card-tag" v-if="item.category">{{ item.category }}</span>
+          <span class="card-tag" v-if="item.area">{{ item.area }}</span>
+          <span class="card-tag" v-if="item.substation">分站#{{ item.substation }}</span>
+        </div>
+        <div class="card-overlay">
+          <div class="card-overlay-btns">
+            <el-button text size="small" @click.stop="showDetail(item)" class="overlay-btn">详情</el-button>
+            <span class="overlay-divider">|</span>
+            <el-button text size="small" @click.stop="showHistory(item)" class="overlay-btn">历史</el-button>
+          </div>
+        </div>
+      </div>
+
+      <div v-if="!loading && tableData.length === 0" class="monitor-empty">
+        暂无数据
+      </div>
+    </div>
+    <!-- 加载空占位 -->
+    <div v-if="loading && tableData.length === 0" style="height: 200px;"></div>
+
+    <!-- 分页 -->
+    <div v-if="total > 0" class="monitor-pagination">
+      <pagination :total="total" :page="queryParams.pageNum" :limit="queryParams.pageSize" @pagination="handlePagination" />
+    </div>
+
+  </div>
+
+  <!-- 详情弹窗 -->
+  <el-dialog v-model="detailVisible" width="560px" top="8vh" class="glass-dialog" destroy-on-close>
     <template #header>
-      <div class="card-header">
-        <span>安全监控</span>
-        <div class="header-controls">
-          <el-tag v-if="loading" type="info" size="small">刷新中...</el-tag>
-          <el-button text size="small" :icon="autoRefresh ? 'VideoPause' : 'VideoPlay'" @click="toggleAutoRefresh">
-            {{ autoRefresh ? '暂停' : '自动刷新' }}
-          </el-button>
+      <div class="dialog-header">
+        <div class="dialog-header-icon">
+          <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/>
+          </svg>
+        </div>
+        <div>
+          <div class="dialog-header-title">监测点详情</div>
+          <div class="dialog-header-sub">{{ currentRow?.devName || '' }}</div>
         </div>
       </div>
     </template>
+    <div v-if="currentRow" class="detail-body">
+      <!-- 主数值区 -->
+      <div class="detail-hero" :class="currentRow.alarmStatus === '报警' ? 'is-alarm' : 'is-normal'">
+        <div class="detail-hero-value">{{ currentRow.devValue }}</div>
+        <div class="detail-hero-status">
+          <span class="status-dot" :class="currentRow.alarmStatus === '报警' ? 'alarm' : 'normal'"></span>
+          {{ currentRow.alarmStatus === '报警' ? '报警中' : '正常' }}
+        </div>
+      </div>
+      <!-- 信息网格 -->
+      <div class="detail-grid">
+        <div class="detail-field">
+          <span class="detail-label">分站</span>
+          <span class="detail-val">{{ currentRow.substation }}</span>
+        </div>
+        <div class="detail-field">
+          <span class="detail-label">类别</span>
+          <span class="detail-val">{{ currentRow.category }}</span>
+        </div>
+        <div class="detail-field">
+          <span class="detail-label">区域</span>
+          <span class="detail-val">{{ currentRow.area }}</span>
+        </div>
+        <div class="detail-field">
+          <span class="detail-label">地点</span>
+          <span class="detail-val">{{ currentRow.site }}</span>
+        </div>
+        <div class="detail-field">
+          <span class="detail-label">报警阈值</span>
+          <span class="detail-val">{{ currentRow.alarmThreshold || '-' }}</span>
+        </div>
+        <div class="detail-field">
+          <span class="detail-label">设备标识</span>
+          <span class="detail-val" style="font-family: var(--font-mono); font-size: 12px;">{{ currentRow.devLabel || '-' }}</span>
+        </div>
+      </div>
+    </div>
+  </el-dialog>
 
-    <!-- 查询区 -->
-    <el-form :model="queryParams" inline size="small" class="filter-form">
-      <el-form-item label="报警状态">
-        <el-select v-model="queryParams.isCallThePolice" placeholder="全部" style="width: 100px" @change="handleQuery">
-          <el-option label="全部" value="" />
-          <el-option label="报警" value="1" />
-          <el-option label="正常" value="0" />
-        </el-select>
-      </el-form-item>
-      <el-form-item label="分站">
-        <el-select v-model="queryParams.substation" placeholder="全部" style="width: 120px" clearable
-          @change="handleQuery">
-          <el-option v-for="item in substationOptions" :key="item.txt" :label="item.txt" :value="item.txt" />
-        </el-select>
-      </el-form-item>
-      <el-form-item label="类型">
-        <el-select v-model="queryParams.type" placeholder="全部" style="width: 120px" clearable @change="handleQuery">
-          <el-option v-for="item in typeOptions" :key="item.txt" :label="item.txt" :value="item.txt" />
-        </el-select>
-      </el-form-item>
-      <el-form-item label="类别">
-        <el-select v-model="queryParams.category" placeholder="全部" style="width: 120px" clearable multiple collapse-tags
-          @change="handleQuery">
-          <el-option v-for="item in categoryOptions" :key="item.txt" :label="item.txt" :value="item.txt" />
-        </el-select>
-      </el-form-item>
-      <el-form-item label="区域">
-        <el-select v-model="queryParams.area" placeholder="全部" style="width: 120px" clearable @change="handleQuery">
-          <el-option v-for="item in areaOptions" :key="item.txt" :label="item.txt" :value="item.txt" />
-        </el-select>
-      </el-form-item>
-      <el-form-item label="地点">
-        <el-select v-model="queryParams.site" placeholder="全部" style="width: 120px" clearable @change="handleQuery">
-          <el-option v-for="item in siteOptions" :key="item.txt" :label="item.txt" :value="item.txt" />
-        </el-select>
-      </el-form-item>
-    </el-form>
-
-    <!-- 统计信息 -->
-    <SafetyMonitoringStatistics v-if="statisticsHtml" :html="statisticsHtml" :is-show-total="true" :total="total" />
-
-    <!-- 数据表格 -->
-    <el-table v-loading="loading" :data="tableData" stripe :max-height="maxHeight" style="width: 100%"
-      @row-click="handleRowClick">
-      <el-table-column type="index" label="#" width="50" fixed />
-      <el-table-column prop="devName" label="名称" min-width="140" show-overflow-tooltip />
-      <el-table-column prop="devValue" label="数值" width="100">
-        <template #default="{ row }">
-          <span :class="{ 'alarm-value': row.alarmStatus === '报警' }">{{ row.devValue }}</span>
-        </template>
-      </el-table-column>
-      <el-table-column prop="devStatus" label="状态" width="80">
-        <template #default="{ row }">
-          <el-tag :type="row.devStatus === '正常' ? 'success' : 'danger'" size="small">
-            {{ row.devStatus }}
-          </el-tag>
-        </template>
-      </el-table-column>
-      <el-table-column prop="alarmStatus" label="报警" width="80">
-        <template #default="{ row }">
-          <el-tag v-if="row.alarmStatus === '报警'" type="danger" size="small" effect="dark">报警</el-tag>
-          <span v-else class="no-alarm">-</span>
-        </template>
-      </el-table-column>
-      <el-table-column prop="substation" label="分站" min-width="100" />
-      <el-table-column prop="category" label="类别" min-width="80" />
-      <el-table-column prop="area" label="区域" min-width="80" />
-      <el-table-column prop="site" label="地点" min-width="100" />
-      <el-table-column label="操作" width="160" fixed="right">
-        <template #default="{ row }">
-          <el-link type="primary" size="small" @click.stop="showDetail(row)">详情</el-link>
-          <el-divider direction="vertical" />
-          <el-link type="primary" size="small" @click.stop="showHistory(row)">历史</el-link>
-        </template>
-      </el-table-column>
-    </el-table>
-
-    <!-- 分页 -->
-    <pagination v-if="total > 0" :total="total" :page="queryParams.pageNum" :limit="queryParams.pageSize"
-      @pagination="handlePagination" />
-
-    <!-- 详情弹窗 -->
-    <el-dialog v-model="detailVisible" title="监测点详情" width="600px">
-      <el-form v-if="currentRow" label-width="100px" size="small">
-        <el-form-item label="名称">{{ currentRow.devName }}</el-form-item>
-        <el-form-item label="数值">{{ currentRow.devValue }}</el-form-item>
-        <el-form-item label="状态">
-          <el-tag :type="currentRow.devStatus === '正常' ? 'success' : 'danger'" size="small">
-            {{ currentRow.devStatus }}
-          </el-tag>
-        </el-form-item>
-        <el-form-item label="分站">{{ currentRow.substation }}</el-form-item>
-        <el-form-item label="类别">{{ currentRow.category }}</el-form-item>
-        <el-form-item label="区域">{{ currentRow.area }}</el-form-item>
-        <el-form-item label="地点">{{ currentRow.site }}</el-form-item>
-        <el-form-item label="报警阈值">{{ currentRow.alarmThreshold || '-' }}</el-form-item>
-      </el-form>
-    </el-dialog>
-
-    <!-- 历史趋势弹窗 -->
-    <el-dialog v-model="historyVisible" title="历史趋势" width="800px">
-      <iframe v-if="historySrc" :src="historySrc" style="width: 100%; height: 500px; border: none" />
-    </el-dialog>
-  </el-card>
+  <!-- 历史趋势弹窗 -->
+  <el-dialog v-model="historyVisible" width="820px" top="5vh" class="glass-dialog" destroy-on-close>
+    <template #header>
+      <div class="dialog-header">
+        <div class="dialog-header-icon" style="color: var(--color-primary);">
+          <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2">
+            <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/>
+          </svg>
+        </div>
+        <div>
+          <div class="dialog-header-title">历史趋势</div>
+          <div class="dialog-header-sub">{{ currentRow?.devName || '' }}</div>
+        </div>
+      </div>
+    </template>
+    <iframe v-if="historySrc" :src="historySrc" style="width: 100%; height: 520px; border: none; border-radius: 8px;" />
+  </el-dialog>
 </template>
 
 <script setup lang="ts">
@@ -131,25 +156,30 @@ import {
   siteSelect,
 } from '@/api/system/safetyMonitoring'
 
-defineProps<{
-  maxHeight?: number
+const emit = defineEmits<{
+  'update:total': [value: number]
 }>()
 
-// 表格数据
+const props = withDefaults(defineProps<{
+  maxHeight?: number
+  filterCategory?: string
+}>(), {
+  maxHeight: undefined,
+  filterCategory: '',
+})
+
 const tableData = ref<any[]>([])
 const total = ref(0)
 const loading = ref(false)
 const statisticsHtml = ref('')
 const currentRow = ref<any>(null)
 
-// 筛选选项
 const substationOptions = ref<any[]>([])
 const typeOptions = ref<any[]>([])
 const categoryOptions = ref<any[]>([])
 const areaOptions = ref<any[]>([])
 const siteOptions = ref<any[]>([])
 
-// 查询参数
 const queryParams = reactive({
   pageNum: 1,
   pageSize: 20,
@@ -161,16 +191,30 @@ const queryParams = reactive({
   site: '',
 })
 
-// 弹窗
 const detailVisible = ref(false)
 const historyVisible = ref(false)
 const historySrc = ref('')
-
-// 自动刷新
+const activeCategory = ref('')
 const autoRefresh = ref(true)
 let refreshTimer: ReturnType<typeof setInterval> | null = null
 
-/** 获取列表数据 */
+// 监听统计图分类点击
+watch(() => props.filterCategory, (val) => {
+  if (val && val !== activeCategory.value) {
+    activeCategory.value = val
+    queryParams.category = [val]
+    queryParams.pageNum = 1
+    getData()
+  }
+})
+
+function clearCategoryFilter() {
+  activeCategory.value = ''
+  queryParams.category = []
+  queryParams.pageNum = 1
+  getData()
+}
+
 async function getData() {
   loading.value = true
   try {
@@ -197,9 +241,11 @@ async function getData() {
       site: item.devAddress,
       alarmThreshold: item.maxVal,
       devLabel: item.devLabel,
+      valueUpdateDT: item.valueUpdateDT,
     }))
     total.value = totalCount || 0
     statisticsHtml.value = statistics || ''
+    emit('update:total', total.value)
   } catch (e) {
     console.error('获取安全监测数据失败', e)
   } finally {
@@ -207,7 +253,6 @@ async function getData() {
   }
 }
 
-/** 获取筛选项 */
 async function getSelectOptions() {
   try {
     const [subRes, typeRes, catRes, areaRes, siteRes] = await Promise.all([
@@ -227,20 +272,28 @@ async function getSelectOptions() {
   }
 }
 
-/** 查询 */
 function handleQuery() {
   queryParams.pageNum = 1
   getData()
 }
 
-/** 翻页 */
+function resetQuery() {
+  queryParams.isCallThePolice = ''
+  queryParams.substation = ''
+  queryParams.type = ''
+  queryParams.category = []
+  queryParams.area = ''
+  queryParams.site = ''
+  queryParams.pageNum = 1
+  getData()
+}
+
 function handlePagination(p: { page: number; limit: number }) {
   queryParams.pageNum = p.page
   queryParams.pageSize = p.limit
   getData()
 }
 
-/** 切换自动刷新 */
 function toggleAutoRefresh() {
   autoRefresh.value = !autoRefresh.value
   if (autoRefresh.value) {
@@ -251,18 +304,11 @@ function toggleAutoRefresh() {
   }
 }
 
-/** 行点击 */
-function handleRowClick(row: any) {
-  currentRow.value = row
-}
-
-/** 详情弹窗 */
 function showDetail(row: any) {
   currentRow.value = row
   detailVisible.value = true
 }
 
-/** 历史趋势 */
 function showHistory(row: any) {
   currentRow.value = row
   historySrc.value = `/DigitizingMine/Historical/HisIndex?name=${encodeURIComponent(row.devName || '')}`
@@ -284,36 +330,342 @@ onBeforeUnmount(() => {
 </script>
 
 <style scoped>
-.safety-table-card {
-  margin-bottom: 16px;
+.safety-monitor {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  background: rgba(20, 29, 47, 0.4);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(148, 163, 184, 0.1);
+  border-radius: var(--radius-md);
+  overflow: hidden;
 }
 
-.card-header {
+/* 头部 */
+.monitor-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
+  padding: 10px 16px;
+  border-bottom: 1px solid rgba(148, 163, 184, 0.08);
+  background: rgba(255, 255, 255, 0.02);
+  flex-shrink: 0;
 }
 
-.filter-form {
-  margin-bottom: 8px;
-}
-
-.header-controls {
+.monitor-title {
   display: flex;
   align-items: center;
   gap: 8px;
 }
 
-.no-alarm {
+.live-indicator {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--text-muted);
+  transition: all 0.3s;
+}
+
+.live-indicator.active {
+  background: var(--color-success);
+  box-shadow: 0 0 8px var(--color-success-glow);
+  animation: live-pulse 2s ease-in-out infinite;
+}
+
+@keyframes live-pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
+}
+
+.monitor-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.monitor-count {
+  font-size: 12px;
   color: var(--text-muted);
 }
 
-.alarm-value {
-  color: var(--color-danger);
-  font-weight: bold;
+/* 筛选区 */
+.monitor-filters {
+  padding: 10px 16px;
+  border-bottom: 1px solid var(--border-color-light);
+  background: rgba(255, 255, 255, 0.015);
 }
 
-:deep(.el-form-item) {
-  margin-bottom: 4px;
+.monitor-filters :deep(.el-form-item) {
+  margin-bottom: 0;
+}
+
+.monitor-filters :deep(.el-form-item__label) {
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
+/* 卡片网格 — 可滚动 */
+.monitor-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 10px;
+  padding: 12px;
+  overflow-y: auto;
+  flex: 1;
+  min-height: 0;
+  align-content: flex-start;
+}
+
+/* 单个监测卡片 — 毛玻璃 */
+.monitor-card {
+  background: rgba(20, 29, 47, 0.55);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(148, 163, 184, 0.1);
+  border-radius: var(--radius-md);
+  padding: 14px 16px;
+  cursor: pointer;
+  transition: all var(--transition-base);
+  position: relative;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+/* 左侧装饰条 */
+.monitor-card::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 4px;
+  border-radius: 0 3px 3px 0;
+  transition: all var(--transition-base);
+}
+
+/* 正常状态 */
+.monitor-card.is-normal::before {
+  background: var(--color-success);
+  box-shadow: 0 0 6px var(--color-success-glow);
+}
+
+.monitor-card.is-normal:hover {
+  border-color: rgba(34, 197, 94, 0.3);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3), 0 0 12px rgba(34, 197, 94, 0.05);
+  transform: translateY(-2px);
+}
+
+/* 报警状态 */
+.monitor-card.is-alarm {
+  border-color: rgba(239, 68, 68, 0.3);
+  background: rgba(239, 68, 68, 0.04);
+}
+
+.monitor-card.is-alarm::before {
+  background: var(--color-danger);
+  box-shadow: 0 0 12px var(--color-danger-glow);
+}
+
+.monitor-card.is-alarm:hover {
+  border-color: rgba(239, 68, 68, 0.5);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4), 0 0 20px rgba(239, 68, 68, 0.1);
+  transform: translateY(-2px);
+}
+
+/* 卡片顶部 */
+.card-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.card-name {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text-primary);
+  flex: 1;
+}
+
+/* 报警徽标 */
+.alarm-badge {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--color-danger);
+  background: rgba(239, 68, 68, 0.15);
+  padding: 2px 8px;
+  border-radius: 10px;
+  white-space: nowrap;
+  border: 1px solid rgba(239, 68, 68, 0.2);
+}
+
+.alarm-badge.pulse {
+  animation: alarm-badge-pulse 1.5s ease-in-out infinite;
+}
+
+@keyframes alarm-badge-pulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.3); }
+  50% { box-shadow: 0 0 8px 2px rgba(239, 68, 68, 0.1); }
+}
+
+/* 数值 */
+.card-value {
+  font-family: var(--font-mono);
+  font-size: 22px;
+  font-weight: 700;
+  letter-spacing: 1px;
+  line-height: 1.2;
+  margin: 2px 0;
+}
+
+.card-value.text-success { color: var(--color-success); }
+.card-value.text-danger {
+  color: var(--color-danger);
+  text-shadow: 0 0 20px var(--color-danger-glow);
+}
+
+/* 标签行 */
+.card-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+.card-tag {
+  font-size: 11px;
+  color: var(--text-muted);
+  background: rgba(148, 163, 184, 0.1);
+  padding: 1px 8px;
+  border-radius: 4px;
+  white-space: nowrap;
+}
+
+/* 悬浮毛玻璃浮层 — 从下到上渐变显示 */
+.card-overlay {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 0;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  background: linear-gradient(to top, rgba(20,29,47,0.85) 0%, rgba(20,29,47,0.4) 60%, transparent 100%);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  border-radius: 0 0 var(--radius-md) var(--radius-md);
+  overflow: hidden;
+  transition: height 0.25s ease;
+}
+
+.monitor-card:hover .card-overlay {
+  height: 48px;
+}
+
+.card-overlay-btns {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding-bottom: 10px;
+  opacity: 0;
+  transform: translateY(8px);
+  transition: all 0.2s ease 0.08s;
+}
+
+.overlay-btn {
+  color: #fff !important;
+  font-size: 12px !important;
+  font-weight: 500 !important;
+  background: transparent !important;
+  border: none !important;
+}
+
+.overlay-btn:hover {
+  color: var(--color-primary-light) !important;
+  background: rgba(255,255,255,0.1) !important;
+}
+
+.overlay-divider {
+  color: rgba(255,255,255,0.15);
+  font-size: 12px;
+}
+
+.monitor-card:hover .card-overlay-btns {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* 分类筛选指示条 */
+.category-filter-bar {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 16px;
+  background: rgba(59, 130, 246, 0.06);
+  border-bottom: 1px solid rgba(59, 130, 246, 0.1);
+  font-size: 13px;
+}
+
+.category-filter-label {
+  color: var(--text-muted);
+}
+
+.category-filter-tag {
+  color: var(--color-primary);
+  font-weight: 500;
+  background: rgba(59, 130, 246, 0.1);
+  padding: 2px 10px;
+  border-radius: 4px;
+  border: 1px solid rgba(59, 130, 246, 0.15);
+}
+
+/* 加载中 */
+.monitor-loading-wrap {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  padding: 48px 0;
+  min-height: 200px;
+  background: rgba(20, 29, 47, 0.3);
+  border-radius: var(--radius-md);
+  margin: 16px;
+}
+
+.loading-pulse {
+  width: 32px;
+  height: 32px;
+  border: 3px solid rgba(59, 130, 246, 0.15);
+  border-top-color: var(--color-primary);
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+/* 空状态 */
+.monitor-empty {
+  grid-column: 1 / -1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 160px;
+  color: var(--text-muted);
+  font-size: 14px;
+}
+
+/* 分页 */
+.monitor-pagination {
+  display: flex;
+  justify-content: center;
+  padding: 8px 16px;
+  border-top: 1px solid var(--border-color);
+  flex-shrink: 0;
 }
 </style>

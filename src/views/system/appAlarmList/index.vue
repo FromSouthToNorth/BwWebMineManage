@@ -1,8 +1,10 @@
 <template>
-  <div class="app-alarm-page page-container">
-    <h2 class="page-title">APP 报警列表</h2>
+  <div class="page-container">
+    <div class="page-header flex-between">
+      <h2 class="gradient-title" style="font-size: 20px; font-weight: 700;">APP 报警列表</h2>
+    </div>
 
-    <el-card shadow="hover" class="query-card">
+    <div class="query-card">
       <el-form :model="queryParams" inline size="small">
         <el-form-item label="时间范围">
           <el-date-picker
