@@ -3,66 +3,68 @@
     <!-- 头部 -->
     <div class="alarm-header">
       <div class="alarm-title">
-        <svg class="alarm-bell" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2">
-          <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/>
-          <path d="M13.73 21a2 2 0 0 1-3.46 0"/>
+        <svg class="alarm-bell" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" />
+          <path d="M13.73 21a2 2 0 0 1-3.46 0" />
         </svg>
-        <span style="font-weight: 600; font-size: 15px;">实时报警</span>
-        <span v-if="alarmData.length" class="alarm-badge-count">{{ alarmData.length }}</span>
+        <span>实时报警</span>
+        <span class="alarm-count">{{ alarmData.length }}</span>
       </div>
-      <el-button text size="small" @click="handleMore" style="color: var(--color-primary); font-weight: 500; font-size: 12px;">查看全部 →</el-button>
+      <div class="alarm-actions">
+        <span class="live-indicator" :class="{ active: true }" />
+        <el-button text size="small" @click="handleMore" style="color: var(--color-primary); font-weight: 500; font-size: 12px;">查看全部 →</el-button>
+      </div>
     </div>
 
     <!-- 报警列表 -->
     <div class="alarm-scroll">
-      <!-- 首次加载骨架 -->
+      <!-- 骨架 -->
       <template v-if="loading && alarmData.length === 0">
         <div v-for="n in 3" :key="'s' + n" class="alarm-skeleton">
-          <div class="sk-line w-40"></div>
-          <div class="sk-line w-90"></div>
+          <div class="sk-row">
+            <div class="sk-line w-30" />
+            <div class="sk-line w-20" />
+          </div>
+          <div class="sk-line w-80" />
+          <div class="sk-line w-40" />
         </div>
       </template>
 
       <!-- 空状态 -->
       <div v-if="!loading && alarmData.length === 0" class="alarm-empty">
-        <svg viewBox="0 0 24 24" width="32" height="32" fill="none" stroke="currentColor" stroke-width="1.5" style="color: var(--color-success); opacity: 0.5;">
-          <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/>
-          <polyline points="22 4 12 14.01 9 11.01"/>
+        <svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="currentColor" stroke-width="1.5" style="color: var(--color-success); opacity: 0.4;">
+          <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" />
+          <polyline points="22 4 12 14.01 9 11.01" />
         </svg>
         <span>系统运行正常，无报警</span>
       </div>
 
       <!-- 报警条目 -->
       <TransitionGroup name="alarm-slide" tag="div" class="alarm-list">
-        <div v-for="(item, idx) in alarmData" :key="item.devName + item.alarmTime" class="alarm-item">
-          <div class="alarm-glow-bar">
-            <div class="alarm-glow-inner"></div>
-          </div>
+        <div v-for="(item, idx) in alarmData" :key="item.alarmTime + item.devName" class="alarm-item">
           <div class="alarm-body">
             <div class="alarm-top">
               <span class="alarm-device">{{ item.devName }}</span>
-              <span class="alarm-type-tag">{{ item.alarmType }}</span>
+              <span class="alarm-type-tag">{{ item.alarmType || '报警' }}</span>
             </div>
-            <div class="alarm-location">{{ item.alarmContent }}</div>
-            <div class="alarm-footer">
+            <div class="alarm-content">{{ item.alarmContent }}</div>
+            <div class="alarm-bottom">
               <span class="alarm-time">{{ formatTime(item.alarmTime) }}</span>
-              <span class="alarm-new" v-if="idx === 0">NEW</span>
+              <span v-if="idx === 0" class="alarm-new">NEW</span>
             </div>
           </div>
         </div>
       </TransitionGroup>
     </div>
-
-    <!-- 查看更多弹窗 -->
   </div>
 
   <!-- 报警记录弹窗 -->
-  <el-dialog v-model="moreVisible" width="820px" top="5vh" class="glass-dialog" destroy-on-close>
+  <el-dialog v-model="moreVisible" width="800px" top="5vh" class="glass-dialog" destroy-on-close>
     <template #header>
       <div class="dialog-header">
         <div class="dialog-header-icon" style="color: var(--color-danger); background: rgba(239,68,68,0.1);">
-          <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2">
-            <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/>
+          <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" /><path d="M13.73 21a2 2 0 0 1-3.46 0" />
           </svg>
         </div>
         <div>
@@ -73,48 +75,40 @@
     </template>
 
     <!-- 筛选栏 -->
-    <div class="alarm-filter-bar">
-      <div class="alarm-filter-row">
-        <div class="alarm-filter-item">
-          <span class="alarm-filter-label">地点</span>
-          <el-input v-model="historyQuery.address" placeholder="输入地点" clearable style="width: 140px" size="small" />
-        </div>
-        <div class="alarm-filter-item">
-          <span class="alarm-filter-label">类型</span>
-          <el-select v-model="historyQuery.typeName" placeholder="全部" clearable style="width: 110px" size="small">
-            <el-option v-for="item in historyTypeOptions" :key="item.txt" :label="item.txt" :value="item.txt" />
-          </el-select>
-        </div>
-        <div class="alarm-filter-item">
-          <span class="alarm-filter-label">时间</span>
-          <el-date-picker v-model="historyDateRange" type="datetimerange" range-separator="至" start-placeholder="开始"
-            end-placeholder="结束" value-format="YYYY-MM-DD HH:mm:ss" style="width: 280px" size="small" />
-        </div>
-        <el-button type="primary" size="small" @click="searchHistory" style="margin-top: 18px;">查询</el-button>
+    <div class="history-filters">
+      <div class="history-filter-item">
+        <label class="history-filter-label">地点</label>
+        <el-input v-model="historyQuery.address" placeholder="输入地点" clearable size="small" style="width: 140px;" />
       </div>
+      <div class="history-filter-item">
+        <label class="history-filter-label">类型</label>
+        <el-select v-model="historyQuery.typeName" placeholder="全部" clearable size="small" style="width: 110px;">
+          <el-option v-for="item in historyTypeOptions" :key="item.txt" :label="item.txt" :value="item.txt" />
+        </el-select>
+      </div>
+      <div class="history-filter-item">
+        <label class="history-filter-label">时间</label>
+        <el-date-picker v-model="historyDateRange" type="datetimerange" range-separator="至" start-placeholder="开始"
+          end-placeholder="结束" value-format="YYYY-MM-DD HH:mm:ss" size="small" style="width: 260px;" />
+      </div>
+      <el-button type="primary" size="small" @click="searchHistory" style="margin-top: 18px;">查询</el-button>
     </div>
 
-    <!-- 列表 -->
-    <div class="alarm-list-wrap">
-      <div v-for="(item, idx) in historyData" :key="idx" class="alarm-record" :class="item.severity === '1' ? 'is-severe' : 'is-normal'">
-        <div class="alarm-record-left">
-          <div class="alarm-record-dot" :class="item.severity === '1' ? 'severe' : 'normal'"></div>
-          <span class="alarm-record-time">{{ item.alarmTime }}</span>
-        </div>
-        <div class="alarm-record-body">
-          <div class="alarm-record-top">
-            <span class="alarm-record-name">{{ item.devName }}</span>
-            <span class="alarm-record-severity" :class="item.severity === '1' ? 'severe' : 'normal'">
-              {{ item.severity === '1' ? '严重' : '一般' }}
-            </span>
+    <!-- 历史列表 -->
+    <div class="history-list">
+      <div v-for="(item, idx) in historyData" :key="idx" class="history-item">
+        <span class="history-time">{{ item.alarmTime }}</span>
+        <div class="history-item-body">
+          <div class="history-item-top">
+            <span class="history-device">{{ item.devName }}</span>
           </div>
-          <div class="alarm-record-desc">{{ item.alarmContent }}</div>
+          <div class="history-content">{{ item.alarmContent }}</div>
         </div>
       </div>
-      <div v-if="historyData.length === 0" class="alarm-record-empty">无匹配记录</div>
+      <div v-if="historyData.length === 0" class="history-empty">无匹配记录</div>
     </div>
 
-    <div class="alarm-record-footer">
+    <div class="history-footer">
       <pagination v-if="historyTotal > 0" :total="historyTotal" :page="historyQuery.pageNum"
         :limit="historyQuery.pageSize" @pagination="handleHistoryPagination" />
     </div>
@@ -124,7 +118,7 @@
 <script setup lang="ts">
 defineOptions({ name: 'TimerAlarmTable' })
 
-import { ref, reactive, onMounted, onBeforeUnmount } from 'vue'
+import { ref, reactive, computed, onMounted, onBeforeUnmount } from 'vue'
 import { listEalTimeAlarm, listHistoricalAlarm } from '@/api/system/ealTimeAlarm'
 
 const alarmData = ref<any[]>([])
@@ -147,7 +141,6 @@ let timer: ReturnType<typeof setInterval> | null = null
 
 function formatTime(t: string | undefined | null): string {
   if (!t) return ''
-  // "2026-05-30 17:51:13.000" → "17:51:13"
   const m = t.match(/\d{2}:\d{2}:\d{2}/)
   return m ? m[0] : t
 }
@@ -159,9 +152,10 @@ async function getData() {
     const { items } = res.data || {}
     alarmData.value = (items || []).map((item: any) => ({
       alarmType: item.alarmType,
-      alarmContent: item.devAddress,
-      devName: item.devLabel,
+      alarmContent: item.devAddress || item.devLabel,
+      devName: item.devLabel || item.devAddress,
       alarmTime: item.alarmBeginDT || item.valueUpdateDT,
+      severity: item.severity || (item.alarmType === 1 ? '1' : '0'),
     }))
   } catch (e) {
     console.error('获取实时报警失败', e)
@@ -223,10 +217,13 @@ onBeforeUnmount(() => {
 .alarm-panel {
   background: rgba(20, 29, 47, 0.4);
   backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-  border: 1px solid rgba(148, 163, 184, 0.1);
+  border: 1px solid rgba(239, 68, 68, 0.12);
+  border-top-color: var(--color-danger);
+  border-top-width: 2px;
   border-radius: var(--radius-md);
   overflow: hidden;
+  display: flex;
+  flex-direction: column;
 }
 
 /* 头部 */
@@ -234,23 +231,26 @@ onBeforeUnmount(() => {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 14px 18px;
+  padding: 10px 14px;
   border-bottom: 1px solid rgba(239, 68, 68, 0.15);
-  background: linear-gradient(135deg, rgba(239,68,68,0.04) 0%, transparent 50%);
+  background: linear-gradient(135deg, rgba(239, 68, 68, 0.08) 0%, rgba(239, 68, 68, 0.015) 60%, transparent 100%);
 }
 
 .alarm-title {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 6px;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-primary);
 }
 
 .alarm-bell {
   color: var(--color-danger);
-  filter: drop-shadow(0 0 4px var(--color-danger-glow));
+  filter: drop-shadow(0 0 3px var(--color-danger-glow));
 }
 
-.alarm-badge-count {
+.alarm-count {
   font-size: 11px;
   font-weight: 600;
   color: #fff;
@@ -262,14 +262,41 @@ onBeforeUnmount(() => {
   text-align: center;
 }
 
-/* 报警滚动区域 */
+.alarm-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.live-indicator {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--color-success);
+  box-shadow: 0 0 6px var(--color-success-glow);
+  animation: live-pulse 2s ease-in-out infinite;
+}
+
+@keyframes live-pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.4; }
+}
+
+/* KPI 统计 */
+/* 报警滚动区 */
 .alarm-scroll {
-  max-height: 380px;
+  max-height: 340px;
   overflow-y: auto;
+  flex: 1;
 }
 
 .alarm-scroll::-webkit-scrollbar {
   width: 3px;
+}
+
+.alarm-scroll::-webkit-scrollbar-thumb {
+  background: rgba(148, 163, 184, 0.15);
+  border-radius: 2px;
 }
 
 /* 报警条目 */
@@ -280,11 +307,9 @@ onBeforeUnmount(() => {
 
 .alarm-item {
   display: flex;
-  gap: 0;
-  min-height: 70px;
-  border-bottom: 1px solid var(--border-color-light);
+  border-bottom: 1px solid rgba(148, 163, 184, 0.05);
+  border-left: 3px solid rgba(239, 68, 68, 0.25);
   transition: all 0.2s ease;
-  position: relative;
   overflow: hidden;
 }
 
@@ -293,42 +318,19 @@ onBeforeUnmount(() => {
 }
 
 .alarm-item:hover {
-  background: rgba(239, 68, 68, 0.04);
+  background: rgba(239, 68, 68, 0.06);
+  border-left-color: var(--color-danger);
 }
 
-/* 左侧发光条 */
-.alarm-glow-bar {
-  width: 4px;
-  flex-shrink: 0;
-  background: var(--color-danger);
-  position: relative;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.alarm-glow-inner {
-  position: absolute;
-  width: 100%;
-  height: 60%;
-  background: var(--color-danger);
-  filter: blur(6px);
-  opacity: 0.7;
-  animation: glow-pulse 2s ease-in-out infinite;
-}
-
-@keyframes glow-pulse {
-  0%, 100% { opacity: 0.4; height: 50%; }
-  50% { opacity: 0.8; height: 70%; }
-}
-
+/* 左侧 severity 色条 */
 /* 报警主体 */
 .alarm-body {
   flex: 1;
-  padding: 10px 14px;
+  padding: 8px 12px;
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: 3px;
+  min-width: 0;
 }
 
 .alarm-top {
@@ -339,53 +341,61 @@ onBeforeUnmount(() => {
 }
 
 .alarm-device {
-  font-size: 13px;
+  font-size: 14px;
   font-weight: 600;
   color: var(--text-primary);
-  font-family: var(--font-mono);
-  letter-spacing: 0.3px;
+  font-family: var(--font-mono, monospace);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .alarm-type-tag {
   font-size: 11px;
-  color: var(--color-danger);
-  background: rgba(239, 68, 68, 0.1);
+  font-weight: 500;
   padding: 1px 8px;
   border-radius: 4px;
-  border: 1px solid rgba(239, 68, 68, 0.15);
   white-space: nowrap;
+  flex-shrink: 0;
+  color: var(--color-danger);
+  background: rgba(239, 68, 68, 0.1);
+  border: 1px solid rgba(239, 68, 68, 0.15);
 }
 
-.alarm-location {
-  font-size: 12px;
+.alarm-content {
+  font-size: 13px;
   color: var(--text-secondary);
-  line-height: 1.4;
-  display: -webkit-box;
-  -webkit-line-clamp: 2;
-  -webkit-box-orient: vertical;
+  line-height: 1.35;
+  white-space: nowrap;
   overflow: hidden;
+  text-overflow: ellipsis;
 }
 
-.alarm-footer {
+.alarm-bottom {
   display: flex;
   align-items: center;
-  justify-content: space-between;
   gap: 8px;
 }
 
 .alarm-time {
-  font-size: 11px;
-  color: var(--text-muted);
-  font-family: var(--font-mono);
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-secondary, #94a3b8);
+  font-family: var(--font-mono, monospace);
+  background: rgba(148, 163, 184, 0.08);
+  padding: 1px 8px;
+  border-radius: 4px;
+  letter-spacing: 0.3px;
 }
 
 .alarm-new {
-  font-size: 9px;
+  font-size: 10px;
   font-weight: 700;
   color: var(--color-danger);
   background: rgba(239, 68, 68, 0.15);
-  padding: 1px 6px;
+  padding: 0 6px;
   border-radius: 3px;
+  line-height: 16px;
   animation: new-blink 1.2s ease-in-out infinite;
 }
 
@@ -396,27 +406,33 @@ onBeforeUnmount(() => {
 
 /* 骨架 */
 .alarm-skeleton {
-  padding: 14px 18px;
-  border-bottom: 1px solid var(--border-color-light);
+  padding: 12px 14px;
+  border-bottom: 1px solid rgba(148, 163, 184, 0.05);
   display: flex;
   flex-direction: column;
   gap: 8px;
 }
 
+.sk-row {
+  display: flex;
+  gap: 12px;
+}
+
 .sk-line {
-  height: 12px;
+  height: 10px;
   border-radius: 4px;
   background: linear-gradient(90deg,
-    var(--bg-card-hover) 25%,
-    rgba(148, 163, 184, 0.1) 50%,
-    var(--bg-card-hover) 75%
-  );
+    rgba(148, 163, 184, 0.06) 25%,
+    rgba(148, 163, 184, 0.12) 50%,
+    rgba(148, 163, 184, 0.06) 75%);
   background-size: 200% 100%;
   animation: sk-shimmer 1.5s ease-in-out infinite;
 }
 
+.sk-line.w-20 { width: 20%; }
+.sk-line.w-30 { width: 30%; }
 .sk-line.w-40 { width: 40%; }
-.sk-line.w-90 { width: 90%; }
+.sk-line.w-80 { width: 80%; }
 
 @keyframes sk-shimmer {
   0% { background-position: 200% 0; }
@@ -429,169 +445,114 @@ onBeforeUnmount(() => {
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  padding: 36px 16px;
-  gap: 10px;
+  padding: 32px 16px;
+  gap: 8px;
   color: var(--text-muted);
-  font-size: 13px;
+  font-size: 14px;
 }
 
 /* 进入动画 */
 .alarm-slide-enter-active {
-  transition: all 0.4s ease;
+  transition: all 0.35s ease;
 }
 
 .alarm-slide-enter-from {
   opacity: 0;
-  transform: translateX(-20px);
+  transform: translateX(-16px);
 }
 
-/* 历史弹窗列表 */
-/* ===== 报警记录弹窗 ===== */
-.alarm-filter-bar {
-  margin-bottom: 16px;
-  background: rgba(255,255,255,0.015);
-  border: 1px solid var(--border-color-light);
-  border-radius: 10px;
-  padding: 12px 16px;
-}
-
-.alarm-filter-row {
+/* ===== 历史弹窗 ===== */
+.history-filters {
   display: flex;
   flex-wrap: wrap;
   gap: 12px;
   align-items: flex-end;
+  margin-bottom: 16px;
+  padding: 12px 16px;
+  background: rgba(255, 255, 255, 0.015);
+  border: 1px solid rgba(148, 163, 184, 0.08);
+  border-radius: 10px;
 }
 
-.alarm-filter-item {
+.history-filter-item {
   display: flex;
   flex-direction: column;
   gap: 4px;
 }
 
-.alarm-filter-label {
+.history-filter-label {
   font-size: 11px;
   color: var(--text-muted);
   font-weight: 500;
 }
 
-.alarm-list-wrap {
-  max-height: 480px;
+.history-list {
+  max-height: 460px;
   overflow-y: auto;
   display: flex;
   flex-direction: column;
   gap: 6px;
 }
 
-.alarm-record {
+.history-item {
   display: flex;
-  gap: 12px;
+  gap: 10px;
   padding: 10px 14px;
-  border: 1px solid var(--border-color-light);
+  border: 1px solid rgba(148, 163, 184, 0.06);
   border-radius: 8px;
-  transition: all var(--transition-fast);
+  border-left-width: 3px;
+  transition: background 0.15s ease;
 }
 
-.alarm-record:hover {
-  background: rgba(255,255,255,0.02);
-  border-color: rgba(148,163,184,0.15);
+.history-item:hover {
+  background: rgba(255, 255, 255, 0.015);
 }
 
-.alarm-record.is-severe {
-  border-left: 3px solid var(--color-danger);
-}
-
-.alarm-record.is-normal {
-  border-left: 3px solid var(--color-warning);
-}
-
-.alarm-record-left {
-  display: flex;
-  align-items: flex-start;
-  gap: 6px;
-  min-width: 150px;
-  padding-top: 2px;
-  flex-shrink: 0;
-}
-
-.alarm-record-dot {
-  width: 7px;
-  height: 7px;
-  border-radius: 50%;
-  margin-top: 4px;
-  flex-shrink: 0;
-}
-
-.alarm-record-dot.severe {
-  background: var(--color-danger);
-  box-shadow: 0 0 6px var(--color-danger-glow);
-}
-
-.alarm-record-dot.normal {
-  background: var(--color-warning);
-  box-shadow: 0 0 6px var(--color-warning-glow);
-}
-
-.alarm-record-time {
-  font-size: 11px;
+.history-time {
+  font-size: 12px;
+  font-weight: 600;
   color: var(--text-muted);
-  font-family: var(--font-mono);
+  font-family: var(--font-mono, monospace);
   line-height: 1.5;
 }
 
-.alarm-record-body {
+.history-item-body {
   flex: 1;
   min-width: 0;
 }
 
-.alarm-record-top {
+.history-item-top {
   display: flex;
   align-items: center;
   gap: 8px;
   margin-bottom: 2px;
 }
 
-.alarm-record-name {
-  font-size: 13px;
+.history-device {
+  font-size: 14px;
   font-weight: 500;
   color: var(--text-primary);
-  font-family: var(--font-mono);
+  font-family: var(--font-mono, monospace);
 }
 
-.alarm-record-severity {
-  font-size: 11px;
-  font-weight: 500;
-  padding: 1px 8px;
-  border-radius: 4px;
-}
-
-.alarm-record-severity.severe {
-  background: rgba(239,68,68,0.1);
-  color: var(--color-danger);
-}
-
-.alarm-record-severity.normal {
-  background: rgba(245,158,11,0.1);
-  color: var(--color-warning);
-}
-
-.alarm-record-desc {
-  font-size: 12px;
+.history-content {
+  font-size: 13px;
   color: var(--text-secondary);
   line-height: 1.4;
 }
 
-.alarm-record-empty {
+.history-empty {
   text-align: center;
   padding: 40px;
   color: var(--text-muted);
-  font-size: 13px;
+  font-size: 14px;
 }
 
-.alarm-record-footer {
+.history-footer {
   display: flex;
   justify-content: center;
   padding: 12px 0 0;
   margin-top: 12px;
-  border-top: 1px solid var(--border-color);
+  border-top: 1px solid rgba(148, 163, 184, 0.08);
 }
 </style>
