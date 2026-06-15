@@ -16,7 +16,7 @@
         <p class="page-subtitle">实时监测数据列表 · 共 {{ total }} 条记录</p>
       </div>
 
-      <el-button type="primary" size="small" class="refresh-btn" :loading="loading" @click="handleQuery">
+      <el-button type="primary" size="small" class="refresh-btn btn-primary" :loading="loading" @click="handleQuery">
         <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"
           stroke-linecap="round" stroke-linejoin="round">
           <polyline points="23 4 23 10 17 10" />
@@ -25,6 +25,11 @@
         </svg>
         刷新
       </el-button>
+
+      <div class="auto-refresh" @click="toggleAutoRefresh">
+        <span class="live-dot" :class="{ active: autoRefresh }" />
+        <span class="live-text">{{ autoRefresh ? '自动刷新' : '已暂停' }}</span>
+      </div>
     </header>
 
     <!-- KPI 概览 -->
@@ -89,15 +94,28 @@
 
         <div class="filter-item">
           <span class="filter-label">地点</span>
-          <el-select v-model="queryParams.site" placeholder="全部" size="small" clearable @change="handleQuery"
-            class="filter-select">
-            <el-option v-for="item in siteOptions" :key="item.txt" :label="item.txt" :value="item.txt" />
-          </el-select>
+          <el-input v-model="queryParams.site" placeholder="输入地点关键词" size="small" clearable @keyup.enter="handleQuery"
+            class="filter-input">
+            <template #prefix>
+              <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"
+                stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="11" cy="11" r="8" />
+                <line x1="21" y1="21" x2="16.65" y2="16.65" />
+              </svg>
+            </template>
+          </el-input>
         </div>
 
         <div class="filter-actions">
-          <el-button type="primary" size="small" @click="handleQuery">查询</el-button>
-          <el-button size="small" @click="resetQuery">重置</el-button>
+          <el-button type="primary" size="small" class="btn-primary" @click="handleQuery">
+            <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"
+              stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="11" cy="11" r="8" />
+              <line x1="21" y1="21" x2="16.65" y2="16.65" />
+            </svg>
+            查询
+          </el-button>
+          <el-button size="small" class="btn-default" @click="resetQuery">重置</el-button>
         </div>
       </div>
     </section>
@@ -285,7 +303,6 @@ import {
   typeSelect,
   categorySelect,
   areaSelect,
-  siteSelect,
 } from '@/api/system/safetyMonitoring'
 
 const loading = ref(false)
@@ -298,7 +315,6 @@ const substationOptions = ref<any[]>([])
 const typeOptions = ref<any[]>([])
 const categoryOptions = ref<any[]>([])
 const areaOptions = ref<any[]>([])
-const siteOptions = ref<any[]>([])
 
 const queryParams = reactive({
   pageNum: 1,
@@ -319,6 +335,8 @@ const pageRef = ref<HTMLDivElement>()
 const tableSectionRef = ref<HTMLDivElement>()
 const tableHeight = ref(400)
 let resizeObserver: ResizeObserver | null = null
+let refreshTimer: ReturnType<typeof setInterval> | null = null
+const autoRefresh = ref(true)
 
 const router = useRouter()
 
@@ -353,18 +371,16 @@ function computeTableHeight() {
 
 async function getSelectOptions() {
   try {
-    const [subRes, typeRes, catRes, areaRes, siteRes] = await Promise.all([
+    const [subRes, typeRes, catRes, areaRes] = await Promise.all([
       substationSelect(),
       typeSelect(),
       categorySelect(),
       areaSelect(),
-      siteSelect(),
     ])
     substationOptions.value = subRes.data || []
     typeOptions.value = typeRes.data || []
     categoryOptions.value = catRes.data || []
     areaOptions.value = areaRes.data || []
-    siteOptions.value = siteRes.data || []
   } catch (e) {
     console.error('获取筛选选项失败', e)
   }
@@ -436,9 +452,34 @@ function openHistoryFromDetail() {
   showHistory(currentRow.value)
 }
 
+function startAutoRefresh() {
+  stopAutoRefresh()
+  refreshTimer = setInterval(() => {
+    queryParams.pageNum = 1
+    getData()
+  }, 30000)
+}
+
+function stopAutoRefresh() {
+  if (refreshTimer) {
+    clearInterval(refreshTimer)
+    refreshTimer = null
+  }
+}
+
+function toggleAutoRefresh() {
+  autoRefresh.value = !autoRefresh.value
+  if (autoRefresh.value) {
+    startAutoRefresh()
+  } else {
+    stopAutoRefresh()
+  }
+}
+
 onMounted(() => {
   getSelectOptions()
   getData()
+  startAutoRefresh()
   resizeObserver = new ResizeObserver(() => computeTableHeight())
   if (tableSectionRef.value) resizeObserver.observe(tableSectionRef.value)
 })
@@ -446,6 +487,7 @@ onMounted(() => {
 onBeforeUnmount(() => {
   resizeObserver?.disconnect()
   resizeObserver = null
+  stopAutoRefresh()
 })
 
 const monitorIcon = '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>'
@@ -524,6 +566,92 @@ const coverageIcon = '<svg viewBox="0 0 24 24" width="18" height="18" fill="none
   align-items: center;
   gap: 4px;
   font-weight: 500;
+}
+
+/* 按钮统一样式 */
+:deep(.btn-primary.el-button) {
+  background: linear-gradient(135deg, var(--color-primary-light), var(--color-primary));
+  border: none;
+  border-radius: 8px;
+  padding: 7px 14px;
+  font-weight: 500;
+  box-shadow: 0 2px 8px rgba(59, 130, 246, 0.25);
+  transition: all 0.2s ease;
+}
+
+:deep(.btn-primary.el-button:hover) {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 14px rgba(59, 130, 246, 0.4);
+  filter: brightness(1.1);
+}
+
+:deep(.btn-primary.el-button:active) {
+  transform: translateY(0);
+}
+
+:deep(.btn-default.el-button) {
+  background: transparent;
+  border: 1px solid rgba(148, 163, 184, 0.25);
+  border-radius: 8px;
+  padding: 7px 14px;
+  color: var(--text-secondary);
+  font-weight: 500;
+  transition: all 0.2s ease;
+}
+
+:deep(.btn-default.el-button:hover) {
+  border-color: rgba(148, 163, 184, 0.5);
+  color: var(--text-primary);
+  background: rgba(148, 163, 184, 0.08);
+}
+
+/* 自动刷新指示器 */
+.auto-refresh {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  border-radius: 20px;
+  background: rgba(148, 163, 184, 0.08);
+  border: 1px solid rgba(148, 163, 184, 0.12);
+  color: var(--text-muted);
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  user-select: none;
+  transition: all 0.2s ease;
+}
+
+.auto-refresh:hover {
+  background: rgba(148, 163, 184, 0.12);
+  border-color: rgba(148, 163, 184, 0.2);
+  color: var(--text-secondary);
+}
+
+.live-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--text-muted);
+  transition: background 0.2s ease;
+}
+
+.live-dot.active {
+  background: var(--color-success);
+  box-shadow: 0 0 8px var(--color-success-glow);
+  animation: live-pulse 2s ease-in-out infinite;
+}
+
+@keyframes live-pulse {
+
+  0%,
+  100% {
+    opacity: 1;
+  }
+
+  50% {
+    opacity: 0.5;
+  }
 }
 
 /* KPI 卡片 */
@@ -661,6 +789,20 @@ const coverageIcon = '<svg viewBox="0 0 24 24" width="18" height="18" fill="none
 
 .filter-select {
   width: 100%;
+}
+
+.filter-input {
+  width: 100%;
+}
+
+.filter-input :deep(.el-input__wrapper) {
+  border-radius: 6px;
+}
+
+.filter-input :deep(.el-input__prefix-inner) {
+  color: var(--text-muted);
+  display: flex;
+  align-items: center;
 }
 
 .filter-actions {
