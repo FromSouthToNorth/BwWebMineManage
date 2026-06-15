@@ -26,8 +26,7 @@
         刷新
       </el-button>
 
-      <div class="auto-refresh" @click="toggleAutoRefresh"
-        :class="{ 'auto-refresh--paused': !autoRefresh }">
+      <div class="auto-refresh" @click="toggleAutoRefresh" :class="{ 'auto-refresh--paused': !autoRefresh }">
         <span class="live-dot" :class="{ active: autoRefresh }" />
         <span class="live-text">{{ autoRefresh ? '自动刷新' : '已暂停' }}</span>
       </div>
@@ -38,19 +37,7 @@
     </header>
 
     <!-- KPI 概览 -->
-    <section class="kpi-section">
-      <div v-for="item in kpiItems" :key="item.label" class="kpi-card" :class="`kpi-card--${item.type || 'default'}`">
-        <div class="kpi-card__icon" v-html="item.iconHtml" />
-        <div class="kpi-card__info">
-          <span class="kpi-card__label">{{ item.label }}</span>
-          <span class="kpi-card__value" :class="`kpi-card__value--${item.type || 'default'}`">
-            {{ item.value ?? '--' }}
-            <span v-if="item.unit" class="kpi-card__unit">{{ item.unit }}</span>
-          </span>
-        </div>
-        <div class="kpi-card__glow" />
-      </div>
-    </section>
+    <KpiSection :data="kpiData" />
 
     <!-- 筛选条件 -->
     <section class="filter-section">
@@ -146,38 +133,79 @@
         </div>
 
         <div class="table-card__body">
-          <el-table v-loading="loading" :data="tableData" stripe size="small" :height="tableHeight"
-            @row-click="handleRowClick">
-            <el-table-column type="index" label="#" width="50" align="center" />
-            <el-table-column prop="devName" label="名称" min-width="160" show-overflow-tooltip />
-            <el-table-column prop="devValue" label="数值" width="100">
+          <div v-if="!isMobile" class="dual-table">
+            <el-table v-for="(list, index) in sMLeftRightLists" :key="index" v-loading="loading" :data="list" stripe
+              size="small" :max-height="tableHeight" :row-class-name="rowClassName" @row-click="handleRowClick">
+              <el-table-column label="点号" align="center" min-width="55" show-overflow-tooltip>
+                <template #default="{ row }">
+                  <span class="point-label" :class="{ 'point-label--substation': isSubstation(row) }"
+                    @click.stop="handleRowClick(row)">
+                    {{ row.devLabel || '--' }}
+                  </span>
+                </template>
+              </el-table-column>
+
+              <el-table-column prop="detectionParam" label="监测参数" align="center" min-width="140"
+                show-overflow-tooltip />
+
+              <el-table-column label="监测值" align="center" min-width="85">
+                <template #default="{ row }">
+                  <span :class="row.statusTxt === '正常' ? '' : 'text-red'" v-html="row.detectionVal" />
+                </template>
+              </el-table-column>
+
+              <el-table-column label="状态" align="center" min-width="55">
+                <template #default="{ row }">
+                  <el-tag :type="row.statusTxt === '正常' ? 'success' : 'danger'" size="small" effect="dark">
+                    {{ row.statusTxt || '--' }}
+                  </el-tag>
+                </template>
+              </el-table-column>
+
+              <el-table-column label="最后变更时间" align="center" min-width="115">
+                <template #default="{ row }">
+                  <span class="update-time" :class="{ 'update-time--substation': isSubstation(row) }"
+                    @click.stop="showHistory(row)">
+                    {{ formatTime(row.valueUpdateDT) }}
+                  </span>
+                </template>
+              </el-table-column>
+            </el-table>
+          </div>
+
+          <el-table v-else v-loading="loading" :data="tableData" stripe size="small" :max-height="tableHeight"
+            :row-class-name="rowClassName" @row-click="handleRowClick">
+            <el-table-column label="点号" align="center" min-width="55" show-overflow-tooltip>
               <template #default="{ row }">
-                <span class="text-mono" :class="row.alarmStatus === '报警' ? 'text-danger' : 'text-primary'"
-                  v-html="row.devValue" />
+                <span class="point-label" :class="{ 'point-label--substation': isSubstation(row) }"
+                  @click.stop="handleRowClick(row)">
+                  {{ row.devLabel || '--' }}
+                </span>
               </template>
             </el-table-column>
 
-            <el-table-column prop="alarmStatus" label="状态" width="90">
+            <el-table-column prop="detectionParam" label="监测参数" align="center" min-width="140" show-overflow-tooltip />
+
+            <el-table-column label="监测值" align="center" min-width="85">
               <template #default="{ row }">
-                <StatusBadge v-if="row.alarmStatus === '报警'" status="alarm" variant="badge" label="报警" pulse />
-                <StatusBadge v-else status="normal" variant="badge" label="正常" />
+                <span :class="row.statusTxt === '正常' ? '' : 'text-red'" v-html="row.detectionVal" />
               </template>
             </el-table-column>
 
-            <el-table-column prop="category" label="类别" min-width="100" show-overflow-tooltip />
-            <el-table-column prop="substation" label="分站" min-width="100" show-overflow-tooltip />
-            <el-table-column prop="area" label="区域" min-width="120" show-overflow-tooltip />
-            <el-table-column prop="site" label="地点" min-width="140" show-overflow-tooltip />
-
-            <el-table-column prop="alarmThreshold" label="报警阈值" width="100">
+            <el-table-column label="状态" align="center" min-width="55">
               <template #default="{ row }">
-                <span class="text-mono text-muted">{{ row.alarmThreshold || '-' }}</span>
+                <el-tag :type="row.statusTxt === '正常' ? 'success' : 'danger'" size="small" effect="dark">
+                  {{ row.statusTxt || '--' }}
+                </el-tag>
               </template>
             </el-table-column>
 
-            <el-table-column label="操作" width="90" fixed="right">
+            <el-table-column label="最后变更时间" align="center" min-width="115">
               <template #default="{ row }">
-                <el-link type="primary" size="small" @click.stop="showHistory(row)">历史</el-link>
+                <span class="update-time" :class="{ 'update-time--substation': isSubstation(row) }"
+                  @click.stop="showHistory(row)">
+                  {{ formatTime(row.valueUpdateDT) }}
+                </span>
               </template>
             </el-table-column>
           </el-table>
@@ -191,107 +219,8 @@
     </section>
 
     <!-- 详情弹窗 -->
-    <el-dialog v-model="detailVisible" width="560px" class="glass-dialog" destroy-on-close
-      :close-on-click-modal="false">
-      <template #header>
-        <div class="dialog-header">
-          <div class="dialog-header-icon"
-            :style="{ color: currentRow?.alarmStatus === '报警' ? 'var(--color-danger)' : 'var(--color-success)' }">
-            <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"
-              stroke-linecap="round" stroke-linejoin="round">
-              <circle cx="12" cy="12" r="10" />
-              <line x1="12" y1="16" x2="12" y2="12" />
-              <line x1="12" y1="8" x2="12.01" y2="8" />
-            </svg>
-          </div>
-          <div>
-            <div class="dialog-header-title">监测点详情</div>
-            <div class="dialog-header-sub">{{ currentRow?.devName || '--' }}</div>
-          </div>
-        </div>
-      </template>
+    <SafetyMonitoringDetail ref="detailRef" v-model="detailVisible" :row="currentRow" />
 
-      <div v-if="currentRow">
-        <div class="detail-hero" :class="currentRow.alarmStatus === '报警' ? 'is-alarm' : 'is-normal'">
-          <div class="detail-hero-value" v-html="currentRow.devValue" />
-          <div class="detail-hero-status">
-            <span class="status-dot" :class="currentRow.alarmStatus === '报警' ? 'alarm' : 'normal'" />
-            <span>{{ currentRow.alarmStatus === '报警' ? '报警中' : '运行正常' }}</span>
-          </div>
-        </div>
-
-        <div class="detail-grid">
-          <div class="detail-field">
-            <span class="detail-label">名称</span>
-            <span class="detail-val">{{ currentRow.devName || '--' }}</span>
-          </div>
-          <div class="detail-field">
-            <span class="detail-label">数值</span>
-            <span class="detail-val text-mono" v-html="currentRow.devValue" />
-          </div>
-          <div class="detail-field">
-            <span class="detail-label">状态</span>
-            <span class="detail-val">
-              <StatusBadge v-if="currentRow.alarmStatus === '报警'" status="alarm" variant="badge" label="报警" pulse />
-              <StatusBadge v-else status="normal" variant="badge" label="正常" />
-            </span>
-          </div>
-          <div class="detail-field">
-            <span class="detail-label">分站</span>
-            <span class="detail-val">{{ currentRow.substation || '--' }}</span>
-          </div>
-          <div class="detail-field">
-            <span class="detail-label">类别</span>
-            <span class="detail-val">{{ currentRow.category || '--' }}</span>
-          </div>
-          <div class="detail-field">
-            <span class="detail-label">区域</span>
-            <span class="detail-val">{{ currentRow.area || '--' }}</span>
-          </div>
-          <div class="detail-field">
-            <span class="detail-label">地点</span>
-            <span class="detail-val">{{ currentRow.site || '--' }}</span>
-          </div>
-          <div class="detail-field">
-            <span class="detail-label">报警阈值</span>
-            <span class="detail-val text-mono">{{ currentRow.alarmThreshold || '--' }}</span>
-          </div>
-        </div>
-
-        <div class="detail-section--action" @click="openHistoryFromDetail">
-          <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"
-            stroke-linecap="round" stroke-linejoin="round">
-            <polyline points="22 12 18 12 15 21 9 3 6 12 2 12" />
-          </svg>
-          <span>查看历史趋势</span>
-          <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"
-            stroke-linecap="round" stroke-linejoin="round">
-            <polyline points="9 18 15 12 9 6" />
-          </svg>
-        </div>
-      </div>
-    </el-dialog>
-
-    <!-- 历史趋势 -->
-    <el-dialog v-model="historyVisible" width="860px" class="glass-dialog" destroy-on-close
-      :close-on-click-modal="false">
-      <template #header>
-        <div class="dialog-header">
-          <div class="dialog-header-icon">
-            <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"
-              stroke-linecap="round" stroke-linejoin="round">
-              <polyline points="22 12 18 12 15 21 9 3 6 12 2 12" />
-            </svg>
-          </div>
-          <div>
-            <div class="dialog-header-title">历史趋势</div>
-            <div class="dialog-header-sub">{{ currentRow?.devName || '--' }}</div>
-          </div>
-        </div>
-      </template>
-
-      <iframe v-if="historySrc" :src="historySrc" class="history-iframe" />
-    </el-dialog>
   </div>
 </template>
 
@@ -300,21 +229,21 @@ defineOptions({ name: 'SafetyMonitoringMore' })
 
 import { ref, reactive, onMounted, computed, onBeforeUnmount, nextTick } from 'vue'
 import { useRouter } from 'vue-router'
-import StatusBadge from '@/components/StatusBadge/index.vue'
-import type { KpiItem } from '@/components/KpiBar/index.vue'
-import {
-  listSafetyMonitoring,
-  substationSelect,
-  typeSelect,
-  categorySelect,
-  areaSelect,
-} from '@/api/system/safetyMonitoring'
+import { useAppStore } from '@/stores/app'
+import SafetyMonitoringDetail from '@/components/SafetyMonitoringDetail/index.vue'
+import KpiSection from '@/components/KpiSection/index.vue'
+import { listSafetyMonitoring, substationSelect, typeSelect, categorySelect, areaSelect, getKpiData } from '@/api/system/safetyMonitoring'
+
 
 const loading = ref(false)
 const tableData = ref<any[]>([])
+const sMLeftRightLists = ref<any[][]>([[], []])
 const total = ref(0)
 const currentRow = ref<any>(null)
-const kpiItems = ref<KpiItem[]>([])
+const kpiData = ref<Record<string, any>>({})
+
+const appStore = useAppStore()
+const isMobile = computed(() => appStore.isMobile)
 
 const substationOptions = ref<any[]>([])
 const typeOptions = ref<any[]>([])
@@ -333,8 +262,7 @@ const queryParams = reactive({
 })
 
 const detailVisible = ref(false)
-const historyVisible = ref(false)
-const historySrc = ref('')
+const detailRef = ref<InstanceType<typeof SafetyMonitoringDetail>>()
 
 const pageRef = ref<HTMLDivElement>()
 const tableSectionRef = ref<HTMLDivElement>()
@@ -354,19 +282,50 @@ const router = useRouter()
 
 const tableCardStatus = computed(() => tableData.value.some(r => r.alarmStatus === '报警') ? 'alarm' : 'normal')
 
+function isSubstation(row: any) {
+  return String(row.devLabel || '').includes('F')
+}
+
+function rowClassName({ row }: { row: any }) {
+  return row.alarmStatus === '报警' || row.statusTxt === '报警' ? 'alarm-row' : ''
+}
+
+function formatTime(t: string | number | undefined | null): string {
+  if (!t) return '--'
+  try {
+    const d = new Date(t)
+    if (Number.isNaN(d.getTime())) return String(t)
+    return d.toLocaleString('zh-CN', { hour12: false })
+  } catch {
+    return String(t)
+  }
+}
+
+function splitTableData(list: any[]) {
+  if (isMobile.value) {
+    sMLeftRightLists.value = []
+    return
+  }
+  if (Array.isArray(list) && list.length > 0) {
+    const index = Math.ceil(list.length / 2)
+    sMLeftRightLists.value = [list.slice(0, index), list.slice(index)]
+  } else {
+    sMLeftRightLists.value = []
+  }
+}
+
 function goBack() {
   router.back()
 }
 
-function updateKpiItems(rows: any[], totalCount: number) {
-  const alarmCount = rows.filter(r => r.alarmStatus === '报警').length
-  const normalCount = rows.length - alarmCount
-  kpiItems.value = [
-    { label: '监测总数', value: totalCount, type: 'total', iconHtml: monitorIcon },
-    { label: '报警点数', value: alarmCount, type: 'alarm', iconHtml: bellIcon },
-    { label: '运行正常', value: normalCount, type: 'success', iconHtml: checkIcon },
-    { label: '数据覆盖率', value: 100, type: 'info', unit: '%', iconHtml: coverageIcon },
-  ]
+async function loadKpi() {
+  try {
+    const res = await getKpiData()
+    const raw = res.data || res || {}
+    kpiData.value = Array.isArray(raw) ? raw[0] || {} : raw
+  } catch (e) {
+    console.warn('KPI 8453 err:', e)
+  }
 }
 
 function computeTableHeight() {
@@ -404,9 +363,12 @@ async function getData() {
     const res = await listSafetyMonitoring(queryParams)
     const { items, total: totalCount } = res.data || {}
     const mapped = (items || []).map((item: any) => ({
-      devName: item.devAddress,
+      devLabel: item.devLabel,
+      detectionParam: item.detectionParam,
+      detectionVal: item.detectionVal,
       devValue: item.value,
-      devStatus: item.statusTxt,
+      statusTxt: item.statusTxt,
+      valueUpdateDT: item.valueUpdateDT,
       alarmStatus: item.alarmType === 1 ? '报警' : '',
       substation: item.stationNo,
       category: item.categoryName,
@@ -416,14 +378,15 @@ async function getData() {
       name: item.name,
     }))
     tableData.value = mapped
+    splitTableData(mapped)
     total.value = totalCount || 0
-    updateKpiItems(mapped, total.value)
     computeTableHeight()
   } catch (e) {
     console.error('获取监测数据失败', e)
   } finally {
     loading.value = false
   }
+  loadKpi()
 }
 
 function handleQuery() {
@@ -455,13 +418,7 @@ function handleRowClick(row: any) {
 
 function showHistory(row: any) {
   currentRow.value = row
-  historySrc.value = `/DigitizingMine/Historical/HisIndex?name=${encodeURIComponent(row.name || row.devName || '')}&themes=blue_black`
-  historyVisible.value = true
-}
-
-function openHistoryFromDetail() {
-  if (!currentRow.value) return
-  showHistory(currentRow.value)
+  detailRef.value?.showHistory()
 }
 
 function startAutoRefresh() {
@@ -508,11 +465,6 @@ onBeforeUnmount(() => {
   resizeObserver = null
   stopAutoRefresh()
 })
-
-const monitorIcon = '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>'
-const bellIcon = '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>'
-const checkIcon = '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.5"><polyline points="20 6 9 17 4 12"/></svg>'
-const coverageIcon = '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>'
 </script>
 
 <style scoped>
@@ -520,10 +472,10 @@ const coverageIcon = '<svg viewBox="0 0 24 24" width="18" height="18" fill="none
   display: flex;
   flex-direction: column;
   height: calc(100vh - 60px);
-  padding: 16px 20px;
+  padding: 12px 16px;
   overflow: hidden;
   background: var(--bg-primary);
-  gap: 12px;
+  gap: 10px;
 }
 
 /* 头部 */
@@ -532,7 +484,7 @@ const coverageIcon = '<svg viewBox="0 0 24 24" width="18" height="18" fill="none
   align-items: center;
   gap: 16px;
   flex-shrink: 0;
-  padding: 4px 0;
+  padding: 0;
 }
 
 .page-header__title {
@@ -694,104 +646,7 @@ const coverageIcon = '<svg viewBox="0 0 24 24" width="18" height="18" fill="none
   color: var(--text-secondary);
 }
 
-/* KPI 卡片 */
-.kpi-section {
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 12px;
-  flex-shrink: 0;
-}
 
-.kpi-card {
-  position: relative;
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  padding: 14px 16px;
-  background: var(--bg-card);
-  border: 1px solid var(--border-color);
-  border-radius: var(--radius-md);
-  overflow: hidden;
-  transition: transform 0.25s ease, box-shadow 0.25s ease, border-color 0.25s ease;
-}
-
-.kpi-card:hover {
-  transform: translateY(-2px);
-  border-color: rgba(148, 163, 184, 0.2);
-  box-shadow: var(--shadow-md);
-}
-
-.kpi-card__icon {
-  width: 42px;
-  height: 42px;
-  border-radius: 12px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
-  z-index: 1;
-}
-
-.kpi-card__info {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-  z-index: 1;
-  min-width: 0;
-}
-
-.kpi-card__label {
-  font-size: var(--font-size-xs);
-  color: var(--text-muted);
-}
-
-.kpi-card__value {
-  font-family: var(--font-mono);
-  font-size: 22px;
-  font-weight: 700;
-  letter-spacing: 0.5px;
-  line-height: 1.2;
-}
-
-.kpi-card__unit {
-  font-size: 12px;
-  color: var(--text-muted);
-  margin-left: 2px;
-  font-weight: 500;
-}
-
-.kpi-card__glow {
-  position: absolute;
-  top: -20px;
-  right: -20px;
-  width: 80px;
-  height: 80px;
-  border-radius: 50%;
-  filter: blur(24px);
-  opacity: 0.15;
-  pointer-events: none;
-  transition: opacity 0.25s ease;
-}
-
-.kpi-card:hover .kpi-card__glow {
-  opacity: 0.25;
-}
-
-.kpi-card--total .kpi-card__icon { background: rgba(59, 130, 246, 0.12); color: var(--color-primary); }
-.kpi-card--total .kpi-card__glow { background: var(--color-primary); }
-.kpi-card--total .kpi-card__value { color: var(--color-primary); }
-
-.kpi-card--alarm .kpi-card__icon { background: rgba(239, 68, 68, 0.12); color: var(--color-danger); }
-.kpi-card--alarm .kpi-card__glow { background: var(--color-danger); }
-.kpi-card--alarm .kpi-card__value { color: var(--color-danger); text-shadow: 0 0 16px var(--color-danger-glow); }
-
-.kpi-card--success .kpi-card__icon { background: rgba(34, 197, 94, 0.12); color: var(--color-success); }
-.kpi-card--success .kpi-card__glow { background: var(--color-success); }
-.kpi-card--success .kpi-card__value { color: var(--color-success); }
-
-.kpi-card--info .kpi-card__icon { background: rgba(100, 116, 139, 0.12); color: var(--color-info); }
-.kpi-card--info .kpi-card__glow { background: var(--color-info); }
-.kpi-card--info .kpi-card__value { color: var(--text-primary); }
 
 /* 筛选工具栏 */
 .filter-section {
@@ -802,7 +657,7 @@ const coverageIcon = '<svg viewBox="0 0 24 24" width="18" height="18" fill="none
   display: flex;
   align-items: flex-end;
   gap: 12px;
-  padding: 12px 16px;
+  padding: 8px 12px;
   background: var(--bg-card);
   border: 1px solid var(--border-color);
   border-radius: var(--radius-md);
@@ -880,7 +735,7 @@ const coverageIcon = '<svg viewBox="0 0 24 24" width="18" height="18" fill="none
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 12px 16px;
+  padding: 8px 12px;
   border-bottom: 1px solid var(--border-color);
   flex-shrink: 0;
 }
@@ -924,8 +779,24 @@ const coverageIcon = '<svg viewBox="0 0 24 24" width="18" height="18" fill="none
 
 .table-card__body {
   flex: 1;
+  min-width: 0;
   min-height: 0;
   overflow: hidden;
+}
+
+.dual-table {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  height: 100%;
+  min-width: 0;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.dual-table .el-table {
+  width: 100%;
+  min-width: 0;
 }
 
 .table-card__body :deep(.el-table) {
@@ -965,10 +836,20 @@ const coverageIcon = '<svg viewBox="0 0 24 24" width="18" height="18" fill="none
   background: rgba(255, 255, 255, 0.03);
 }
 
+/* 报警行整行字体红色 */
+.table-card__body :deep(.el-table__row.alarm-row td) {
+  color: var(--color-danger);
+}
+
+.table-card__body :deep(.el-table__row.alarm-row .point-label),
+.table-card__body :deep(.el-table__row.alarm-row .update-time) {
+  color: var(--color-danger);
+}
+
 .table-card__footer {
   display: flex;
   justify-content: center;
-  padding: 10px 16px;
+  padding: 6px 12px;
   border-top: 1px solid var(--border-color);
   flex-shrink: 0;
 }
@@ -989,6 +870,35 @@ const coverageIcon = '<svg viewBox="0 0 24 24" width="18" height="18" fill="none
   color: var(--text-muted);
 }
 
+.point-label {
+  cursor: pointer;
+  transition: color 0.2s ease;
+}
+
+.point-label:hover {
+  color: var(--color-primary);
+}
+
+.point-label--substation {
+  background: rgba(59, 130, 246, 0.12);
+  color: var(--color-primary);
+  padding: 2px 8px;
+  border-radius: 4px;
+}
+
+.update-time {
+  cursor: pointer;
+  transition: color 0.2s ease;
+}
+
+.update-time:hover {
+  color: var(--color-primary);
+}
+
+.update-time--substation {
+  color: var(--color-primary);
+}
+
 .status-dot {
   width: 8px;
   height: 8px;
@@ -1006,32 +916,6 @@ const coverageIcon = '<svg viewBox="0 0 24 24" width="18" height="18" fill="none
   box-shadow: 0 0 8px var(--color-danger-glow);
 }
 
-.detail-section--action {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 8px;
-  margin-top: 20px;
-  padding: 12px 16px;
-  background: rgba(59, 130, 246, 0.06);
-  border: 1px solid rgba(59, 130, 246, 0.12);
-  border-radius: 10px;
-  color: var(--color-primary);
-  font-size: 14px;
-  font-weight: 500;
-  cursor: pointer;
-  transition: all 0.2s ease;
-}
-
-.detail-section--action:hover {
-  background: rgba(59, 130, 246, 0.1);
-  border-color: rgba(59, 130, 246, 0.2);
-}
-
-.detail-section--action > span {
-  flex: 1;
-}
-
 .history-iframe {
   width: 100%;
   height: 520px;
@@ -1040,9 +924,9 @@ const coverageIcon = '<svg viewBox="0 0 24 24" width="18" height="18" fill="none
   background: var(--bg-secondary);
 }
 
-@media (max-width: 1400px) {
-  .kpi-section {
-    grid-template-columns: repeat(2, 1fr);
+@media (max-width: 1200px) {
+  .dual-table {
+    grid-template-columns: 1fr;
   }
 }
 
@@ -1071,10 +955,6 @@ const coverageIcon = '<svg viewBox="0 0 24 24" width="18" height="18" fill="none
     overflow-y: auto;
   }
 
-  .kpi-section {
-    grid-template-columns: repeat(2, 1fr);
-  }
-
   .filter-item,
   .filter-item--wide {
     flex: 0 0 calc(50% - 6px);
@@ -1082,10 +962,6 @@ const coverageIcon = '<svg viewBox="0 0 24 24" width="18" height="18" fill="none
 }
 
 @media (max-width: 480px) {
-  .kpi-section {
-    grid-template-columns: 1fr;
-  }
-
   .filter-item,
   .filter-item--wide {
     flex: 0 0 100%;
