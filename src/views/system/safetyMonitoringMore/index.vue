@@ -450,6 +450,10 @@ const coverageIcon = '<svg viewBox="0 0 24 24" width="18" height="18" fill="none
   margin-top: var(--spacing-md);
 }
 
+.table-card :deep(.el-table--striped .el-table__body tr.el-table__row--striped td) {
+  background: rgba(255, 255, 255, 0.05);
+}
+
 .table-extra {
   font-size: 12px;
   color: var(--text-muted);
