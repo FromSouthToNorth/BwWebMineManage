@@ -47,28 +47,31 @@
       <!-- 数据列表 -->
       <van-list v-else v-model:loading="listLoading" :finished="finished" finished-text="— 已加载全部 —" @load="onLoad">
         <div v-for="(item, idx) in list" :key="item.id || idx" class="monitor-card"
-          :class="{ 'is-alarm': item.alarmStatus === '" + "报警" + "' }" @click="showDetail(item)">
+          :class="{ 'is-alarm': item.alarmStatus === '报警' }" @click="showDetail(item)">
           <div class="monitor-card__left">
-            <div class="monitor-card__dot" :class="item.alarmStatus === '" + "报警" + "' ? 'alarm' : 'normal'"></div>
+            <div class="monitor-card__dot" :class="item.alarmStatus === '报警' ? 'alarm' : 'normal'"></div>
           </div>
           <div class="monitor-card__body">
             <div class="monitor-card__row1">
               <span class="monitor-card__name">{{ item.devName }}</span>
-              <span v-if="item.alarmStatus === '" + "报警" + "'" class="monitor-card__badge">
+              <span v-if="item.alarmStatus === '报警'" class="monitor-card__badge">
                 <span class="badge-dot" />
-                " + "报警" + "
+                报警
               </span>
             </div>
-            <div class="monitor-card__value" :class="item.alarmStatus === '" + "报警" + "' ? 'is-danger' : 'is-normal'">
+            <div class="monitor-card__value" :class="item.alarmStatus === '报警' ? 'is-danger' : 'is-normal'">
               <span v-html="item.devValue"></span>
             </div>
             <div class="monitor-card__tags">
               <span class="monitor-card__tag">{{ item.category }}</span>
-              <span class="monitor-card__tag" :class="item.devLabel?.indexOf('F') !== -1 ? 'label-f' : 'label-normal'">{{ item.devLabel }}</span>
+              <span class="monitor-card__tag"
+                :class="item.devLabel?.indexOf('F') !== -1 ? 'label-f' : 'label-normal'">{{
+                  item.devLabel }}</span>
               <span class="monitor-card__tag" v-if="item.area">{{ item.area }}</span>
             </div>
           </div>
-        </div></van-list>
+        </div>
+      </van-list>
     </van-pull-refresh>
 
     <!-- 详情弹窗 -->
@@ -288,6 +291,8 @@ const KPI_CONFIG: Record<string, { label: string; valueClass?: string }> = {
   devicesNeedCalibration: { label: '需标校', valueClass: 'kpi-total' },
 }
 
+const TOP_KPI_KEYS = ['total', 'alarmPoint', 'devicesNeedCalibration']
+
 const list = ref<any[]>([])
 const listLoading = ref(false)
 const finished = ref(false)
@@ -307,13 +312,12 @@ async function fetchData(append: boolean) {
   if (!append) loading.value = true
   try {
     const res = await listSafetyMonitoring({ pageNum: pageNum.value, pageSize: 20 })
-    const data = res.data || {}
-    const items = (data.items || []) as any[]
+    const items = ((res.data || {}).items || []) as any[]
     const mapped = items.map((item: any) => ({
       devName: item.devAddress,
       devValue: item.detectionVal,
       devStatus: item.statusTxt,
-      alarmStatus: item.alarmType == 1 || item.alarmType === '1' || item.alarmStatus === '报警' ? '报警' : '',
+      alarmStatus: item.alarmType == 1 || item.alarmType === '1' || item.state === '报警' || item.statusTxt === '报警' ? '报警' : '',
       substation: item.stationNo,
       category: item.categoryName,
       area: item.devArea,
@@ -328,14 +332,14 @@ async function fetchData(append: boolean) {
     } else {
       list.value = mapped
     }
-            pageNum.value++
+    pageNum.value++
     if (items.length < 20) finished.value = true
-      // KPI 8453
+    // KPI 8453
     try {
       const kpiRes = await getKpiData()
       const raw = kpiRes.data || kpiRes || {}
       const kd = Array.isArray(raw) ? raw[0] || {} : raw
-      kpiList.value = Object.keys(KPI_CONFIG)
+      kpiList.value = TOP_KPI_KEYS
         .filter(k => k in kd)
         .map(k => ({ key: k, label: KPI_CONFIG[k].label, value: kd[k] ?? 0, valueClass: KPI_CONFIG[k].valueClass }))
     } catch (e) { console.warn('KPI 8453 err:', e) }
@@ -611,7 +615,9 @@ onBeforeUnmount(() => {
   overflow: hidden;
 }
 
-.monitor-card:active { transform: scale(0.99); }
+.monitor-card:active {
+  transform: scale(0.99);
+}
 
 .monitor-card__left {
   display: flex;
@@ -647,7 +653,7 @@ onBeforeUnmount(() => {
   gap: 4px;
 }
 
-.monitor-card__top {.monitor-card__top {
+.monitor-card__row1 {
   display: flex;
   align-items: center;
   justify-content: space-between;

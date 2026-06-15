@@ -48,12 +48,8 @@
 
         <!-- 报警条目 -->
         <template v-else>
-          <div
-            v-for="(item, idx) in alarmData"
-            :key="item.devName + item.alarmTime"
-            class="alarm-item"
-            @click="showDetail(item)"
-          >
+          <div v-for="(item, idx) in alarmData" :key="item.devName + item.alarmTime" class="alarm-item"
+            @click="showDetail(item)">
             <div class="alarm-item__dot" :class="idx < 3 ? 'is-severe' : 'is-normal'" />
             <div class="alarm-item__body">
               <div class="alarm-item__top">
@@ -317,16 +313,30 @@ onBeforeUnmount(() => {
   animation: sk-pulse 1.5s ease-in-out infinite;
 }
 
-.sk-line--60 { width: 60%; }
-.sk-line--90 { width: 90%; }
+.sk-line--60 {
+  width: 60%;
+}
+
+.sk-line--90 {
+  width: 90%;
+}
 
 @keyframes sk-pulse {
-  0%, 100% { opacity: 0.4; }
-  50% { opacity: 0.8; }
+
+  0%,
+  100% {
+    opacity: 0.4;
+  }
+
+  50% {
+    opacity: 0.8;
+  }
 }
 
 @keyframes spin {
-  to { transform: rotate(360deg); }
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 /* 空状态 */
@@ -363,6 +373,7 @@ onBeforeUnmount(() => {
   transition: all var(--transition-fast);
   position: relative;
   overflow: hidden;
+  margin-bottom: 8px;
 }
 
 .alarm-item:active {

@@ -1,6 +1,6 @@
 import { shallowRef, type Ref } from 'vue'
 import * as echarts from 'echarts'
-import type { EChartsOption } from 'echarts'
+import type { EChartsOption, LinearGradientObject } from 'echarts'
 
 /** ECharts 暗色主题配色 */
 export const DARK_CHART_COLORS = [
@@ -8,11 +8,45 @@ export const DARK_CHART_COLORS = [
   '#06b6d4', '#ec4899', '#14b8a6', '#f97316', '#6366f1',
 ]
 
+/** 判断用户是否偏好减少动画 */
+export function prefersReducedMotion(): boolean {
+  if (typeof window === 'undefined') return false
+  return window.matchMedia('(prefers-reduced-motion: reduce)').matches
+}
+
+/** 读取 CSS 变量值 */
+export function getCssVar(name: string, fallback = ''): string {
+  if (typeof document === 'undefined') return fallback
+  const value = getComputedStyle(document.documentElement).getPropertyValue(name).trim()
+  return value || fallback
+}
+
+/** 创建线性渐变 */
+export function createLinearGradient(
+  x0: number,
+  y0: number,
+  x1: number,
+  y1: number,
+  colors: { offset: number; color: string }[],
+): LinearGradientObject {
+  return new echarts.graphic.LinearGradient(x0, y0, x1, y1, colors)
+}
+
+/** 按索引读取图表配色 CSS 变量 */
+export function chartColor(index: number): string {
+  return getCssVar(`--chart-${(index % 8) + 1}`)
+}
+
 /** 暗色主题全局选项（合并到 chart.setOption 中） */
 export function darkChartTheme(): EChartsOption {
+  const reduced = prefersReducedMotion()
   return {
     backgroundColor: 'transparent',
     color: DARK_CHART_COLORS,
+    animation: !reduced,
+    animationDuration: reduced ? 0 : 800,
+    animationEasing: 'cubicOut',
+    animationDurationUpdate: reduced ? 0 : 300,
     grid: {
       top: 24,
       bottom: 28,

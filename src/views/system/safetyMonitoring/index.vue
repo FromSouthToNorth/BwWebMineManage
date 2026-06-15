@@ -1,6 +1,6 @@
 <template>
   <div class="dashboard">
-            <!-- KPI 栏（动态渲染 API 返回字段） -->
+    <!-- KPI 栏（动态渲染 API 返回字段） -->
     <div class="kpi-bar">
       <template v-for="(item, idx) in kpiList" :key="item.key">
         <div v-if="idx > 0" class="kpi-divider" />
@@ -20,10 +20,7 @@
     <div class="main-area">
       <!-- 左：安全监测 -->
       <div class="left-col">
-        <SafetyMonitoringTable
-          :filter-category="selectedCategory"
-          @update:total="onTotalUpdate"
-        />
+        <SafetyMonitoringTable :filter-category="selectedCategory" @update:total="onTotalUpdate" />
       </div>
       <!-- 右：报警 + 图表 -->
       <div class="right-col">
@@ -48,12 +45,12 @@ const selectedCategory = ref('')
 const kpiList = ref<KpiItem[]>([])
 
 const KPI_CONFIG: Record<string, { label: string; icon: string; iconClass: string; valueClass?: string }> = {
-  total:            { label: '监测总数', icon: '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>', iconClass: 'kpi-total' },
-  alarmPoint:       { label: '报警点数', icon: '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>', iconClass: 'kpi-alarm', valueClass: 'kpi-danger' },
-  analog:           { label: '模拟量', icon: '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.5"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>', iconClass: 'kpi-ok' },
-  switch:           { label: '开关量', icon: '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>', iconClass: 'kpi-total' },
-  substation:       { label: '分站', icon: '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2" y="2" width="20" height="20" rx="2"/><rect x="6" y="6" width="4" height="4"/><rect x="14" y="6" width="4" height="4"/><rect x="6" y="14" width="4" height="4"/><rect x="14" y="14" width="4" height="4"/></svg>', iconClass: 'kpi-warn' },
-  other:            { label: '其他', icon: '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="3"/></svg>', iconClass: 'kpi-total' },
+  total: { label: '监测总数', icon: '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>', iconClass: 'kpi-total' },
+  alarmPoint: { label: '报警点数', icon: '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>', iconClass: 'kpi-alarm', valueClass: 'kpi-danger' },
+  analog: { label: '模拟量', icon: '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.5"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>', iconClass: 'kpi-ok' },
+  switch: { label: '开关量', icon: '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>', iconClass: 'kpi-total' },
+  substation: { label: '分站', icon: '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2" y="2" width="20" height="20" rx="2"/><rect x="6" y="6" width="4" height="4"/><rect x="14" y="6" width="4" height="4"/><rect x="6" y="14" width="4" height="4"/><rect x="14" y="14" width="4" height="4"/></svg>', iconClass: 'kpi-warn' },
+  other: { label: '其他', icon: '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="3"/></svg>', iconClass: 'kpi-total' },
   devicesNeedCalibration: { label: '需标校', icon: '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.5"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>', iconClass: 'kpi-warn', valueClass: 'kpi-warning' },
 }
 
@@ -103,31 +100,83 @@ function onTotalUpdate(val: Record<string, any>) {
   border-radius: 10px;
   padding: 6px 14px;
 }
+
 .kpi-item {
   display: flex;
   align-items: center;
   gap: 8px;
   flex: 1;
 }
+
 .kpi-icon {
-  width: 30px; height: 30px;
+  width: 30px;
+  height: 30px;
   border-radius: 8px;
   display: flex;
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
 }
-.kpi-total { background: rgba(59, 130, 246, 0.1); color: #3b82f6; }
-.kpi-alarm { background: rgba(239, 68, 68, 0.1); color: #ef4444; }
-.kpi-ok { background: rgba(34, 197, 94, 0.1); color: #22c55e; }
-.kpi-warn { background: rgba(245, 158, 11, 0.1); color: #f59e0b; }
-.kpi-info { display: flex; flex-direction: column; gap: 1px; }
-.kpi-label { font-size: 10px; color: var(--text-muted); }
-.kpi-value { font-size: 17px; font-weight: 700; font-family: var(--font-mono); color: var(--text-primary); line-height: 1.2; }
-.kpi-value.kpi-danger { color: var(--color-danger); }
-.kpi-value.kpi-success { color: var(--color-success); }
-.kpi-value.kpi-warning { color: var(--color-warning); }
-.kpi-divider { width: 1px; height: 26px; background: var(--border-color); flex-shrink: 0; margin: 0 2px; }
+
+.kpi-total {
+  background: rgba(59, 130, 246, 0.1);
+  color: #3b82f6;
+}
+
+.kpi-alarm {
+  background: rgba(239, 68, 68, 0.1);
+  color: #ef4444;
+}
+
+.kpi-ok {
+  background: rgba(34, 197, 94, 0.1);
+  color: #22c55e;
+}
+
+.kpi-warn {
+  background: rgba(245, 158, 11, 0.1);
+  color: #f59e0b;
+}
+
+.kpi-info {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+
+.kpi-label {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--text-muted);
+}
+
+.kpi-value {
+  font-size: 17px;
+  font-weight: 700;
+  font-family: var(--font-mono);
+  color: var(--text-primary);
+  line-height: 1.2;
+}
+
+.kpi-value.kpi-danger {
+  color: var(--color-danger);
+}
+
+.kpi-value.kpi-success {
+  color: var(--color-success);
+}
+
+.kpi-value.kpi-warning {
+  color: var(--color-warning);
+}
+
+.kpi-divider {
+  width: 1px;
+  height: 26px;
+  background: var(--border-color);
+  flex-shrink: 0;
+  margin: 0 2px;
+}
 
 /* 左右主体 */
 .main-area {
@@ -168,5 +217,4 @@ function onTotalUpdate(val: Record<string, any>) {
   height: 100% !important;
   min-height: 200px;
 }
-
 </style>
