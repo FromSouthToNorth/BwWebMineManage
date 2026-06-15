@@ -1,3 +1,5 @@
+import dayjs from 'dayjs'
+
 export function parseTime(time: string | number | Date | null | undefined, pattern?: string): string | null {
   if (!time) return null
   const format = pattern || '{y}-{m}-{d} {h}:{i}:{s}'
@@ -62,4 +64,25 @@ export function praseBeginTime(str: string | null | undefined): string {
 
 export function praseEndTime(str: string | null | undefined): string {
   return str ? `${str} 23:59:59` : ''
+}
+
+/**
+ * 使用 dayjs 格式化日期时间
+ * @param date 日期值，为空时返回当前时间
+ * @param format 输出格式，默认 YYYY-MM-DD HH:mm:ss
+ */
+export function formatDateTime(date?: string | number | Date | null, format = 'YYYY-MM-DD HH:mm:ss'): string {
+  return dayjs(date || undefined).format(format)
+}
+
+/**
+ * 获取最近 N 天的日期范围
+ * @param days 天数
+ * @param format 输出格式，默认 YYYY-MM-DD HH:mm:ss
+ * @returns [开始时间, 结束时间]，结束时间为当前时间
+ */
+export function getRecentDayRange(days: number, format = 'YYYY-MM-DD HH:mm:ss'): [string, string] {
+  const end = dayjs()
+  const start = end.subtract(days, 'day')
+  return [start.format(format), end.format(format)]
 }

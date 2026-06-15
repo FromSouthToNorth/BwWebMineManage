@@ -3,7 +3,8 @@
     <!-- 头部 -->
     <div class="alarm-header">
       <div class="alarm-title">
-        <svg class="alarm-bell" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2">
+        <svg class="alarm-bell" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor"
+          stroke-width="2">
           <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" />
           <path d="M13.73 21a2 2 0 0 1-3.46 0" />
         </svg>
@@ -12,7 +13,7 @@
       </div>
       <div class="alarm-actions">
         <span class="live-indicator" :class="{ active: true }" />
-        <el-button text size="small" @click="handleMore" style="color: var(--color-primary); font-weight: 500; font-size: 12px;">查看全部 →</el-button>
+        <el-button link size="small" @click="handleMore">查看更多 →</el-button>
       </div>
     </div>
 
@@ -32,7 +33,8 @@
 
       <!-- 空状态 -->
       <div v-if="!loading && alarmData.length === 0" class="alarm-empty">
-        <svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="currentColor" stroke-width="1.5" style="color: var(--color-success); opacity: 0.4;">
+        <svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="currentColor" stroke-width="1.5"
+          style="color: var(--color-success); opacity: 0.4;">
           <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" />
           <polyline points="22 4 12 14.01 9 11.01" />
         </svg>
@@ -64,7 +66,8 @@
       <div class="dialog-header">
         <div class="dialog-header-icon" style="color: var(--color-danger); background: rgba(239,68,68,0.1);">
           <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2">
-            <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" /><path d="M13.73 21a2 2 0 0 1-3.46 0" />
+            <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" />
+            <path d="M13.73 21a2 2 0 0 1-3.46 0" />
           </svg>
         </div>
         <div>
@@ -91,18 +94,25 @@
         <el-date-picker v-model="historyDateRange" type="datetimerange" range-separator="至" start-placeholder="开始"
           end-placeholder="结束" value-format="YYYY-MM-DD HH:mm:ss" size="small" style="width: 260px;" />
       </div>
-      <el-button type="primary" size="small" @click="searchHistory" style="margin-top: 18px;">查询</el-button>
+      <el-button type="primary" size="small" class="history-search-btn" @click="searchHistory">查询</el-button>
     </div>
 
     <!-- 历史列表 -->
     <div class="history-list">
-      <div v-for="(item, idx) in historyData" :key="idx" class="history-item">
-        <span class="history-time">{{ item.alarmTime }}</span>
+      <div v-for="(item, idx) in historyData" :key="item.devLabel + item.faultBeginDT" class="history-item">
         <div class="history-item-body">
           <div class="history-item-top">
-            <span class="history-device">{{ item.devName }}</span>
+            <span class="history-device">{{ item.devLabel }}</span>
+            <span class="history-state" :class="{ 'is-alarm': String(item.faultState).includes('报警') }">{{ item.faultState }}</span>
           </div>
-          <div class="history-content">{{ item.alarmContent }}</div>
+          <div class="history-content">
+            {{ item.detectionParam }} · {{ item.categoryName }} · {{ item.devType }}
+            <span v-if="item.faultValue !== null && item.faultValue !== undefined"> · 值: {{ item.faultValue }}{{ item.unit || '' }}</span>
+          </div>
+          <div class="history-meta">
+            <span class="history-meta__time">{{ formatDateTime(item.faultBeginDT) }} ~ {{ formatDateTime(item.faultEndDT) }}</span>
+            <span class="history-meta__duration">持续 {{ item.faultDurationTime || '--' }}</span>
+          </div>
         </div>
       </div>
       <div v-if="historyData.length === 0" class="history-empty">无匹配记录</div>
@@ -120,6 +130,8 @@ defineOptions({ name: 'TimerAlarmTable' })
 
 import { ref, reactive, computed, onMounted, onBeforeUnmount } from 'vue'
 import { listEalTimeAlarm, listHistoricalAlarm } from '@/api/system/ealTimeAlarm'
+import { typeSelect } from '@/api/system/safetyMonitoring'
+import { getRecentDayRange, formatDateTime } from '@/utils/util'
 
 const alarmData = ref<any[]>([])
 const loading = ref(false)
@@ -166,7 +178,20 @@ async function getData() {
 
 function handleMore() {
   moreVisible.value = true
+  if (!historyDateRange.value) {
+    historyDateRange.value = getRecentDayRange(3)
+  }
+  getTypeOptions()
   searchHistory()
+}
+
+async function getTypeOptions() {
+  try {
+    const res = await typeSelect()
+    historyTypeOptions.value = res.data || []
+  } catch (e) {
+    console.error('获取类型选项失败', e)
+  }
 }
 
 async function searchHistory() {
@@ -183,11 +208,16 @@ async function searchHistory() {
     })
     const { items, total: totalCount } = res.data || {}
     historyData.value = (items || []).map((item: any) => ({
-      alarmType: item.alarmType,
-      alarmContent: item.devAddress,
-      devName: item.devLabel,
-      alarmTime: item.alarmBeginDT || item.valueUpdateDT,
-      severity: item.severity,
+      devLabel: item.devLabel,
+      detectionParam: item.detectionParam,
+      devType: item.devType,
+      categoryName: item.categoryName,
+      faultValue: item.faultValue,
+      faultState: item.faultState,
+      unit: item.unit,
+      faultBeginDT: item.faultBeginDT,
+      faultEndDT: item.faultEndDT,
+      faultDurationTime: item.faultDurationTime,
     }))
     historyTotal.value = totalCount || 0
   } catch (e) {
@@ -278,8 +308,15 @@ onBeforeUnmount(() => {
 }
 
 @keyframes live-pulse {
-  0%, 100% { opacity: 1; }
-  50% { opacity: 0.4; }
+
+  0%,
+  100% {
+    opacity: 1;
+  }
+
+  50% {
+    opacity: 0.4;
+  }
 }
 
 /* KPI 统计 */
@@ -400,8 +437,15 @@ onBeforeUnmount(() => {
 }
 
 @keyframes new-blink {
-  0%, 100% { opacity: 1; }
-  50% { opacity: 0.4; }
+
+  0%,
+  100% {
+    opacity: 1;
+  }
+
+  50% {
+    opacity: 0.4;
+  }
 }
 
 /* 骨架 */
@@ -422,21 +466,37 @@ onBeforeUnmount(() => {
   height: 10px;
   border-radius: 4px;
   background: linear-gradient(90deg,
-    rgba(148, 163, 184, 0.06) 25%,
-    rgba(148, 163, 184, 0.12) 50%,
-    rgba(148, 163, 184, 0.06) 75%);
+      rgba(148, 163, 184, 0.06) 25%,
+      rgba(148, 163, 184, 0.12) 50%,
+      rgba(148, 163, 184, 0.06) 75%);
   background-size: 200% 100%;
   animation: sk-shimmer 1.5s ease-in-out infinite;
 }
 
-.sk-line.w-20 { width: 20%; }
-.sk-line.w-30 { width: 30%; }
-.sk-line.w-40 { width: 40%; }
-.sk-line.w-80 { width: 80%; }
+.sk-line.w-20 {
+  width: 20%;
+}
+
+.sk-line.w-30 {
+  width: 30%;
+}
+
+.sk-line.w-40 {
+  width: 40%;
+}
+
+.sk-line.w-80 {
+  width: 80%;
+}
 
 @keyframes sk-shimmer {
-  0% { background-position: 200% 0; }
-  100% { background-position: -200% 0; }
+  0% {
+    background-position: 200% 0;
+  }
+
+  100% {
+    background-position: -200% 0;
+  }
 }
 
 /* 空状态 */
@@ -484,6 +544,10 @@ onBeforeUnmount(() => {
   font-size: 11px;
   color: var(--text-muted);
   font-weight: 500;
+}
+
+.history-search-btn {
+  margin-top: 18px;
 }
 
 .history-list {
@@ -535,10 +599,49 @@ onBeforeUnmount(() => {
   font-family: var(--font-mono, monospace);
 }
 
+.history-state {
+  font-size: 11px;
+  font-weight: 500;
+  padding: 1px 8px;
+  border-radius: 4px;
+  white-space: nowrap;
+  flex-shrink: 0;
+  color: var(--text-secondary);
+  background: rgba(148, 163, 184, 0.08);
+  border: 1px solid var(--border-color);
+}
+
+.history-state.is-alarm {
+  color: var(--color-danger);
+  background: rgba(239, 68, 68, 0.08);
+  border-color: rgba(239, 68, 68, 0.15);
+}
+
 .history-content {
   font-size: 13px;
   color: var(--text-secondary);
   line-height: 1.4;
+}
+
+.history-meta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  font-size: 12px;
+  color: var(--text-muted);
+  margin-top: 4px;
+}
+
+.history-meta__time {
+  font-family: var(--font-mono, monospace);
+}
+
+.history-meta__duration {
+  white-space: nowrap;
+  background: rgba(148, 163, 184, 0.06);
+  padding: 1px 8px;
+  border-radius: 4px;
 }
 
 .history-empty {

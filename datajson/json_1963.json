@@ -1,0 +1,34 @@
+{
+  "code": 100,
+  "data": {
+    "total": 29,
+    "items": [
+      {
+        "devLabel": "043D06",
+        "detectionParam": "150113回风顺槽",
+        "devType": "开关量",
+        "categoryName": "风门",
+        "faultValue": "0",
+        "faultState": "超限报警",
+        "unit": null,
+        "faultBeginDT": "2026-05-20 21:58:35.000",
+        "faultEndDT": "2026-05-20 22:00:20.000",
+        "faultDurationTime": "00:01:45"
+      },
+      {
+        "devLabel": "043D06",
+        "detectionParam": "150113回风顺槽",
+        "devType": "开关量",
+        "categoryName": "风门",
+        "faultValue": "0",
+        "faultState": "超限报警",
+        "unit": null,
+        "faultBeginDT": "2026-05-20 19:19:17.000",
+        "faultEndDT": "2026-05-20 19:22:15.000",
+        "faultDurationTime": "00:02:58"
+      }
+    ],
+    "pageIndex": 0
+  },
+  "timestamp": 1781526916733
+}

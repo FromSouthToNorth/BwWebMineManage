@@ -539,43 +539,6 @@ onBeforeUnmount(() => {
   font-weight: 500;
 }
 
-/* 按钮统一样式 */
-:deep(.btn-primary.el-button) {
-  background: linear-gradient(135deg, var(--color-primary-light), var(--color-primary));
-  border: none;
-  border-radius: 8px;
-  padding: 7px 14px;
-  font-weight: 500;
-  box-shadow: 0 2px 8px rgba(59, 130, 246, 0.25);
-  transition: all 0.2s ease;
-}
-
-:deep(.btn-primary.el-button:hover) {
-  transform: translateY(-1px);
-  box-shadow: 0 4px 14px rgba(59, 130, 246, 0.4);
-  filter: brightness(1.1);
-}
-
-:deep(.btn-primary.el-button:active) {
-  transform: translateY(0);
-}
-
-:deep(.btn-default.el-button) {
-  background: transparent;
-  border: 1px solid rgba(148, 163, 184, 0.25);
-  border-radius: 8px;
-  padding: 7px 14px;
-  color: var(--text-secondary);
-  font-weight: 500;
-  transition: all 0.2s ease;
-}
-
-:deep(.btn-default.el-button:hover) {
-  border-color: rgba(148, 163, 184, 0.5);
-  color: var(--text-primary);
-  background: rgba(148, 163, 184, 0.08);
-}
-
 /* 自动刷新指示器 */
 .auto-refresh {
   display: inline-flex;

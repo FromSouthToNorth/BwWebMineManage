@@ -59,7 +59,12 @@
 3. `bwSSOSDKLogin` 检查 URL 是否包含 `mine_key` 查询参数；若有，立即调用 `callback()` 让应用挂载，实际登录由 `src/permission.ts` 处理。
 4. 若无 `mine_key` 且全局存在 `BW_SSO_SDK`，则调用 `SSOLogin(hostname, port, callback)`。
 5. 若 `BW_SSO_SDK` 不可用且无 `mine_key`，函数仅发出警告并**不会**调用 `callback()`；此时应用不会挂载。
-6. `src/permission.ts` 路由守卫负责处理 `mine_key` 自动登录、token 校验及 SSO 登出重定向。
+6. `src/permission.ts` 路由守卫负责处理 `mine_key` 自动登录、token 校验及 SSO 登出重定向。它在 `main.ts` 中于 Pinia 安装后动态导入，因为它依赖 `user` store。
+
+### Token 与矿点身份
+
+- `src/utils/auth.ts` — 在 `localStorage` 中读写用户 `token`（供 Axios 与 `user` store 使用）。
+- `src/utils/cookie.ts` — 从 cookie 中读取矿点级值（`MineName`、`MineDesc`、`Access-Token`），并提供 `localStorage` 回退（命名空间 `pro__`）。
 
 ### Strategy API 模式
 
@@ -74,16 +79,19 @@
 
 ```ts
 // src/api/system/bar.ts — 策略 ID 1942，用于分类统计
+import { requestStrategyData, getMineName } from './helpers'
+
 export function getData() {
   return requestStrategyData(1942, [{ name: 'MineName', value: getMineName() }])
 }
 ```
 
-`getMineName()` 从 cookie 读取（见 `src/utils/cookie.ts`），并在页面生命周期内缓存结果。
+`getMineName()` 由 `helpers.ts` 导出，从 `src/utils/cookie.ts` 读取，并在页面生命周期内缓存结果。
+后端响应/错误消息格式见 `api.md`。
 
 ### Axios 拦截器行为（`src/utils/request.ts`）
 
-所有请求都会设置请求头 `caller: WebMineManage`，并在 `token` 请求头中携带当前 token。
+所有请求都会设置请求头 `caller: WebMineManage`，并从 `src/utils/auth.ts` 读取当前 token 放入 `token` 请求头。
 
 | 状态码 | 行为 |
 |------|----------|
@@ -168,12 +176,15 @@ async function initChart() {
 | `user` | `src/stores/user.ts` | Token、登录动作 |
 
 ### Vite 配置
-- **基础路径**：`/WebMineManage`（与生产部署一致）。
+- **基础路径**：`/WebMineManage`（与生产部署及 `createWebHistory` 一致）。
+- **开发服务器**：host `0.0.0.0`，端口 `8080`。
 - **代理**：`/net`、`/DigitizingMine`、`/cas`、`/bwmes-boot`、`/bwPublic` → 目标地址来自 `VITE_API_TARGET`。
 - **构建分块**：`chunk-libs`（vue/router/pinia）、`chunk-element-plus`、`chunk-vant`、`chunk-echarts`。
 - **生产构建**：terser 压缩（移除 console/debugger），输出到 `dist/WebMineManage/`。
 - **SCSS**：启用 modern-compiler API。
-- **自定义插件**：`injectSsoSdk`、`generateVersionJson`，位于 `vite-plugin/`。
+- **自定义插件**：
+  - `injectSsoSdk` — 注入 BW SSO SDK 脚本。
+  - `generateVersionJson` — 生产构建结束时写入 `dist/<VITE_APP_PATH>/version.json`，使用 `VITE_APP_VERSION` 与 `VITE_APP_PATH`。
 
 ### 项目结构
 
@@ -232,6 +243,7 @@ design-system/           # 层级化设计系统文档
 - Fixture 自动 mock `BW_SSO_SDK` 并拦截 API 路由返回真实 mock 数据。
 - 两个测试项目：`chromium`（桌面 Chrome，`zh-CN`）和 `mobile-chrome`（Pixel 5）。
 - WebServer 配置为测试期间在端口 `8081` 启动 Vite（`node ./node_modules/vite/bin/vite.js --port 8081`）。
+- 测试使用 `baseURL: http://localhost:8081`（开发服务器运行在 `8080`）。
 - 失败时截图、失败时保留视频、首次重试时保留 trace。
 
 ### 设计系统

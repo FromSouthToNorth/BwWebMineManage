@@ -12,7 +12,7 @@
           查看更多 →
         </el-button>
         <el-tag v-if="loading" type="info" size="small" effect="dark">刷新中...</el-tag>
-        <el-button text size="small" @click="toggleAutoRefresh" style="font-weight: 500;">
+        <el-button text size="small" @click="toggleAutoRefresh">
           {{ autoRefresh ? '⏸ 暂停' : '▶ 自动刷新' }}
         </el-button>
       </div>
@@ -22,8 +22,7 @@
     <div v-if="activeCategory" class="category-filter-bar">
       <span class="category-filter-label">分类筛选：</span>
       <span class="category-filter-tag">{{ activeCategory }}</span>
-      <el-button text size="small" @click="clearCategoryFilter"
-        style="color: var(--text-muted); font-size: 12px; margin-left: 4px;">✕ 清除</el-button>
+      <el-button text size="small" class="clear-filter-btn" @click="clearCategoryFilter">✕ 清除</el-button>
     </div>
 
     <!-- 监测点卡片网格 -->
@@ -665,10 +664,10 @@ onBeforeUnmount(() => {
 
 /* 单个监测卡片 — 毛玻璃 */
 .monitor-card {
-  background: rgba(20, 29, 47, 0.55);
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
-  border: 1px solid rgba(148, 163, 184, 0.1);
+  background: linear-gradient(135deg, rgba(20, 29, 47, 0.6), rgba(15, 23, 42, 0.6));
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(148, 163, 184, 0.12);
   border-radius: var(--radius-md);
   padding: 14px 16px;
   cursor: pointer;
@@ -678,6 +677,7 @@ onBeforeUnmount(() => {
   display: flex;
   flex-direction: column;
   gap: 8px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.03);
 }
 
 /* 右上角光晕 */
@@ -721,8 +721,8 @@ onBeforeUnmount(() => {
 
 /* 正常状态 */
 .monitor-card.is-normal::before {
-  background: var(--color-success);
-  box-shadow: 0 0 6px var(--color-success-glow);
+  background: rgba(34, 197, 94, 0.6);
+  box-shadow: 0 0 16px var(--color-success-glow), 0 0 32px rgba(34, 197, 94, 0.15);
 }
 
 .monitor-card.is-normal:hover {
@@ -734,7 +734,7 @@ onBeforeUnmount(() => {
 /* 报警状态 */
 .monitor-card.is-alarm {
   border-color: rgba(239, 68, 68, 0.3);
-  background: rgba(239, 68, 68, 0.04);
+  background: linear-gradient(135deg, rgba(239, 68, 68, 0.08), rgba(20, 29, 47, 0.22));
 }
 
 .monitor-card.is-alarm::before {
@@ -924,6 +924,11 @@ onBeforeUnmount(() => {
   padding: 2px 10px;
   border-radius: 4px;
   border: 1px solid rgba(59, 130, 246, 0.15);
+}
+
+.clear-filter-btn {
+  margin-left: 4px;
+  font-size: 12px;
 }
 
 /* 加载中 */
