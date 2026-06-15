@@ -196,7 +196,8 @@ async function searchHistory() {
       endTime: historyDateRange.value?.[1] || '',
     })
     const { items, total: totalCount } = res.data || {}
-    historyData.value = (items || []).map((item: any) => ({
+    const rawItems = items || []
+    historyData.value = rawItems.map((item: any) => ({
       devLabel: item.devLabel,
       detectionParam: item.detectionParam,
       devType: item.devType,
@@ -208,6 +209,9 @@ async function searchHistory() {
       faultEndDT: item.faultEndDT,
       faultDurationTime: item.faultDurationTime,
     }))
+    // 从返回数据中提取类型选项，用于下拉筛选
+    const typeSet = new Set(rawItems.map((item: any) => item.devType).filter(Boolean))
+    historyTypeOptions.value = Array.from(typeSet).map(txt => ({ txt }))
     historyTotal.value = totalCount || 0
   } catch (e) {
     console.error('获取历史报警失败', e)
