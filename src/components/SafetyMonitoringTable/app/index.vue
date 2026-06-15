@@ -654,8 +654,8 @@ onBeforeUnmount(() => {
 }
 
 .monitor-card.is-alarm::before {
-  background: var(--color-danger);
-  box-shadow: 0 0 12px var(--color-danger-glow);
+  background: radial-gradient(ellipse at left center, rgba(239, 68, 68, 0.45) 0%, rgba(239, 68, 68, 0.1) 60%, transparent 100%);
+  box-shadow: 0 0 16px var(--color-danger-glow), 0 0 32px rgba(239, 68, 68, 0.15);
 }
 
 .monitor-card:active {
