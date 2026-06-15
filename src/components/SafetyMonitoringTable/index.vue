@@ -693,7 +693,7 @@ onBeforeUnmount(() => {
 /* 正常状态 */
 .monitor-card.is-normal::before {
   background: var(--color-success);
-  box-shadow: 0 0 6px var(--color-success-glow);
+  box-shadow: 0 0 16px var(--color-success-glow), 0 0 32px rgba(34, 197, 94, 0.15);
 }
 
 .monitor-card.is-normal:hover {
