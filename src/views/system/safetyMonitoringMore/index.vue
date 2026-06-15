@@ -123,8 +123,8 @@
       :close-on-click-modal="false">
       <template #header>
         <div class="dialog-header">
-          <div class="dialog-header-icon" :style="{ color: currentRow?.alarmStatus === '报警' ? 'var(--color-danger)' : 'var(--color-success)' }"
-003e
+          <div class="dialog-header-icon"
+            :style="{ color: currentRow?.alarmStatus === '报警' ? 'var(--color-danger)' : 'var(--color-success)' }">
             <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"
               stroke-linecap="round" stroke-linejoin="round">
               <circle cx="12" cy="12" r="10" />
