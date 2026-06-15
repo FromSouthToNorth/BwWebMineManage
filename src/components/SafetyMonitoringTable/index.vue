@@ -663,7 +663,7 @@ onBeforeUnmount(() => {
 
 /* 单个监测卡片 — 毛玻璃 */
 .monitor-card {
-  background: linear-gradient(135deg, rgba(20, 29, 47, 0.35), rgba(15, 23, 42, 0.22));
+  background: linear-gradient(135deg, rgba(20, 29, 47, 0.6), rgba(15, 23, 42, 0.6));
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
   border: 1px solid rgba(148, 163, 184, 0.12);
