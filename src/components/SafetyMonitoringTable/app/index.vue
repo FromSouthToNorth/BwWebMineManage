@@ -9,7 +9,7 @@
           <span class="kpi-value" :class="item.valueClass">{{ item.value ?? 0 }}</span>
         </div>
       </template>
-      <button class="kpi-refresh" :class="{ spinning }" @click="manualRefresh">
+      <button class="app-btn-icon kpi-refresh" :class="{ spinning }" @click="manualRefresh">
         <van-icon name="replay" />
       </button>
     </div>
@@ -479,21 +479,6 @@ onBeforeUnmount(() => {
 
 .kpi-refresh {
   margin-left: 4px;
-  width: 32px;
-  height: 32px;
-  border: none;
-  background: var(--bg-hover);
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: var(--text-secondary);
-  cursor: pointer;
-  transition: all var(--transition-fast);
-}
-
-.kpi-refresh:active {
-  transform: scale(0.92);
 }
 
 .kpi-refresh.spinning :deep(.van-icon) {

@@ -14,7 +14,7 @@
         <span class="stat-label">更新于</span>
         <span class="stat-time">{{ lastUpdate }}</span>
       </div>
-      <button class="stat-refresh" :class="{ refreshing }" @click="manualRefresh">
+      <button class="app-btn-icon stat-refresh" :class="{ refreshing }" @click="manualRefresh">
         <van-icon name="replay" />
       </button>
     </div>
@@ -250,21 +250,6 @@ onBeforeUnmount(() => {
 
 .stat-refresh {
   margin-left: auto;
-  width: 32px;
-  height: 32px;
-  border: none;
-  background: var(--bg-hover);
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: var(--text-secondary);
-  cursor: pointer;
-  transition: all var(--transition-fast);
-}
-
-.stat-refresh:active {
-  transform: scale(0.92);
 }
 
 .stat-refresh.refreshing :deep(.van-icon) {

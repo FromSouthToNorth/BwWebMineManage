@@ -651,25 +651,177 @@ ul, ol {
   box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1) !important;
 }
 
+/* ===================== Element Plus 按钮统一 ===================== */
+
 .el-button {
   border-radius: var(--radius-sm);
   font-weight: 500;
   transition: all var(--transition-fast);
 }
 
-.el-button--primary {
+/* Primary —— 主操作（查询、确定、更多等） */
+.el-button--primary,
+.el-button.btn-primary,
+.btn-primary.el-button {
   background: var(--color-primary-gradient);
-  border: none;
+  border-color: transparent;
+  color: #ffffff;
 }
 
-.el-button--primary:hover {
-  opacity: 0.9;
-  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+.el-button--primary:hover,
+.el-button--primary:focus,
+.el-button.btn-primary:hover,
+.el-button.btn-primary:focus,
+.btn-primary.el-button:hover,
+.btn-primary.el-button:focus {
+  opacity: 0.92;
+  box-shadow: 0 4px 14px rgba(59, 130, 246, 0.35);
   transform: translateY(-1px);
 }
 
-.el-button--primary:active {
+.el-button--primary:active,
+.el-button.btn-primary:active,
+.btn-primary.el-button:active {
   transform: translateY(0);
+  opacity: 1;
+}
+
+/* Default —— 次要操作（重置、取消等），深色主题下灰透边框 */
+.el-button--default,
+.el-button.btn-default,
+.btn-default.el-button {
+  background: transparent;
+  border-color: var(--border-color);
+  color: var(--text-secondary);
+}
+
+.el-button--default:hover,
+.el-button--default:focus,
+.el-button.btn-default:hover,
+.el-button.btn-default:focus,
+.btn-default.el-button:hover,
+.btn-default.el-button:focus {
+  border-color: rgba(148, 163, 184, 0.35);
+  color: var(--text-primary);
+  background: rgba(148, 163, 184, 0.06);
+}
+
+/* Success / Warning / Danger */
+.el-button--success {
+  background: var(--color-success);
+  border-color: var(--color-success);
+  color: #ffffff;
+}
+
+.el-button--success:hover,
+.el-button--success:focus {
+  opacity: 0.92;
+  box-shadow: 0 4px 14px var(--color-success-glow);
+  transform: translateY(-1px);
+}
+
+.el-button--success:active {
+  transform: translateY(0);
+  opacity: 1;
+}
+
+.el-button--warning {
+  background: var(--color-warning);
+  border-color: var(--color-warning);
+  color: #ffffff;
+}
+
+.el-button--warning:hover,
+.el-button--warning:focus {
+  opacity: 0.92;
+  box-shadow: 0 4px 14px var(--color-warning-glow);
+  transform: translateY(-1px);
+}
+
+.el-button--warning:active {
+  transform: translateY(0);
+  opacity: 1;
+}
+
+.el-button--danger {
+  background: var(--color-danger);
+  border-color: var(--color-danger);
+  color: #ffffff;
+}
+
+.el-button--danger:hover,
+.el-button--danger:focus {
+  opacity: 0.92;
+  box-shadow: 0 4px 14px var(--color-danger-glow);
+  transform: translateY(-1px);
+}
+
+.el-button--danger:active {
+  transform: translateY(0);
+  opacity: 1;
+}
+
+/* Text / Link 按钮 */
+.el-button.is-text,
+.el-button.is-link {
+  color: var(--text-secondary);
+}
+
+.el-button.is-text:not(.is-disabled):hover,
+.el-button.is-text:not(.is-disabled):focus {
+  color: var(--text-primary);
+  background: rgba(148, 163, 184, 0.06);
+}
+
+.el-button.is-link:not(.is-disabled):hover,
+.el-button.is-link:not(.is-disabled):focus {
+  color: var(--color-primary-light);
+}
+
+.el-button.is-link {
+  color: var(--color-primary);
+}
+
+/* ===================== 移动端通用按钮类 ===================== */
+
+.app-btn-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  border: 1px solid var(--border-color);
+  background: var(--bg-card);
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.app-btn-icon:active {
+  transform: scale(0.95);
+  background: var(--bg-hover);
+  color: var(--text-primary);
+}
+
+.app-btn-text {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  padding: 6px 12px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border-color);
+  background: transparent;
+  color: var(--text-secondary);
+  font-size: var(--font-size-sm);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.app-btn-text:active {
+  background: rgba(148, 163, 184, 0.08);
+  color: var(--text-primary);
 }
 
 .el-tag {

@@ -12,7 +12,7 @@
           查看更多 →
         </el-button>
         <el-tag v-if="loading" type="info" size="small" effect="dark">刷新中...</el-tag>
-        <el-button text size="small" @click="toggleAutoRefresh" style="font-weight: 500;">
+        <el-button text size="small" @click="toggleAutoRefresh">
           {{ autoRefresh ? '⏸ 暂停' : '▶ 自动刷新' }}
         </el-button>
       </div>
@@ -22,8 +22,7 @@
     <div v-if="activeCategory" class="category-filter-bar">
       <span class="category-filter-label">分类筛选：</span>
       <span class="category-filter-tag">{{ activeCategory }}</span>
-      <el-button text size="small" @click="clearCategoryFilter"
-        style="color: var(--text-muted); font-size: 12px; margin-left: 4px;">✕ 清除</el-button>
+      <el-button text size="small" class="clear-filter-btn" @click="clearCategoryFilter">✕ 清除</el-button>
     </div>
 
     <!-- 监测点卡片网格 -->
@@ -896,6 +895,11 @@ onBeforeUnmount(() => {
   padding: 2px 10px;
   border-radius: 4px;
   border: 1px solid rgba(59, 130, 246, 0.15);
+}
+
+.clear-filter-btn {
+  margin-left: 4px;
+  font-size: 12px;
 }
 
 /* 加载中 */
