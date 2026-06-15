@@ -26,11 +26,8 @@
     </div>
 
     <!-- 监测点卡片网格 -->
-    <div v-if="loading && tableData.length === 0" class="monitor-loading-wrap">
-      <div class="loading-pulse"></div>
-      <span style="color: var(--text-muted); font-size: 13px;">加载监测数据...</span>
-    </div>
-    <div v-else class="monitor-grid">
+    <div v-loading="loading" class="monitor-grid" element-loading-text="加载监测数据中..."
+      element-loading-background="rgba(20, 29, 47, 0.6)">
       <div v-for="(item, idx) in tableData" :key="idx" class="monitor-card"
         :class="{ 'is-alarm': item.alarmStatus === '报警', 'is-normal': item.alarmStatus !== '报警' }"
         @click="showDetail(item)">
@@ -60,8 +57,6 @@
         暂无数据
       </div>
     </div>
-    <!-- 加载空占位 -->
-    <div v-if="loading && tableData.length === 0" style="height: 200px;"></div>
 
     <!-- 分页 -->
     <div v-if="total > 0" class="monitor-pagination">
@@ -931,35 +926,6 @@ onBeforeUnmount(() => {
 .clear-filter-btn {
   margin-left: 4px;
   font-size: 12px;
-}
-
-/* 加载中 */
-.monitor-loading-wrap {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 12px;
-  padding: 48px 0;
-  min-height: 200px;
-  background: rgba(20, 29, 47, 0.3);
-  border-radius: var(--radius-md);
-  margin: 16px;
-}
-
-.loading-pulse {
-  width: 32px;
-  height: 32px;
-  border: 3px solid rgba(59, 130, 246, 0.15);
-  border-top-color: var(--color-primary);
-  border-radius: 50%;
-  animation: spin 0.8s linear infinite;
-}
-
-@keyframes spin {
-  to {
-    transform: rotate(360deg);
-  }
 }
 
 /* 空状态 */
