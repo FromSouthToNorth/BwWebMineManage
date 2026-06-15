@@ -1,56 +1,19 @@
 <template>
   <div class="dashboard">
-    <!-- KPI 栏 -->
+            <!-- KPI 栏（动态渲染 API 返回字段） -->
     <div class="kpi-bar">
-      <div class="kpi-item">
-        <div class="kpi-icon kpi-total">
-          <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.5">
-            <rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/>
-            <rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/>
-          </svg>
+      <template v-for="(item, idx) in kpiList" :key="item.key">
+        <div v-if="idx > 0" class="kpi-divider" />
+        <div class="kpi-item">
+          <div class="kpi-icon" :class="item.iconClass">
+            <span v-html="item.icon"></span>
+          </div>
+          <div class="kpi-info">
+            <span class="kpi-label">{{ item.label }}</span>
+            <span class="kpi-value" :class="item.valueClass">{{ item.value ?? 0 }}</span>
+          </div>
         </div>
-        <div class="kpi-info">
-          <span class="kpi-label">监测总数</span>
-          <span class="kpi-value">{{ totalPoints || 0 }}</span>
-        </div>
-      </div>
-      <div class="kpi-divider"></div>
-      <div class="kpi-item">
-        <div class="kpi-icon kpi-alarm">
-          <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.5">
-            <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/>
-          </svg>
-        </div>
-        <div class="kpi-info">
-          <span class="kpi-label">报警点数</span>
-          <span class="kpi-value kpi-danger">{{ alarmPoints || 0 }}</span>
-        </div>
-      </div>
-      <div class="kpi-divider"></div>
-      <div class="kpi-item">
-        <div class="kpi-icon kpi-ok">
-          <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.5">
-            <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/>
-          </svg>
-        </div>
-        <div class="kpi-info">
-          <span class="kpi-label">运行正常</span>
-          <span class="kpi-value kpi-success">{{ normalPoints || 0 }}</span>
-        </div>
-      </div>
-      <div class="kpi-divider"></div>
-      <div class="kpi-item">
-        <div class="kpi-icon kpi-warn">
-          <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.5">
-            <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
-            <line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/>
-          </svg>
-        </div>
-        <div class="kpi-info">
-          <span class="kpi-label">异常设备</span>
-          <span class="kpi-value kpi-warning">{{ abnormalPoints || 0 }}</span>
-        </div>
-      </div>
+      </template>
     </div>
 
     <!-- 主体：左右两栏 -->
@@ -82,17 +45,39 @@ import TimerAlarmTable from '@/components/TimerAlarmTable/index.vue'
 import BarChart from '@/views/dashboard/BarChart.vue'
 
 const selectedCategory = ref('')
-const totalPoints = ref(0)
-const alarmPoints = ref(0)
-const normalPoints = ref(0)
-const abnormalPoints = ref(0)
+const kpiList = ref<KpiItem[]>([])
+
+const KPI_CONFIG: Record<string, { label: string; icon: string; iconClass: string; valueClass?: string }> = {
+  total:            { label: '监测总数', icon: '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>', iconClass: 'kpi-total' },
+  alarmPoint:       { label: '报警点数', icon: '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>', iconClass: 'kpi-alarm', valueClass: 'kpi-danger' },
+  analog:           { label: '模拟量', icon: '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.5"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>', iconClass: 'kpi-ok' },
+  switch:           { label: '开关量', icon: '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>', iconClass: 'kpi-total' },
+  substation:       { label: '分站', icon: '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2" y="2" width="20" height="20" rx="2"/><rect x="6" y="6" width="4" height="4"/><rect x="14" y="6" width="4" height="4"/><rect x="6" y="14" width="4" height="4"/><rect x="14" y="14" width="4" height="4"/></svg>', iconClass: 'kpi-warn' },
+  other:            { label: '其他', icon: '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="3"/></svg>', iconClass: 'kpi-total' },
+  devicesNeedCalibration: { label: '需标校', icon: '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.5"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>', iconClass: 'kpi-warn', valueClass: 'kpi-warning' },
+}
+
+interface KpiItem {
+  key: string
+  label: string
+  value: number
+  icon: string
+  iconClass: string
+  valueClass?: string
+}
 
 function onChartClick(category: string) {
   selectedCategory.value = category
 }
 
-function onTotalUpdate(val: number) {
-  totalPoints.value = val
+function onTotalUpdate(val: Record<string, any>) {
+  kpiList.value = Object.keys(KPI_CONFIG)
+    .filter(k => k in val)
+    .map(k => ({
+      key: k,
+      ...KPI_CONFIG[k],
+      value: val[k] ?? 0,
+    }))
 }
 </script>
 

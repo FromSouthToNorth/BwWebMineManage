@@ -1049,3 +1049,16 @@ ul, ol {
     scroll-behavior: auto !important;
   }
 }
+
+@font-face {
+  font-family: iconfont;
+  src: url("./fontIcon/iconfont.eot"),
+    url("./fontIcon/iconfont.woff") format("woff"),
+    url("./fontIcon/iconfont.ttf") format("truetype"),
+    url("./fontIcon/iconfont.svg") format("svg");
+}
+
+.iconfont {
+  font-family: iconfont;
+  font-style: normal;
+}

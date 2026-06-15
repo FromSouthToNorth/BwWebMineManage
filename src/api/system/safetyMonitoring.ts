@@ -19,7 +19,7 @@ export function listSafetyMonitoring(query: SafetyMonitoringQuery) {
     { name: 'PageRowNums', value: query.pageSize },
     { name: 'style', value: query.theme || 'theme-dark' },
     { name: 'MineName', value: getMineName() },
-    { name: 'AlarmType', value: praseStrZero(query.isCallThePolice) },
+    { name: 'AlarmType', value: query.isCallThePolice || '' },
     { name: 'Station', value: praseStrZero(query.substation) },
     { name: 'DevType', value: praseStrZero(query.type) },
     {
@@ -55,6 +55,32 @@ export function getSafetyMonitoringTotal(query: { isCallThePolice?: string }) {
   const params: StrategyParam[] = [
     { name: 'MineName', value: getMineName() },
     { name: 'IsCallThePolice', value: praseStrZero(query.isCallThePolice) },
+  ]
+  return requestStrategyData(1965, params)
+}
+
+/** 获取 KPI 统计数据（总点数、报警点数、模拟量、开关量等，策略 8453） */
+export function getKpiData() {
+  const params: StrategyParam[] = [
+    { name: 'MineName', value: getMineName() },
+  ]
+  return requestStrategyData(8453, params)
+}
+
+/** 获取分站详情（devLabel 含 F 时调用，策略 1964） */
+export function substationInfo(devLabel: string) {
+  const params: StrategyParam[] = [
+    { name: 'MineName', value: getMineName() },
+    { name: 'DevLabel', value: devLabel },
+  ]
+  return requestStrategyData(1964, params)
+}
+
+/** 获取监测点详情（devLabel 不含 F 时调用，策略 1965） */
+export function monitoringPointInfo(devLabel: string) {
+  const params: StrategyParam[] = [
+    { name: 'MineName', value: getMineName() },
+    { name: 'DevLabel', value: devLabel },
   ]
   return requestStrategyData(1965, params)
 }
