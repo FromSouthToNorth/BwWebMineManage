@@ -59,7 +59,12 @@ Other shared components are imported via the barrel file `src/components/index.t
 3. `bwSSOSDKLogin` checks the URL for a `mine_key` query param; if present, it calls `callback()` immediately so the app mounts, and `src/permission.ts` handles the actual login.
 4. If no `mine_key` and the `BW_SSO_SDK` global is available, it invokes `SSOLogin(hostname, port, callback)`.
 5. If `BW_SSO_SDK` is unavailable and there is no `mine_key`, the function warns and returns **without** calling `callback()`; the app will not mount in that case.
-6. `src/permission.ts` route guard processes `mine_key` auto-login, token validation, and SSO logout redirection.
+6. `src/permission.ts` route guard processes `mine_key` auto-login, token validation, and SSO logout redirection. It is dynamically imported in `main.ts` after Pinia is installed because it depends on the `user` store.
+
+### Token & Mine Identity
+
+- `src/utils/auth.ts` — reads/writes the user `token` in `localStorage` (used by Axios and the `user` store).
+- `src/utils/cookie.ts` — reads mine-scoped values (`MineName`, `MineDesc`, `Access-Token`) from cookies (with a localStorage fallback under namespace `pro__`).
 
 ### Strategy API Pattern
 
@@ -74,16 +79,20 @@ Each API module exports typed functions that call these helpers with numeric str
 
 ```ts
 // src/api/system/bar.ts — strategy ID 1942 for category stats
+import { requestStrategyData, getMineName } from './helpers'
+
 export function getData() {
   return requestStrategyData(1942, [{ name: 'MineName', value: getMineName() }])
 }
 ```
 
-`getMineName()` reads from a cookie (`src/utils/cookie.ts`) and caches the result for the page lifecycle.
+`getMineName()` is exported from `helpers.ts`, reads from `src/utils/cookie.ts`, and caches the result for the page lifecycle.
+
+Backend response/error message formats are documented in `api.md`.
 
 ### Axios Interceptor Behavior (`src/utils/request.ts`)
 
-All requests set the header `caller: WebMineManage` and carry the current token in the `token` header.
+All requests set the header `caller: WebMineManage` and carry the current token in the `token` header (read from `src/utils/auth.ts`).
 
 | Code | Behavior |
 |------|----------|
@@ -162,12 +171,15 @@ async function initChart() {
 | `user` | `src/stores/user.ts` | Token, login action |
 
 ### Vite Configuration
-- **Base path**: `/WebMineManage` (matches production deployment).
+- **Base path**: `/WebMineManage` (matches production deployment and `createWebHistory`).
+- **Dev server**: host `0.0.0.0`, port `8080`.
 - **Proxy**: `/net`, `/DigitizingMine`, `/cas`, `/bwmes-boot`, `/bwPublic` → target from `VITE_API_TARGET`.
 - **Build chunks**: `chunk-libs` (vue/router/pinia), `chunk-element-plus`, `chunk-vant`, `chunk-echarts`.
 - **Production**: terser minification (drop console/debugger), output to `dist/WebMineManage/`.
 - **SCSS**: modern-compiler API enabled.
-- **Custom plugins**: `injectSsoSdk`, `generateVersionJson` in `vite-plugin/`.
+- **Custom plugins**:
+  - `injectSsoSdk` — injects the BW SSO SDK script.
+  - `generateVersionJson` — writes `dist/<VITE_APP_PATH>/version.json` at the end of a production build using `VITE_APP_VERSION` and `VITE_APP_PATH`.
 
 ### Project Structure
 
@@ -223,6 +235,7 @@ design-system/           # Hierarchical design system docs
 - Fixture auto-mocks `BW_SSO_SDK` and intercepts API routes with realistic mock data.
 - Two projects: `chromium` (Desktop Chrome, `zh-CN`) and `mobile-chrome` (Pixel 5).
 - WebServer configured to start Vite on port `8081` during tests (`node ./node_modules/vite/bin/vite.js --port 8081`).
+- Tests use `baseURL: http://localhost:8081` (dev server runs on `8080`).
 - Screenshots on failure, video retain-on-failure, trace on first retry.
 
 ### Design System
