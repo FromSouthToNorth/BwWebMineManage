@@ -8,6 +8,9 @@
       </div>
       <div class="monitor-actions">
         <span class="monitor-count">{{ total }} 个监测点</span>
+        <el-button type="primary" size="small" class="more-btn" @click="goToMore">
+          查看更多 →
+        </el-button>
         <el-tag v-if="loading" type="info" size="small" effect="dark">刷新中...</el-tag>
         <el-button text size="small" @click="toggleAutoRefresh" style="font-weight: 500;">
           {{ autoRefresh ? '⏸ 暂停' : '▶ 自动刷新' }}
@@ -335,6 +338,7 @@
 defineOptions({ name: 'SafetyMonitoringTable' })
 
 import { ref, reactive, onMounted, onBeforeUnmount } from 'vue'
+import { useRouter } from 'vue-router'
 import {
   listSafetyMonitoring,
   substationSelect,
@@ -390,6 +394,12 @@ const historySrc = ref('')
 const activeCategory = ref('')
 const autoRefresh = ref(true)
 let refreshTimer: ReturnType<typeof setInterval> | null = null
+
+const router = useRouter()
+
+function goToMore() {
+  router.push('/safetyMonitoringMore')
+}
 
 // 监听统计图分类点击
 watch(() => props.filterCategory, (val) => {
@@ -618,6 +628,10 @@ onBeforeUnmount(() => {
 .monitor-count {
   font-size: 12px;
   color: var(--text-muted);
+}
+
+.more-btn {
+  font-weight: 500;
 }
 
 /* 筛选区 */
