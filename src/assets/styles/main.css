@@ -513,6 +513,20 @@ ul, ol {
   opacity: 0.7;
 }
 
+/* Element Plus Loading 全局暗色毛玻璃 */
+.el-loading-mask {
+  background: rgba(15, 23, 42, 0.7);
+  backdrop-filter: blur(2px);
+}
+
+.el-loading-spinner .path {
+  stroke: var(--color-primary);
+}
+
+.el-loading-spinner .el-loading-text {
+  color: var(--text-secondary);
+}
+
 /* 排序箭头 */
 .el-table .caret-wrapper {
   height: 22px;

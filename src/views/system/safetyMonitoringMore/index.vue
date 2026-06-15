@@ -965,19 +965,6 @@ const coverageIcon = '<svg viewBox="0 0 24 24" width="18" height="18" fill="none
   background: rgba(255, 255, 255, 0.03);
 }
 
-.table-card__body :deep(.el-loading-mask) {
-  background: rgba(15, 23, 42, 0.7);
-  backdrop-filter: blur(2px);
-}
-
-.table-card__body :deep(.el-loading-spinner .path) {
-  stroke: var(--color-primary);
-}
-
-.table-card__body :deep(.el-loading-spinner .el-loading-text) {
-  color: var(--text-secondary);
-}
-
 .table-card__footer {
   display: flex;
   justify-content: center;
