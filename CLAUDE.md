@@ -1,49 +1,49 @@
 # CLAUDE.md
 
-This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+本文件为 Claude Code (claude.ai/code) 提供在本仓库中工作时的指引。
 
-## Commands
+## 常用命令
 
-| Command | Description |
+| 命令 | 说明 |
 |---------|-------------|
-| `pnpm dev` | Start Vite dev server (host `0.0.0.0`, port `8080`) |
-| `pnpm build` | Type check (`vue-tsc --noEmit`) + production build |
-| `pnpm build:prod` | Production build only (skip type check) |
-| `pnpm preview` | Preview production build |
-| `pnpm test` | Run all Playwright E2E tests |
-| `pnpm test tests/specs/example.spec.ts` | Run a single test file |
-| `pnpm test -g "test name"` | Run a single test by name |
-| `pnpm test --project=chromium` | Run tests only on the desktop Chromium project |
-| `pnpm test --project=mobile-chrome` | Run tests only on the mobile Chrome project |
-| `pnpm test:ui` | Run Playwright tests with UI mode |
-| `pnpm lint` | ESLint auto-fix in `src/` |
+| `pnpm dev` | 启动 Vite 开发服务器（host `0.0.0.0`，端口 `8080`） |
+| `pnpm build` | 类型检查（`vue-tsc --noEmit`）+ 生产构建 |
+| `pnpm build:prod` | 仅生产构建（跳过类型检查） |
+| `pnpm preview` | 预览生产构建 |
+| `pnpm test` | 运行全部 Playwright E2E 测试 |
+| `pnpm test tests/specs/example.spec.ts` | 运行单个测试文件 |
+| `pnpm test -g "test name"` | 按名称运行单个测试 |
+| `pnpm test --project=chromium` | 仅运行桌面 Chromium 项目 |
+| `pnpm test --project=mobile-chrome` | 仅运行移动端 Chrome 项目 |
+| `pnpm test:ui` | 以 UI 模式运行 Playwright 测试 |
+| `pnpm lint` | 在 `src/` 中自动修复 ESLint 问题 |
 
-Environment variables are loaded via `.env.development` / `.env.production`:
+环境变量通过 `.env.development` / `.env.production` 加载：
 
-- `VITE_APP_BASE_API` — API base path (default `/net`)
-- `VITE_API_TARGET` — proxy target
-  - Development: `http://192.163.5.10:33382`
-  - Production: `http://192.168.133.110:33382`
+- `VITE_APP_BASE_API` — API 基础路径（默认 `/net`）
+- `VITE_API_TARGET` — 代理目标地址
+  - 开发环境：`http://192.163.5.10:33382`
+  - 生产环境：`http://192.168.133.110:33382`
 
-## Architecture Overview
+## 架构概览
 
-### Tech Stack
-- **Framework**: Vue 3.5 + Composition API + `<script setup lang="ts">`
-- **Build**: Vite 6 + TypeScript 5.6 + pnpm 10
-- **UI**: Element Plus 2.9 (PC) + Vant 4.9 (Mobile)
-- **State**: Pinia 2.3 (setup stores with `defineStore('name', () => {...})`)
-- **Router**: Vue Router 4.5 with `createWebHistory('/WebMineManage')`
-- **Charts**: ECharts 5.6 + vue-echarts 7 + zrender 6 (low-level canvas)
-- **HTTP**: Axios 1.7 with interceptors
-- **Utilities**: `@vueuse/core`, `js-base64`, `jsencrypt`, `fuse.js`, `sortablejs`, `file-saver`, `clipboard`
-- **Auto-imports**: `unplugin-auto-import` for `vue`, `vue-router`, and `pinia` APIs (`src/types/auto-imports.d.ts`)
-- **Testing**: Playwright 1.50+ (Chromium + Mobile Chrome)
+### 技术栈
+- **框架**：Vue 3.5 + Composition API + `<script setup lang="ts">`
+- **构建**：Vite 6 + TypeScript 5.6 + pnpm 10
+- **UI**：Element Plus 2.9（PC 端，默认 `size: 'small'`，`zh-CN` 语言包）+ Vant 4.9（移动端）
+- **状态**：Pinia 2.3（setup 风格 store：`defineStore('name', () => {...})`）
+- **路由**：Vue Router 4.5，使用 `createWebHistory('/WebMineManage')`
+- **图表**：ECharts 5.6 + vue-echarts 7 + zrender 6（底层 canvas）
+- **HTTP**：Axios 1.7 拦截器（超时 30000ms）
+- **工具库**：`@vueuse/core`、`js-base64`、`jsencrypt`、`fuse.js`、`sortablejs`、`file-saver`、`clipboard`
+- **自动导入**：`unplugin-auto-import` 自动导入 `vue`、`vue-router`、`pinia` API（见 `src/types/auto-imports.d.ts`）
+- **测试**：Playwright 1.50+（Chromium + Mobile Chrome）
 
-### Module Alias
-`vite.config.ts` resolves `@` to the `src/` directory. Use `@/components/...`, `@/utils/...`, etc. for all project imports.
+### 模块别名
+`vite.config.ts` 将 `@` 解析到 `src/` 目录。项目内所有导入统一使用 `@/components/...`、`@/utils/...` 等形式。
 
-### Global Components
-`src/main.ts` globally registers the following components; use them in templates without importing:
+### 全局组件
+`src/main.ts` 全局注册了以下组件，在模板中可直接使用：
 
 - `Pagination`
 - `SafetyMonitoringStatistics`
@@ -51,54 +51,54 @@ Environment variables are loaded via `.env.development` / `.env.production`:
 - `TopShow`
 - `Setting`
 
-Other shared components are imported via the barrel file `src/components/index.ts`.
+其他共享组件通过桶文件 `src/components/index.ts` 导入。
 
-### SSO Login Flow
-1. `vite-plugin/injectSsoSdk.ts` injects `<script src="/net/Content/Resource/SDK/bw.sso.sdk.js">` into HTML.
-2. `src/main.ts` calls `bwSSOSDKLogin(callback)` from `src/utils/sso.ts` **before** mounting the app.
-3. `bwSSOSDKLogin` checks the URL for a `mine_key` query param; if present, it calls `callback()` immediately so the app mounts, and `src/permission.ts` handles the actual login.
-4. If no `mine_key` and the `BW_SSO_SDK` global is available, it invokes `SSOLogin(hostname, port, callback)`.
-5. If `BW_SSO_SDK` is unavailable and there is no `mine_key`, the function warns and returns **without** calling `callback()`; the app will not mount in that case.
-6. `src/permission.ts` route guard processes `mine_key` auto-login, token validation, and SSO logout redirection.
+### SSO 登录流程
+1. `vite-plugin/injectSsoSdk.ts` 向 HTML 注入 `<script src="/net/Content/Resource/SDK/bw.sso.sdk.js">`。
+2. `src/main.ts` 在挂载应用前调用 `src/utils/sso.ts` 中的 `bwSSOSDKLogin(callback)`。
+3. `bwSSOSDKLogin` 检查 URL 是否包含 `mine_key` 查询参数；若有，立即调用 `callback()` 让应用挂载，实际登录由 `src/permission.ts` 处理。
+4. 若无 `mine_key` 且全局存在 `BW_SSO_SDK`，则调用 `SSOLogin(hostname, port, callback)`。
+5. 若 `BW_SSO_SDK` 不可用且无 `mine_key`，函数仅发出警告并**不会**调用 `callback()`；此时应用不会挂载。
+6. `src/permission.ts` 路由守卫负责处理 `mine_key` 自动登录、token 校验及 SSO 登出重定向。
 
-### Strategy API Pattern
+### Strategy API 模式
 
-All backend data fetching uses a unified strategy pattern in `src/api/system/helpers.ts`:
+所有后端数据请求统一通过 `src/api/system/helpers.ts` 中的策略模式调用：
 
 - **`requestStrategyData(id, params, 'data')`** → `POST /api/PoininfoSmartValid/GetStrategyData`
-- **`requestStrategyData(id, params, 'page')`** → `POST /api/PoininfoSmartValid/GetPageStrategyData` (paginated)
+- **`requestStrategyData(id, params, 'page')`** → `POST /api/PoininfoSmartValid/GetPageStrategyData`（分页）
 - **`requestStrategyData(id, params, 'json')`** → `POST /api/PoininfoSmartValid/GetStrategyJsonData`
 - **`executeStrategy(id, params)`** → `POST /api/PoininfoSmartValid/ExecuteStrategyCom`
 
-Each API module exports typed functions that call these helpers with numeric strategy IDs:
+各 API 模块导出带类型的函数，内部以数字策略 ID 调用上述辅助函数：
 
 ```ts
-// src/api/system/bar.ts — strategy ID 1942 for category stats
+// src/api/system/bar.ts — 策略 ID 1942，用于分类统计
 export function getData() {
   return requestStrategyData(1942, [{ name: 'MineName', value: getMineName() }])
 }
 ```
 
-`getMineName()` reads from a cookie (`src/utils/cookie.ts`) and caches the result for the page lifecycle.
+`getMineName()` 从 cookie 读取（见 `src/utils/cookie.ts`），并在页面生命周期内缓存结果。
 
-### Axios Interceptor Behavior (`src/utils/request.ts`)
+### Axios 拦截器行为（`src/utils/request.ts`）
 
-All requests set the header `caller: WebMineManage` and carry the current token in the `token` header.
+所有请求都会设置请求头 `caller: WebMineManage`，并在 `token` 请求头中携带当前 token。
 
-| Code | Behavior |
+| 状态码 | 行为 |
 |------|----------|
-| 100 / 200 | Success — resolves with `res.data` |
-| 401 | Token expired — `ElMessageBox.confirm` → redirect to `/401` |
-| 101 | Business error — `ElMessage.error(msg)` → rejects |
-| 500 | Server error — `ElMessage.error(msg)` → rejects |
-| Other | Shows error msg → rejects |
-| HTTP error | Reads `response.data.mesg` first, falls back to network error |
+| 100 / 200 | 成功 — 返回 `res.data` |
+| 401 | Token 过期 — `ElMessageBox.confirm` → 跳转 `/401` |
+| 101 | 业务错误 — `ElMessage.error(msg)` → reject |
+| 500 | 服务端错误 — `ElMessage.error(msg)` → reject |
+| 其他 | 显示错误信息 → reject |
+| HTTP 错误 | 优先读取 `response.data.mesg`，否则返回网络错误 |
 
-`cleanMessage()` strips `:提示:`, `:错误:`, `:警告:`, `:信息:` labels from API messages while preserving numeric prefixes.
+`cleanMessage()` 会去除 API 消息中的 `:提示:`、`:错误:`、`:警告:`、`:信息:` 等分类标签，同时保留前缀数字。
 
-### Data Mapping Pattern
+### 数据映射模式
 
-Components map raw API response fields to display fields consistently:
+组件需将原始 API 字段统一映射为展示字段：
 
 ```ts
 const mapped = (items || []).map((item: any) => ({
@@ -111,11 +111,15 @@ const mapped = (items || []).map((item: any) => ({
 }))
 ```
 
-Always include the mapping step — never pass raw API objects to templates.
+必须包含映射步骤 —— 禁止将原始 API 对象直接传给模板。
 
-### ECharts + Composables Pattern
+### KPI 常量
 
-Reusable `useECharts` composable (`src/composables/useECharts.ts`):
+KPI 元数据（标签、图标、颜色、顶部栏优先级）集中在 `src/constants/kpi.ts` 中，通过 `KPI_LIST` / `KPI_CONFIG` / `TOP_KPI_KEYS` 导出。`KpiSection` 等共享组件直接消费该配置，避免重复定义 KPI。
+
+### ECharts + Composables 模式
+
+可复用的 `useECharts` 组合式函数（`src/composables/useECharts.ts`）：
 
 ```ts
 const chartRef = ref<HTMLDivElement>()
@@ -127,106 +131,111 @@ async function initChart() {
 }
 ```
 
-- `chart` is a `shallowRef`, so always use `chart.value` to access the instance.
-- Always call `init()` before `setOption()` and guard with `if (!init()) return`.
-- `darkChartTheme()` provides base dark-theme config (grid, textStyle, tooltip, axis defaults).
-- The composable exposes `resize()` and `dispose()` but **does not call them automatically**; components must wire up their own `ResizeObserver`/`window.resize` listener and dispose in `onBeforeUnmount`.
-- To click on empty chart areas (not just bars/series), use `chart.value.getZr()` (zrender) with `convertToPixel` segment calculation for Y-axis area clicks.
-- Add `ResizeObserver` when segment-based click positions need recalculation on resize.
+- `chart` 是 `shallowRef`，访问实例时务必使用 `chart.value`。
+- 调用 `setOption()` 前必须先调用 `init()`，并用 `if (!init()) return` 进行防护。
+- `darkChartTheme()` 提供暗色主题基础配置（grid、textStyle、tooltip、坐标轴默认样式）。
+- 该组合式函数只暴露 `resize()` 和 `dispose()`，**不会自动调用**；组件需自行接入 `ResizeObserver` / `window.resize` 监听，并在 `onBeforeUnmount` 中调用 `dispose()`。
+- 如需点击图表空白区域（而非仅柱子/系列），使用 `chart.value.getZr()`（zrender），结合 `convertToPixel` 分段计算 Y 轴区域点击位置。
+- 若点击位置基于分段计算，需在 resize 时通过 `ResizeObserver` 重新计算。
 
-### Mobile / PC Dual-Mode Architecture
+### 移动端 / PC 端双模式架构
 
-- **Mobile pages** live under `app/` subdirectories (e.g., `views/system/safetyMonitoring/app/`).
-- **PC pages** live at the view root.
-- Mobile uses Vant Tabbar navigation — manually implemented with `<nav>` + `router.push({ query: route.query })` to preserve SSO ticket params. Do NOT use Vant's `route` prop to avoid full-page SSO redirect.
-- Mobile pages are wrapped with `<NavBar>` component (icon, title, subtitle, optional action slot).
-- Mobile routes use path names like `index_phone.cpt`, `personnelLocation_phone.cpt`.
+- **PC 页面**位于视图根目录（如 `views/system/safetyMonitoringMore/index.vue`）。
+- **移动端页面**采用以下两种模式之一：
+  - `app/` 子目录（如 `views/system/safetyMonitoring/app/index.vue`、`components/SafetyMonitoringTable/app/index.vue`、`views/personnel_location/app/*`）。
+  - `app.vue` 同级文件（如 `views/system/safetyMonitoringMore/app.vue`、`views/system/newSafetyMonitoring/app.vue`）。
+- 移动端使用 Vant Tabbar 导航 —— 手动实现 `<nav>` + `router.push({ query: route.query })`，以保留 SSO ticket 参数。不要使用 Vant 的 `route` 属性，避免触发整页 SSO 重定向。
+- 移动端页面外层包裹 `<NavBar>` 组件（支持图标、标题、副标题、操作插槽）。
+- 移动端路由使用形如 `index_phone.cpt`、`personnelLocation_phone.cpt` 的 path 名称。
 
-### Theme System
-- CSS variables on `:root` / `[data-theme='theme-dark']` / `[data-theme='theme-light']`.
-- Switched by setting `data-theme` attribute on the `<html>` element.
-- Theme resolution on mount (`App.vue`): URL query param `theme` → `localStorage` → default `theme-dark`.
-- All CSS in `src/assets/styles/main.css` (single entry point).
-- Chart color palette: `--chart-1` through `--chart-8`.
-- Z-index scale: `--z-content` (10), `--z-sticky` (20), `--z-overlay` (30), `--z-modal` (50), `--z-loading` (100).
-- Font sizes: `--font-size-hero`, `--font-size-lg`, `--font-size-base`, `--font-size-sm`, `--font-size-xs`.
-- Element Plus and Vant CSS variables overridden in the same file.
-- Prefers-reduced-motion media query supported.
+### 主题系统
+- CSS 变量定义在 `:root` / `[data-theme='theme-dark']` / `[data-theme='theme-light']` 上。
+- 通过设置 `<html>` 元素的 `data-theme` 属性切换主题。
+- 主题解析在 `App.vue` 挂载时执行：URL 查询参数 `theme` → `localStorage` → 默认 `theme-dark`。
+- 所有 CSS 集中在 `src/assets/styles/main.css`（单一入口）。
+- 图表配色：`--chart-1` 至 `--chart-8`。
+- z-index 层级：`--z-content` (10)、`--z-sticky` (20)、`--z-overlay` (30)、`--z-modal` (50)、`--z-loading` (100)。
+- 字号：`--font-size-hero`、`--font-size-lg`、`--font-size-base`、`--font-size-sm`、`--font-size-xs`。
+- Element Plus 与 Vant 的 CSS 变量也在同一文件中覆盖。
+- 支持 `prefers-reduced-motion` 媒体查询。
 
-### Pinia Stores
+### Pinia Store
 
-| Store | File | Purpose |
+| Store | 文件 | 用途 |
 |-------|------|---------|
-| `app` | `src/stores/app.ts` | Sidebar state, isMobile, size, histPopup |
-| `settings` | `src/stores/settings.ts` | Theme (dark/light) |
-| `user` | `src/stores/user.ts` | Token, login action |
+| `app` | `src/stores/app.ts` | 侧边栏状态、isMobile、size、histPopup |
+| `settings` | `src/stores/settings.ts` | 主题（dark/light） |
+| `user` | `src/stores/user.ts` | Token、登录动作 |
 
-### Vite Configuration
-- **Base path**: `/WebMineManage` (matches production deployment).
-- **Proxy**: `/net`, `/DigitizingMine`, `/cas`, `/bwmes-boot`, `/bwPublic` → target from `VITE_API_TARGET`.
-- **Build chunks**: `chunk-libs` (vue/router/pinia), `chunk-element-plus`, `chunk-vant`, `chunk-echarts`.
-- **Production**: terser minification (drop console/debugger), output to `dist/WebMineManage/`.
-- **SCSS**: modern-compiler API enabled.
-- **Custom plugins**: `injectSsoSdk`, `generateVersionJson` in `vite-plugin/`.
+### Vite 配置
+- **基础路径**：`/WebMineManage`（与生产部署一致）。
+- **代理**：`/net`、`/DigitizingMine`、`/cas`、`/bwmes-boot`、`/bwPublic` → 目标地址来自 `VITE_API_TARGET`。
+- **构建分块**：`chunk-libs`（vue/router/pinia）、`chunk-element-plus`、`chunk-vant`、`chunk-echarts`。
+- **生产构建**：terser 压缩（移除 console/debugger），输出到 `dist/WebMineManage/`。
+- **SCSS**：启用 modern-compiler API。
+- **自定义插件**：`injectSsoSdk`、`generateVersionJson`，位于 `vite-plugin/`。
 
-### Project Structure
+### 项目结构
 
 ```
 src/
-├── api/system/          # API modules, each with typed functions + strategy IDs
-│   └── helpers.ts       # requestStrategyData(), executeStrategy(), getMineName()
-├── assets/styles/       # Single main.css with CSS variables + component overrides
-├── components/          # Shared components (one folder per component)
-│   ├── index.ts         # Barrel exports
-│   ├── SafetyMonitoringTable/  # PC (root) + mobile (app/) versions
-│   ├── TimerAlarmTable/        # PC (root) + mobile (app/) versions
-│   ├── KpiBar/          # Generic KPI metric bar
-│   ├── StatusBadge/     # Status indicator (dot/badge/text, 5 states)
-│   ├── GlassCard/       # Glass-morphism card container
-│   ├── NavBar/          # Enhanced nav bar with icon/subtitle/actions
-│   └── …                # Pagination, Hamburger, BackToTop, Setting, etc.
-├── composables/         # useECharts.ts (chart lifecycle, dark theme, zrender click)
-├── router/index.ts      # All routes in one file, all hidden (no sidebar nav)
-├── stores/              # Pinia (app, settings, user)
-├── types/               # env.d.ts, global.d.ts (BW_SSO_SDK type), auto-imports.d.ts
-├── utils/               # request.ts (axios), auth.ts, sso.ts, cookie.ts, errorCode.ts
-├── views/               # Page views
-│   ├── system/          # safetyMonitoring, minePressure, production, appAlarmList...
-│   ├── dashboard/       # BarChart, AppCharts, minePressure charts, production charts
-│   ├── personnel_location/  # PC (root) + mobile (app/) subdirs
-│   └── error/           # 401, 404
-├── App.vue              # Root: device type detection + theme on mount
-├── main.ts              # Entry: SSO → Pinia → Router → mount
-└── permission.ts        # Route guard (mine_key login, token validation)
+├── api/system/          # API 模块，每个模块包含带类型的函数 + 策略 ID
+│   └── helpers.ts       # requestStrategyData()、executeStrategy()、getMineName()
+├── assets/styles/       # 单一 main.css，包含 CSS 变量与组件样式覆盖
+├── components/          # 共享组件（每个组件一个目录）
+│   ├── index.ts         # 桶导出
+│   ├── SafetyMonitoringTable/  # PC（根目录）+ 移动端（app/）双版本
+│   ├── TimerAlarmTable/        # PC（根目录）+ 移动端（app/）双版本
+│   ├── KpiBar/          # 通用 KPI 指标条
+│   ├── KpiSection/      # 安全监测页面使用的 KPI 卡片网格
+│   ├── SafetyMonitoringDetail/  # 详情 + 历史趋势弹窗
+│   ├── StatusBadge/     # 状态指示器（点/徽标/文字，5 种状态）
+│   ├── GlassCard/       # 毛玻璃卡片容器
+│   ├── NavBar/          # 增强导航栏（图标/副标题/操作插槽）
+│   └── …                # Pagination、Hamburger、BackToTop、Setting 等
+├── composables/         # useECharts.ts（图表生命周期、暗色主题、zrender 点击）
+├── constants/           # kpi.ts（KPI 元数据统一配置）
+├── router/index.ts      # 所有路由集中在一个文件，全部隐藏（无侧边栏导航）
+├── stores/              # Pinia（app、settings、user）
+├── types/               # env.d.ts、global.d.ts（BW_SSO_SDK 类型）、auto-imports.d.ts
+├── utils/               # request.ts（axios）、auth.ts、sso.ts、cookie.ts、errorCode.ts
+├── views/               # 页面视图
+│   ├── system/          # safetyMonitoring、safetyMonitoringMore、minePressure、production、appAlarmList 等
+│   ├── dashboard/       # BarChart、AppCharts、minePressure 图表、production 图表
+│   ├── personnel_location/  # PC（根目录）+ 移动端（app/）子目录
+│   └── error/           # 401、404
+├── App.vue              # 根组件：设备类型检测 + 挂载时设置主题
+├── main.ts              # 入口：SSO → Pinia → 动态导入 permission → Router → 挂载
+└── permission.ts        # 路由守卫（mine_key 登录、token 校验）
 
-vite-plugin/             # Custom Vite plugins
+vite-plugin/             # 自定义 Vite 插件
 tests/
-├── specs/               # Playwright test files
-├── utils/               # mock.ts (SSO + API mock fixture), setup.ts (custom fixture)
-└── fixtures/            # Mock JSON data
-design-system/           # Hierarchical design system docs
-├── MASTER.md            # Global design rules
-├── guidelines-supplement.md  # ECharts guide, UX patterns, Vue implementation
-└── pages/               # Page-specific overrides
+├── specs/               # Playwright 测试文件
+├── utils/               # mock.ts（SSO + API mock fixture）、setup.ts（自定义 fixture）
+└── fixtures/            # Mock JSON 数据
+design-system/           # 层级化设计系统文档
+├── MASTER.md            # 全局设计规则
+├── guidelines-supplement.md  # ECharts 指南、UX 模式、Vue 实现
+└── pages/               # 页面级覆盖规则
 ```
 
-### Component Patterns
-- All components use `<script setup lang="ts">` with `defineOptions({ name: '...' })`.
-- Props typed with `withDefaults(defineProps<{...}>(), {...})`.
-- Emits typed with `defineEmits<{ eventName: [args] }>()`.
-- Scoped styles with CSS custom properties.
-- Auto-refresh via `setInterval` in `onMounted`, cleared in `onBeforeUnmount`.
-- Loading skeletons for async content, empty state for zero-data.
+### 组件规范
+- 所有组件使用 `<script setup lang="ts">` 并配合 `defineOptions({ name: '...' })`。
+- Props 使用 `withDefaults(defineProps<{...}>(), {...})` 定义类型与默认值。
+- Emits 使用 `defineEmits<{ eventName: [args] }>()` 定义类型。
+- 样式使用 scoped + CSS 自定义属性。
+- 自动刷新在 `onMounted` 中通过 `setInterval` 实现，并在 `onBeforeUnmount` 中清除。
+- 异步内容使用 loading 骨架屏，无数据时展示空状态。
 
-### Testing Strategy
-- Playwright with custom fixture in `tests/utils/setup.ts`.
-- Fixture auto-mocks `BW_SSO_SDK` and intercepts API routes with realistic mock data.
-- Two projects: `chromium` (Desktop Chrome, `zh-CN`) and `mobile-chrome` (Pixel 5).
-- WebServer configured to start Vite on port `8081` during tests (`node ./node_modules/vite/bin/vite.js --port 8081`).
-- Screenshots on failure, video retain-on-failure, trace on first retry.
+### 测试策略
+- Playwright 配合 `tests/utils/setup.ts` 中的自定义 fixture。
+- Fixture 自动 mock `BW_SSO_SDK` 并拦截 API 路由返回真实 mock 数据。
+- 两个测试项目：`chromium`（桌面 Chrome，`zh-CN`）和 `mobile-chrome`（Pixel 5）。
+- WebServer 配置为测试期间在端口 `8081` 启动 Vite（`node ./node_modules/vite/bin/vite.js --port 8081`）。
+- 失败时截图、失败时保留视频、首次重试时保留 trace。
 
-### Design System
-The `design-system/` directory contains a hierarchical design system:
-- `MASTER.md` — Global Source of Truth (CSS variable inventory, color palettes, typography scale, z-index system, component specs, chart rules, accessibility).
-- `pages/<name>.md` — Page-specific overrides that take precedence over `MASTER.md`.
-- Always reference these files when designing new UI or modifying existing styles.
+### 设计系统
+`design-system/` 目录包含层级化设计系统：
+- `MASTER.md` — 全局唯一事实来源（CSS 变量清单、色板、排版层级、z-index 系统、组件规范、图表规则、无障碍）。
+- `pages/<name>.md` — 页面级覆盖规则，优先级高于 `MASTER.md`。
+- 设计新 UI 或修改现有样式时，务必参考上述文件。

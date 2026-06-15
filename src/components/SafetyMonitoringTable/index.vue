@@ -54,6 +54,7 @@
             <el-button text size="small" @click.stop="showHistory(item)" class="overlay-btn">历史</el-button>
           </div>
         </div>
+        <div class="card-glow" :class="item.alarmStatus === '报警' ? 'alarm' : 'normal'" />
       </div>
 
       <div v-if="!loading && tableData.length === 0" class="monitor-empty">
@@ -677,6 +678,33 @@ onBeforeUnmount(() => {
   display: flex;
   flex-direction: column;
   gap: 8px;
+}
+
+/* 右上角光晕 */
+.card-glow {
+  position: absolute;
+  top: -20px;
+  right: -20px;
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  filter: blur(24px);
+  opacity: 0.12;
+  pointer-events: none;
+  transition: opacity 0.25s ease;
+  z-index: 0;
+}
+
+.monitor-card:hover .card-glow {
+  opacity: 0.22;
+}
+
+.card-glow.normal {
+  background: var(--color-success);
+}
+
+.card-glow.alarm {
+  background: var(--color-danger);
 }
 
 /* 左侧装饰条 */

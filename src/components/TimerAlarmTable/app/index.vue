@@ -103,7 +103,7 @@
 defineOptions({ name: 'AppTimerAlarmTable' })
 
 import { ref, onMounted, onBeforeUnmount } from 'vue'
-import { showToast } from 'vant'
+import { showToast, closeToast } from 'vant'
 import { listEalTimeAlarm } from '@/api/system/ealTimeAlarm'
 
 interface AlarmItem {
@@ -167,7 +167,7 @@ function onRefresh() {
 function manualRefresh() {
   spinning.value = true
   showToast({ message: '刷新中...', duration: 0 })
-  getData().finally(() => showToast.clear())
+  getData().finally(() => closeToast())
 }
 
 function showDetail(item: AlarmItem) {

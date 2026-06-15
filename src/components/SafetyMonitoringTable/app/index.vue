@@ -9,6 +9,10 @@
           <span class="kpi-value" :class="item.valueClass">{{ item.value ?? 0 }}</span>
         </div>
       </template>
+      <button class="kpi-more" @click="goToMore">
+        <span>更多</span>
+        <van-icon name="arrow" />
+      </button>
       <button class="kpi-refresh" :class="{ spinning }" @click="manualRefresh">
         <van-icon name="replay" />
       </button>
@@ -70,6 +74,7 @@
               <span class="monitor-card__tag" v-if="item.area">{{ item.area }}</span>
             </div>
           </div>
+          <div class="card-glow" :class="item.alarmStatus === '报警' ? 'alarm' : 'normal'" />
         </div>
       </van-list>
     </van-pull-refresh>
@@ -273,7 +278,8 @@
 defineOptions({ name: 'AppSafetyMonitoringTable' })
 
 import { ref, onMounted, onBeforeUnmount } from 'vue'
-import { showToast } from 'vant'
+import { useRouter } from 'vue-router'
+import { showToast, closeToast } from 'vant'
 import {
   listSafetyMonitoring,
   substationInfo,
@@ -283,6 +289,8 @@ import {
 import { KPI_CONFIG, TOP_KPI_KEYS } from '@/constants/kpi'
 
 const ALARM_TEXT = '报警'
+
+const router = useRouter()
 
 const list = ref<any[]>([])
 const listLoading = ref(false)
@@ -301,6 +309,10 @@ let timer: ReturnType<typeof setInterval> | null = null
 
 function isAlarm(item: any) {
   return item.alarmType == 1 || item.state === ALARM_TEXT || item.statusTxt === ALARM_TEXT
+}
+
+function goToMore() {
+  router.push('/appSafetyMonitoringMore')
 }
 
 async function loadKpi() {
@@ -375,7 +387,7 @@ function manualRefresh() {
   finished.value = false
   pageNum.value = 1
   list.value = []
-  Promise.all([fetchData(false), loadKpi()]).finally(() => showToast.clear())
+  Promise.all([fetchData(false), loadKpi()]).finally(() => closeToast())
 }
 
 function showDetail(item: any) {
@@ -475,6 +487,28 @@ onBeforeUnmount(() => {
   width: 1px;
   height: 28px;
   background: var(--border-color);
+}
+
+.kpi-more {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  margin-left: 8px;
+  padding: 4px 8px;
+  border: none;
+  background: rgba(59, 130, 246, 0.12);
+  border-radius: 12px;
+  color: var(--color-primary);
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  flex-shrink: 0;
+}
+
+.kpi-more:active {
+  transform: scale(0.95);
+  background: rgba(59, 130, 246, 0.2);
 }
 
 .kpi-refresh {
@@ -616,6 +650,29 @@ onBeforeUnmount(() => {
   transform: scale(0.99);
 }
 
+/* 右上角光晕 */
+.card-glow {
+  position: absolute;
+  top: -16px;
+  right: -16px;
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  filter: blur(20px);
+  opacity: 0.12;
+  pointer-events: none;
+  transition: opacity 0.25s ease;
+  z-index: 0;
+}
+
+.card-glow.normal {
+  background: var(--color-success);
+}
+
+.card-glow.alarm {
+  background: var(--color-danger);
+}
+
 .monitor-card__left {
   display: flex;
   flex-direction: column;
@@ -640,6 +697,13 @@ onBeforeUnmount(() => {
   background: var(--color-danger);
   box-shadow: 0 0 10px var(--color-danger-glow);
   animation: pulse-alarm 1.5s ease-in-out infinite;
+}
+
+/* 报警卡片文字全部变红 */
+.monitor-card.is-alarm .monitor-card__name,
+.monitor-card.is-alarm .monitor-card__time,
+.monitor-card.is-alarm .monitor-card__tag:not(.label-f):not(.label-normal) {
+  color: var(--color-danger);
 }
 
 .monitor-card__body {

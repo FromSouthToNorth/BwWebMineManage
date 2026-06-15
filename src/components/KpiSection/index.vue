@@ -1,6 +1,6 @@
 <template>
-  <section class="kpi-section">
-    <div v-for="item in kpiItems" :key="item.key" class="kpi-card" :class="`kpi-card--${item.type || 'default'}`">
+  <section class="kpi-section" :class="{ 'is-collapsed': collapsible && collapsed }">
+    <div v-for="item in displayItems" :key="item.key" class="kpi-card" :class="`kpi-card--${item.type || 'default'}`">
       <div class="kpi-card__icon" v-html="item.iconHtml" />
       <div class="kpi-card__info">
         <span class="kpi-card__label">{{ item.label }}</span>
@@ -11,18 +11,40 @@
       </div>
       <div class="kpi-card__glow" />
     </div>
+
+    <button v-if="collapsible && kpiItems.length > limit" type="button" class="kpi-toggle"
+      @click.stop="collapsed = !collapsed">
+      <span class="kpi-toggle__text">{{ collapsed ? `展开全部 ${kpiItems.length} 项` : '收起' }}</span>
+      <span class="kpi-toggle__icon" :class="{ 'is-open': !collapsed }">
+        <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"
+          stroke-linecap="round" stroke-linejoin="round">
+          <polyline points="6 9 12 15 18 9" />
+        </svg>
+      </span>
+    </button>
   </section>
 </template>
 
 <script setup lang="ts">
 defineOptions({ name: 'KpiSection' })
 
-import { computed } from 'vue'
+import { computed, ref } from 'vue'
 import { KPI_CONFIG } from '@/constants/kpi'
 
-const props = defineProps<{
+interface Props {
   data: Record<string, any>
-}>()
+  collapsible?: boolean
+  defaultCollapsed?: boolean
+  limit?: number
+}
+
+const props = withDefaults(defineProps<Props>(), {
+  collapsible: false,
+  defaultCollapsed: true,
+  limit: 3,
+})
+
+const collapsed = ref(props.defaultCollapsed)
 
 interface KpiItem {
   key: string
@@ -46,6 +68,11 @@ const kpiItems = computed<KpiItem[]>(() => {
         iconHtml: meta.icon,
       }
     })
+})
+
+const displayItems = computed(() => {
+  if (!props.collapsible || !collapsed.value) return kpiItems.value
+  return kpiItems.value.slice(0, props.limit)
 })
 
 function mapKpiColor(color: string): string {
@@ -208,9 +235,61 @@ function mapKpiColor(color: string): string {
   color: var(--color-warning);
 }
 
+.kpi-toggle {
+  grid-column: 1 / -1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 6px;
+  border: 1px dashed var(--border-color);
+  border-radius: var(--radius-md);
+  background: transparent;
+  color: var(--text-muted);
+  font-size: 12px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.kpi-toggle:hover {
+  color: var(--text-primary);
+  border-color: var(--text-muted);
+  background: var(--bg-hover);
+}
+
+.kpi-toggle__icon {
+  display: inline-flex;
+  transition: transform 0.2s ease;
+}
+
+.kpi-toggle__icon.is-open {
+  transform: rotate(180deg);
+}
+
 @media (max-width: 768px) {
   .kpi-section {
     grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+    gap: 8px;
+  }
+
+  .kpi-card {
+    padding: 8px 10px;
+    gap: 8px;
+  }
+
+  .kpi-card__icon {
+    width: 30px;
+    height: 30px;
+    border-radius: 10px;
+  }
+
+  .kpi-card__value {
+    font-size: 16px;
+  }
+
+  .kpi-toggle {
+    padding: 5px;
+    font-size: 11px;
   }
 }
 </style>
