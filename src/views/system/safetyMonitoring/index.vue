@@ -37,6 +37,8 @@
 defineOptions({ name: 'SafetyMonitoringHomePage' })
 
 import { ref } from 'vue'
+import { KPI_CONFIG } from '@/constants/kpi'
+import type { KpiMeta } from '@/types/kpi'
 import SafetyMonitoringTable from '@/components/SafetyMonitoringTable/index.vue'
 import TimerAlarmTable from '@/components/TimerAlarmTable/index.vue'
 import BarChart from '@/views/dashboard/BarChart.vue'
@@ -44,23 +46,8 @@ import BarChart from '@/views/dashboard/BarChart.vue'
 const selectedCategory = ref('')
 const kpiList = ref<KpiItem[]>([])
 
-const KPI_CONFIG: Record<string, { label: string; icon: string; iconClass: string; valueClass?: string }> = {
-  total: { label: '监测总数', icon: '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>', iconClass: 'kpi-total' },
-  alarmPoint: { label: '报警点数', icon: '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>', iconClass: 'kpi-alarm', valueClass: 'kpi-danger' },
-  analog: { label: '模拟量', icon: '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.5"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>', iconClass: 'kpi-ok' },
-  switch: { label: '开关量', icon: '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>', iconClass: 'kpi-total' },
-  substation: { label: '分站', icon: '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2" y="2" width="20" height="20" rx="2"/><rect x="6" y="6" width="4" height="4"/><rect x="14" y="6" width="4" height="4"/><rect x="6" y="14" width="4" height="4"/><rect x="14" y="14" width="4" height="4"/></svg>', iconClass: 'kpi-warn' },
-  other: { label: '其他', icon: '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="3"/></svg>', iconClass: 'kpi-total' },
-  devicesNeedCalibration: { label: '需标校', icon: '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.5"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>', iconClass: 'kpi-warn', valueClass: 'kpi-warning' },
-}
-
-interface KpiItem {
-  key: string
-  label: string
+interface KpiItem extends KpiMeta {
   value: number
-  icon: string
-  iconClass: string
-  valueClass?: string
 }
 
 function onChartClick(category: string) {
@@ -71,7 +58,6 @@ function onTotalUpdate(val: Record<string, any>) {
   kpiList.value = Object.keys(KPI_CONFIG)
     .filter(k => k in val)
     .map(k => ({
-      key: k,
       ...KPI_CONFIG[k],
       value: val[k] ?? 0,
     }))

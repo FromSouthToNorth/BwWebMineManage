@@ -26,31 +26,21 @@
 defineOptions({ name: 'AppCharts' })
 
 import { ref, onMounted, onBeforeUnmount, nextTick, computed } from 'vue'
-import * as echarts from 'echarts'
 import { useECharts, darkChartTheme, createLinearGradient, getCssVar } from '@/composables/useECharts'
+import { KPI_CONFIG } from '@/constants/kpi'
+import type { KpiSemanticColor } from '@/types/kpi'
 import { getData } from '@/api/system/bar'
 import { getKpiData } from '@/api/system/safetyMonitoring'
 
 const loading = ref(true)
 
 const barRef = ref<HTMLDivElement>()
-const pieRef = ref<HTMLDivElement>()
 const kpiRef = ref<HTMLDivElement>()
 
 const { chart: barChart, init: initBar, setOption: setBar } = useECharts(barRef)
 const { chart: kpiChart, init: initKpi, setOption: setKpi } = useECharts(kpiRef)
 
 let resizeObserver: ResizeObserver | null = null
-
-const KPI_CONFIG: Record<string, { label: string; valueClass?: string }> = {
-  total: { label: '监测总数' },
-  alarmPoint: { label: '报警', valueClass: 'kpi-alarm' },
-  analog: { label: '模拟量' },
-  switch: { label: '开关量' },
-  substation: { label: '分站' },
-  other: { label: '其他' },
-  devicesNeedCalibration: { label: '需标校', valueClass: 'kpi-warn' },
-}
 
 const kpiList = ref<{ key: string; label: string; value: number; valueClass?: string }[]>([])
 
@@ -66,8 +56,33 @@ function getAdaptiveSize() {
   return { fontSize }
 }
 
+function getKpiColor(color: KpiSemanticColor) {
+  switch (color) {
+    case 'danger':
+      return {
+        start: getCssVar('--color-danger-light', '#f87171'),
+        end: getCssVar('--color-danger', '#ef4444'),
+        shadow: 'rgba(239, 68, 68, 0.35)',
+        glow: 'rgba(239, 68, 68, 0.45)',
+      }
+    case 'warning':
+      return {
+        start: getCssVar('--color-warning-light', '#fbbf24'),
+        end: getCssVar('--color-warning', '#f59e0b'),
+        shadow: 'rgba(245, 158, 11, 0.35)',
+        glow: 'rgba(245, 158, 11, 0.45)',
+      }
+    default:
+      return {
+        start: getCssVar('--color-primary-light', '#60a5fa'),
+        end: getCssVar('--color-primary', '#3b82f6'),
+        shadow: 'rgba(59, 130, 246, 0.35)',
+        glow: 'rgba(59, 130, 246, 0.45)',
+      }
+  }
+}
+
 async function loadCharts() {
-  loading.value = true
   try {
     const res = await getData()
     const raw = (res.data || []) as any[]
@@ -141,8 +156,6 @@ async function loadCharts() {
     }
   } catch (e) {
     console.error('加载图表数据失败', e)
-  } finally {
-    loading.value = false
   }
 }
 
@@ -155,7 +168,6 @@ async function loadKpi() {
       .filter(k => k in kd)
       .map(k => ({ key: k, label: KPI_CONFIG[k].label, value: kd[k] ?? 0, valueClass: KPI_CONFIG[k].valueClass }))
 
-    // KPI 横向条形图（bullet 风格）
     await nextTick()
     if (!initKpi()) return
 
@@ -167,28 +179,7 @@ async function loadKpi() {
     const kpiValues = chartItems.map(item => Number(item.value) || 0)
     const totalCount = Number(totalItem?.value) || kpiValues.reduce((a, b) => a + b, 0) || 1
 
-    const getColor = (key: string) => {
-      if (key === 'alarmPoint') return {
-        start: getCssVar('--color-danger-light', '#f87171'),
-        end: getCssVar('--color-danger', '#ef4444'),
-        shadow: 'rgba(239, 68, 68, 0.35)',
-        glow: 'rgba(239, 68, 68, 0.45)',
-      }
-      if (key === 'devicesNeedCalibration') return {
-        start: getCssVar('--color-warning-light', '#fbbf24'),
-        end: getCssVar('--color-warning', '#f59e0b'),
-        shadow: 'rgba(245, 158, 11, 0.35)',
-        glow: 'rgba(245, 158, 11, 0.45)',
-      }
-      return {
-        start: getCssVar('--color-primary-light', '#60a5fa'),
-        end: getCssVar('--color-primary', '#3b82f6'),
-        shadow: 'rgba(59, 130, 246, 0.35)',
-        glow: 'rgba(59, 130, 246, 0.45)',
-      }
-    }
-
-    const palette = chartItems.map(item => getColor(item.key))
+    const palette = chartItems.map(item => getKpiColor(KPI_CONFIG[item.key].color))
     const { fontSize } = getAdaptiveSize()
 
     setKpi({
@@ -201,9 +192,7 @@ async function loadKpi() {
         textStyle: { color: '#f0f2f5', fontSize: 12 },
         formatter: (params: any) => {
           if (!params || params.length === 0) return '无数据'
-          const p = Array.isArray(params)
-            ? params.find((x: any) => x.seriesName === '数值')
-            : params
+          const p = Array.isArray(params) ? params[0] : params
           if (!p) return '无数据'
           const percent = ((p.value / totalCount) * 100).toFixed(1)
           return `<div style="font-weight:600;margin-bottom:4px;">${p.name}</div>`
@@ -232,60 +221,46 @@ async function loadKpi() {
         axisLine: { show: false },
         axisTick: { show: false },
       },
-      series: [
-        {
-          // 背景轨道（以监测总数为 100% 参考）
-          name: '背景轨道',
-          type: 'bar',
-          data: kpiValues.map(() => totalCount),
-          barGap: '-100%',
-          barMaxWidth: 18,
+      series: [{
+        name: '数值',
+        type: 'bar',
+        showBackground: true,
+        backgroundStyle: {
+          color: 'rgba(148, 163, 184, 0.08)',
+          borderRadius: [8, 8, 8, 8],
+        },
+        data: kpiValues.map((v, i) => ({
+          value: v,
           itemStyle: {
-            color: 'rgba(148, 163, 184, 0.08)',
+            color: createLinearGradient(0, 0, 1, 0, [
+              { offset: 0, color: palette[i].start },
+              { offset: 1, color: palette[i].end },
+            ]),
             borderRadius: [8, 8, 8, 8],
+            shadowBlur: 8,
+            shadowColor: palette[i].shadow,
           },
-          silent: true,
-          animation: false,
-          z: 1,
+        })),
+        barMaxWidth: 18,
+        emphasis: {
+          itemStyle: (params: any) => ({
+            shadowBlur: 14,
+            shadowColor: palette[params.dataIndex]?.glow || 'rgba(59, 130, 246, 0.45)',
+          }),
         },
-        {
-          // 实际数值条
-          name: '数值',
-          type: 'bar',
-          data: kpiValues.map((v, i) => ({
-            value: v,
-            itemStyle: {
-              color: createLinearGradient(0, 0, 1, 0, [
-                { offset: 0, color: palette[i].start },
-                { offset: 1, color: palette[i].end },
-              ]),
-              borderRadius: [8, 8, 8, 8],
-              shadowBlur: 8,
-              shadowColor: palette[i].shadow,
-            },
-          })),
-          barMaxWidth: 18,
-          emphasis: {
-            itemStyle: (params: any) => ({
-              shadowBlur: 14,
-              shadowColor: palette[params.dataIndex]?.glow || 'rgba(59, 130, 246, 0.45)',
-            }),
+        label: {
+          show: true,
+          position: 'right',
+          color: '#e2e8f0',
+          fontSize,
+          fontWeight: 600,
+          formatter: (p: any) => {
+            const percent = ((p.value / totalCount) * 100).toFixed(1)
+            return `${p.value}  (${percent}%)`
           },
-          label: {
-            show: true,
-            position: 'right',
-            color: '#e2e8f0',
-            fontSize,
-            fontWeight: 600,
-            formatter: (p: any) => {
-              const percent = ((p.value / totalCount) * 100).toFixed(1)
-              return `${p.value}  (${percent}%)`
-            },
-          },
-          animationDelay: (idx: number) => idx * 100,
-          z: 2,
         },
-      ],
+        animationDelay: (idx: number) => idx * 100,
+      }],
     })
 
     kpiChart.value?.resize()
@@ -294,20 +269,25 @@ async function loadKpi() {
   }
 }
 
+async function loadAll() {
+  loading.value = true
+  try {
+    await Promise.all([loadCharts(), loadKpi()])
+  } finally {
+    loading.value = false
+  }
+}
+
 onMounted(() => {
-  loadCharts()
-  loadKpi()
+  loadAll()
   const handler = () => {
     barChart.value?.resize()
     kpiChart.value?.resize()
   }
-  window.addEventListener('resize', handler)
   resizeObserver = new ResizeObserver(handler)
   if (barRef.value) resizeObserver.observe(barRef.value)
-  if (pieRef.value) resizeObserver.observe(pieRef.value)
   if (kpiRef.value) resizeObserver.observe(kpiRef.value)
   onBeforeUnmount(() => {
-    window.removeEventListener('resize', handler)
     resizeObserver?.disconnect()
     resizeObserver = null
   })

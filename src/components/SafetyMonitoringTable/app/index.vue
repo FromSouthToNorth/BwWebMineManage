@@ -280,18 +280,9 @@ import {
   monitoringPointInfo,
   getKpiData,
 } from '@/api/system/safetyMonitoring'
+import { KPI_CONFIG, TOP_KPI_KEYS } from '@/constants/kpi'
 
-const KPI_CONFIG: Record<string, { label: string; valueClass?: string }> = {
-  total: { label: '监测总数' },
-  alarmPoint: { label: '报警', valueClass: 'kpi-alarm' },
-  analog: { label: '模拟量' },
-  switch: { label: '开关量' },
-  substation: { label: '分站' },
-  other: { label: '其他' },
-  devicesNeedCalibration: { label: '需标校', valueClass: 'kpi-total' },
-}
-
-const TOP_KPI_KEYS = ['total', 'alarmPoint', 'devicesNeedCalibration']
+const ALARM_TEXT = '报警'
 
 const list = ref<any[]>([])
 const listLoading = ref(false)
@@ -308,6 +299,21 @@ const isSubstationDetail = ref(false)
 
 let timer: ReturnType<typeof setInterval> | null = null
 
+function isAlarm(item: any) {
+  return item.alarmType == 1 || item.state === ALARM_TEXT || item.statusTxt === ALARM_TEXT
+}
+
+async function loadKpi() {
+  try {
+    const kpiRes = await getKpiData()
+    const raw = kpiRes.data || kpiRes || {}
+    const kd = Array.isArray(raw) ? raw[0] || {} : raw
+    kpiList.value = TOP_KPI_KEYS
+      .filter(k => k in kd)
+      .map(k => ({ key: k, label: KPI_CONFIG[k].label, value: kd[k] ?? 0, valueClass: KPI_CONFIG[k].valueClass }))
+  } catch (e) { console.warn('KPI 8453 err:', e) }
+}
+
 async function fetchData(append: boolean) {
   if (!append) loading.value = true
   try {
@@ -317,7 +323,7 @@ async function fetchData(append: boolean) {
       devName: item.devAddress,
       devValue: item.detectionVal,
       devStatus: item.statusTxt,
-      alarmStatus: item.alarmType == 1 || item.alarmType === '1' || item.state === '报警' || item.statusTxt === '报警' ? '报警' : '',
+      alarmStatus: isAlarm(item) ? ALARM_TEXT : '',
       substation: item.stationNo,
       category: item.categoryName,
       area: item.devArea,
@@ -334,15 +340,6 @@ async function fetchData(append: boolean) {
     }
     pageNum.value++
     if (items.length < 20) finished.value = true
-    // KPI 8453
-    try {
-      const kpiRes = await getKpiData()
-      const raw = kpiRes.data || kpiRes || {}
-      const kd = Array.isArray(raw) ? raw[0] || {} : raw
-      kpiList.value = TOP_KPI_KEYS
-        .filter(k => k in kd)
-        .map(k => ({ key: k, label: KPI_CONFIG[k].label, value: kd[k] ?? 0, valueClass: KPI_CONFIG[k].valueClass }))
-    } catch (e) { console.warn('KPI 8453 err:', e) }
   } catch (e) {
     console.error('获取安全监测数据失败', e)
   } finally {
@@ -361,7 +358,7 @@ async function onLoad() {
     refreshing.value = false
   }
   listLoading.value = true
-  await fetchData(true)
+  await Promise.all([fetchData(true), loadKpi()])
 }
 
 function onRefresh() {
@@ -378,7 +375,7 @@ function manualRefresh() {
   finished.value = false
   pageNum.value = 1
   list.value = []
-  fetchData(false).finally(() => showToast.clear())
+  Promise.all([fetchData(false), loadKpi()]).finally(() => showToast.clear())
 }
 
 function showDetail(item: any) {
@@ -416,7 +413,7 @@ onMounted(() => {
   onLoad()
   timer = setInterval(() => {
     pageNum.value = 1
-    fetchData(false)
+    Promise.all([fetchData(false), loadKpi()])
   }, 30000)
 })
 
