@@ -663,10 +663,10 @@ onBeforeUnmount(() => {
 
 /* 单个监测卡片 — 毛玻璃 */
 .monitor-card {
-  background: rgba(20, 29, 47, 0.55);
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
-  border: 1px solid rgba(148, 163, 184, 0.1);
+  background: linear-gradient(135deg, rgba(20, 29, 47, 0.35), rgba(15, 23, 42, 0.22));
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(148, 163, 184, 0.12);
   border-radius: var(--radius-md);
   padding: 14px 16px;
   cursor: pointer;
@@ -676,6 +676,7 @@ onBeforeUnmount(() => {
   display: flex;
   flex-direction: column;
   gap: 8px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.03);
 }
 
 /* 左侧装饰条 */
@@ -705,7 +706,7 @@ onBeforeUnmount(() => {
 /* 报警状态 */
 .monitor-card.is-alarm {
   border-color: rgba(239, 68, 68, 0.3);
-  background: rgba(239, 68, 68, 0.04);
+  background: linear-gradient(135deg, rgba(239, 68, 68, 0.08), rgba(20, 29, 47, 0.22));
 }
 
 .monitor-card.is-alarm::before {
