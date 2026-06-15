@@ -2,8 +2,12 @@
   <div class="safety-more-page page-container">
     <div class="page-header flex-between">
       <div class="page-header__left">
-        <el-button text size="small" class="back-btn" @click="goBack">
-          ← 返回
+        <el-button text size="small" class="back-btn" aria-label="返回上一页" @click="goBack">
+          <svg class="back-btn__icon" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="19" y1="12" x2="5" y2="12" />
+            <polyline points="12 19 5 12 12 5" />
+          </svg>
+          返回
         </el-button>
         <h2 class="gradient-title" style="font-size: 20px; font-weight: 700;">安全监测详情</h2>
       </div>
@@ -269,12 +273,26 @@ onMounted(() => {
 }
 
 .back-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
   font-weight: 500;
   color: var(--text-muted);
+  transition: color 0.2s ease, background-color 0.2s ease;
 }
 
-.back-btn:hover {
+.back-btn__icon {
+  transition: transform 0.2s ease;
+}
+
+.back-btn:hover,
+.back-btn:focus-visible {
   color: var(--text-primary);
+}
+
+.back-btn:hover .back-btn__icon,
+.back-btn:focus-visible .back-btn__icon {
+  transform: translateX(-2px);
 }
 
 .pagination-wrapper {
