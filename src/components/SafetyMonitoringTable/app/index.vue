@@ -50,8 +50,8 @@
 
       <!-- 数据列表 -->
       <van-list v-else v-model:loading="listLoading" :finished="finished" finished-text="— 已加载全部 —" @load="onLoad">
-        <div v-for="(item, idx) in list" :key="item.id || idx" class="monitor-card"
-          :class="{ 'is-alarm': item.alarmStatus === '报警' }" @click="showDetail(item)">
+        <div v-for="(item, idx) in list" :key="item.id || idx" class="monitor-card glass-card"
+          :class="{ 'is-alarm': item.alarmStatus === '报警', 'is-normal': item.alarmStatus !== '报警' }" @click="showDetail(item)">
           <div class="monitor-card__left">
             <div class="monitor-card__dot" :class="item.alarmStatus === '报警' ? 'alarm' : 'normal'"></div>
           </div>
@@ -74,7 +74,7 @@
               <span class="monitor-card__tag" v-if="item.area">{{ item.area }}</span>
             </div>
           </div>
-          <div class="card-glow" :class="item.alarmStatus === '报警' ? 'alarm' : 'normal'" />
+          <div class="glow-orb" :class="item.alarmStatus === '报警' ? 'glow-orb--danger' : 'glow-orb--success'" />
         </div>
       </van-list>
     </van-pull-refresh>
@@ -620,69 +620,13 @@ onBeforeUnmount(() => {
 .monitor-card {
   display: flex;
   gap: 10px;
-  background: linear-gradient(135deg, rgba(20, 29, 47, 0.6), rgba(15, 23, 42, 0.6));
-  border: 1px solid rgba(148, 163, 184, 0.12);
-  border-radius: var(--radius-md);
   padding: 12px 14px;
   margin-bottom: 8px;
   cursor: pointer;
-  transition: all var(--transition-fast);
-  position: relative;
-  overflow: hidden;
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.03);
-}
-
-.monitor-card::before {
-  content: '';
-  position: absolute;
-  left: 0;
-  top: 0;
-  bottom: 0;
-  width: 4px;
-  border-radius: 0 3px 3px 0;
-  transition: all var(--transition-fast);
-}
-
-.monitor-card.is-normal::before {
-  background: radial-gradient(ellipse at left center, rgba(34, 197, 94, 0.45) 0%, rgba(34, 197, 94, 0.1) 60%, transparent 100%);
-  box-shadow: 0 0 16px var(--color-success-glow), 0 0 32px rgba(34, 197, 94, 0.15);
-}
-
-.monitor-card.is-alarm {
-  border-color: rgba(239, 68, 68, 0.3);
-  background: linear-gradient(135deg, rgba(239, 68, 68, 0.08), rgba(20, 29, 47, 0.6));
-}
-
-.monitor-card.is-alarm::before {
-  background: radial-gradient(ellipse at left center, rgba(239, 68, 68, 0.45) 0%, rgba(239, 68, 68, 0.1) 60%, transparent 100%);
-  box-shadow: 0 0 16px var(--color-danger-glow), 0 0 32px rgba(239, 68, 68, 0.15);
 }
 
 .monitor-card:active {
   transform: scale(0.99);
-}
-
-/* 右上角光晕 */
-.card-glow {
-  position: absolute;
-  top: -16px;
-  right: -16px;
-  width: 64px;
-  height: 64px;
-  border-radius: 50%;
-  filter: blur(20px);
-  opacity: 0.12;
-  pointer-events: none;
-  transition: opacity 0.25s ease;
-  z-index: 0;
-}
-
-.card-glow.normal {
-  background: var(--color-success);
-}
-
-.card-glow.alarm {
-  background: var(--color-danger);
 }
 
 .monitor-card__left {

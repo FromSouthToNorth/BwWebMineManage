@@ -28,7 +28,7 @@
     <!-- 监测点卡片网格 -->
     <div v-loading="loading" class="monitor-grid" element-loading-text="加载监测数据中..."
       element-loading-background="rgba(20, 29, 47, 0.6)">
-      <div v-for="(item, idx) in tableData" :key="idx" class="monitor-card"
+      <div v-for="(item, idx) in tableData" :key="idx" class="monitor-card glass-card"
         :class="{ 'is-alarm': item.alarmStatus === '报警', 'is-normal': item.alarmStatus !== '报警' }"
         @click="showDetail(item)">
         <div class="card-top">
@@ -50,7 +50,7 @@
             <el-button text size="small" @click.stop="showHistory(item)" class="overlay-btn">历史</el-button>
           </div>
         </div>
-        <div class="card-glow" :class="item.alarmStatus === '报警' ? 'alarm' : 'normal'" />
+        <div class="glow-orb" :class="item.alarmStatus === '报警' ? 'glow-orb--danger' : 'glow-orb--success'" />
       </div>
 
       <div v-if="!loading && tableData.length === 0" class="monitor-empty">
@@ -657,69 +657,16 @@ onBeforeUnmount(() => {
   align-content: flex-start;
 }
 
-/* 单个监测卡片 — 毛玻璃 */
+/* 单个监测卡片 — 结构样式 */
 .monitor-card {
-  background: linear-gradient(135deg, rgba(20, 29, 47, 0.6), rgba(15, 23, 42, 0.6));
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
-  border: 1px solid rgba(148, 163, 184, 0.12);
-  border-radius: var(--radius-md);
   padding: 14px 16px;
   cursor: pointer;
-  transition: all var(--transition-base);
-  position: relative;
-  overflow: hidden;
   display: flex;
   flex-direction: column;
   gap: 8px;
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.03);
-}
-
-/* 右上角光晕 */
-.card-glow {
-  position: absolute;
-  top: -20px;
-  right: -20px;
-  width: 80px;
-  height: 80px;
-  border-radius: 50%;
-  filter: blur(24px);
-  opacity: 0.12;
-  pointer-events: none;
-  transition: opacity 0.25s ease;
-  z-index: 0;
-}
-
-.monitor-card:hover .card-glow {
-  opacity: 0.22;
-}
-
-.card-glow.normal {
-  background: var(--color-success);
-}
-
-.card-glow.alarm {
-  background: var(--color-danger);
-}
-
-/* 左侧装饰条 */
-.monitor-card::before {
-  content: '';
-  position: absolute;
-  left: 0;
-  top: 0;
-  bottom: 0;
-  width: 4px;
-  border-radius: 0 3px 3px 0;
-  transition: all var(--transition-base);
 }
 
 /* 正常状态 */
-.monitor-card.is-normal::before {
-  background: radial-gradient(ellipse at left center, rgba(34, 197, 94, 0.45) 0%, rgba(34, 197, 94, 0.1) 60%, transparent 100%);
-  box-shadow: 0 0 16px var(--color-success-glow), 0 0 32px rgba(34, 197, 94, 0.15);
-}
-
 .monitor-card.is-normal:hover {
   border-color: rgba(34, 197, 94, 0.3);
   box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3), 0 0 12px rgba(34, 197, 94, 0.05);
@@ -727,16 +674,6 @@ onBeforeUnmount(() => {
 }
 
 /* 报警状态 */
-.monitor-card.is-alarm {
-  border-color: rgba(239, 68, 68, 0.3);
-  background: linear-gradient(135deg, rgba(239, 68, 68, 0.08), rgba(20, 29, 47, 0.22));
-}
-
-.monitor-card.is-alarm::before {
-  background: radial-gradient(ellipse at left center, rgba(239, 68, 68, 0.45) 0%, rgba(239, 68, 68, 0.1) 60%, transparent 100%);
-  box-shadow: 0 0 16px var(--color-danger-glow), 0 0 32px rgba(239, 68, 68, 0.15);
-}
-
 .monitor-card.is-alarm:hover {
   border-color: rgba(239, 68, 68, 0.5);
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4), 0 0 20px rgba(239, 68, 68, 0.1);
