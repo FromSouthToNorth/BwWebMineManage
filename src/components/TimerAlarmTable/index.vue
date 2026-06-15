@@ -130,6 +130,7 @@ defineOptions({ name: 'TimerAlarmTable' })
 
 import { ref, reactive, computed, onMounted, onBeforeUnmount } from 'vue'
 import { listEalTimeAlarm, listHistoricalAlarm } from '@/api/system/ealTimeAlarm'
+import { typeSelect } from '@/api/system/safetyMonitoring'
 import { getRecentDayRange, formatDateTime } from '@/utils/util'
 
 const alarmData = ref<any[]>([])
@@ -180,7 +181,17 @@ function handleMore() {
   if (!historyDateRange.value) {
     historyDateRange.value = getRecentDayRange(3)
   }
+  getTypeOptions()
   searchHistory()
+}
+
+async function getTypeOptions() {
+  try {
+    const res = await typeSelect()
+    historyTypeOptions.value = res.data || []
+  } catch (e) {
+    console.error('获取类型选项失败', e)
+  }
 }
 
 async function searchHistory() {
@@ -196,8 +207,7 @@ async function searchHistory() {
       endTime: historyDateRange.value?.[1] || '',
     })
     const { items, total: totalCount } = res.data || {}
-    const rawItems = items || []
-    historyData.value = rawItems.map((item: any) => ({
+    historyData.value = (items || []).map((item: any) => ({
       devLabel: item.devLabel,
       detectionParam: item.detectionParam,
       devType: item.devType,
@@ -209,9 +219,6 @@ async function searchHistory() {
       faultEndDT: item.faultEndDT,
       faultDurationTime: item.faultDurationTime,
     }))
-    // 从返回数据中提取类型选项，用于下拉筛选
-    const typeSet = new Set(rawItems.map((item: any) => item.devType).filter(Boolean))
-    historyTypeOptions.value = Array.from(typeSet).map(txt => ({ txt }))
     historyTotal.value = totalCount || 0
   } catch (e) {
     console.error('获取历史报警失败', e)
