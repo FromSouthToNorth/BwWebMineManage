@@ -26,10 +26,15 @@
         刷新
       </el-button>
 
-      <div class="auto-refresh" @click="toggleAutoRefresh">
+      <div class="auto-refresh" @click="toggleAutoRefresh"
+        :class="{ 'auto-refresh--paused': !autoRefresh }">
         <span class="live-dot" :class="{ active: autoRefresh }" />
         <span class="live-text">{{ autoRefresh ? '自动刷新' : '已暂停' }}</span>
       </div>
+
+      <el-select v-model="refreshInterval" size="small" class="refresh-interval" @change="onIntervalChange">
+        <el-option v-for="opt in refreshOptions" :key="opt.value" :label="opt.label" :value="opt.value" />
+      </el-select>
     </header>
 
     <!-- KPI 概览 -->
@@ -337,6 +342,13 @@ const tableHeight = ref(400)
 let resizeObserver: ResizeObserver | null = null
 let refreshTimer: ReturnType<typeof setInterval> | null = null
 const autoRefresh = ref(true)
+const refreshInterval = ref(30000)
+const refreshOptions = [
+  { label: '10s', value: 10000 },
+  { label: '30s', value: 30000 },
+  { label: '1m', value: 60000 },
+  { label: '5m', value: 300000 },
+]
 
 const router = useRouter()
 
@@ -454,10 +466,17 @@ function openHistoryFromDetail() {
 
 function startAutoRefresh() {
   stopAutoRefresh()
+  if (!autoRefresh.value) return
   refreshTimer = setInterval(() => {
     queryParams.pageNum = 1
     getData()
-  }, 30000)
+  }, refreshInterval.value)
+}
+
+function onIntervalChange() {
+  if (autoRefresh.value) {
+    startAutoRefresh()
+  }
 }
 
 function stopAutoRefresh() {
@@ -652,6 +671,27 @@ const coverageIcon = '<svg viewBox="0 0 24 24" width="18" height="18" fill="none
   50% {
     opacity: 0.5;
   }
+}
+
+.auto-refresh--paused {
+  background: rgba(148, 163, 184, 0.04);
+  border-color: rgba(148, 163, 184, 0.08);
+}
+
+.refresh-interval {
+  width: 72px;
+}
+
+.refresh-interval :deep(.el-input__wrapper) {
+  border-radius: 20px;
+  background: rgba(148, 163, 184, 0.06);
+  box-shadow: 0 0 0 1px rgba(148, 163, 184, 0.12) inset;
+}
+
+.refresh-interval :deep(.el-input__inner) {
+  text-align: center;
+  font-size: 12px;
+  color: var(--text-secondary);
 }
 
 /* KPI 卡片 */
