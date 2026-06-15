@@ -1,7 +1,12 @@
 <template>
   <div class="safety-more-page page-container">
     <div class="page-header flex-between">
-      <h2 class="gradient-title" style="font-size: 20px; font-weight: 700;">安全监测详情</h2>
+      <div class="page-header__left">
+        <el-button text size="small" class="back-btn" @click="goBack">
+          ← 返回
+        </el-button>
+        <h2 class="gradient-title" style="font-size: 20px; font-weight: 700;">安全监测详情</h2>
+      </div>
     </div>
 
     <div class="query-card">
@@ -128,6 +133,7 @@
 defineOptions({ name: 'SafetyMonitoringMore' })
 
 import { ref, reactive, onMounted } from 'vue'
+import { useRouter } from 'vue-router'
 import {
   listSafetyMonitoring,
   substationSelect,
@@ -163,6 +169,12 @@ const queryParams = reactive({
 const detailVisible = ref(false)
 const historyVisible = ref(false)
 const historySrc = ref('')
+
+const router = useRouter()
+
+function goBack() {
+  router.back()
+}
 
 async function getSelectOptions() {
   try {
@@ -250,6 +262,21 @@ onMounted(() => {
 </script>
 
 <style scoped>
+.page-header__left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.back-btn {
+  font-weight: 500;
+  color: var(--text-muted);
+}
+
+.back-btn:hover {
+  color: var(--text-primary);
+}
+
 .pagination-wrapper {
   display: flex;
   justify-content: center;
