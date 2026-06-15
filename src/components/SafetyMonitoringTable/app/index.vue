@@ -620,8 +620,8 @@ onBeforeUnmount(() => {
 .monitor-card {
   display: flex;
   gap: 10px;
-  background: var(--bg-card);
-  border: 1px solid var(--border-color);
+  background: linear-gradient(135deg, rgba(20, 29, 47, 0.6), rgba(15, 23, 42, 0.6));
+  border: 1px solid rgba(148, 163, 184, 0.12);
   border-radius: var(--radius-md);
   padding: 12px 14px;
   margin-bottom: 8px;
@@ -629,6 +629,33 @@ onBeforeUnmount(() => {
   transition: all var(--transition-fast);
   position: relative;
   overflow: hidden;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.03);
+}
+
+.monitor-card::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 4px;
+  border-radius: 0 3px 3px 0;
+  transition: all var(--transition-fast);
+}
+
+.monitor-card.is-normal::before {
+  background: radial-gradient(ellipse at left center, rgba(34, 197, 94, 0.45) 0%, rgba(34, 197, 94, 0.1) 60%, transparent 100%);
+  box-shadow: 0 0 16px var(--color-success-glow), 0 0 32px rgba(34, 197, 94, 0.15);
+}
+
+.monitor-card.is-alarm {
+  border-color: rgba(239, 68, 68, 0.3);
+  background: linear-gradient(135deg, rgba(239, 68, 68, 0.08), rgba(20, 29, 47, 0.6));
+}
+
+.monitor-card.is-alarm::before {
+  background: var(--color-danger);
+  box-shadow: 0 0 12px var(--color-danger-glow);
 }
 
 .monitor-card:active {
