@@ -721,7 +721,9 @@ onBeforeUnmount(() => {
 
 /* 正常状态 */
 .monitor-card.is-normal::before {
-  background: rgba(34, 197, 94, 0.6);
+  background: rgba(34, 197, 94, 0.25);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
   box-shadow: 0 0 16px var(--color-success-glow), 0 0 32px rgba(34, 197, 94, 0.15);
 }
 
