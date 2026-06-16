@@ -215,6 +215,11 @@
               </template>
             </el-table-column>
           </el-table>
+
+          <!-- 空状态 -->
+          <div v-if="!loading && total === 0" class="empty-tip">
+            暂无匹配数据，可尝试调整筛选条件后刷新
+          </div>
         </div>
 
         <div v-if="total > 0" class="table-card__footer">
