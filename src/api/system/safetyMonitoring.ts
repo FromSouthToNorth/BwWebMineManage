@@ -19,7 +19,7 @@ export function listSafetyMonitoring(query: SafetyMonitoringQuery) {
     { name: 'PageRowNums', value: query.pageSize },
     { name: 'style', value: query.theme || 'theme-dark' },
     { name: 'MineName', value: getMineName() },
-    { name: 'AlarmType', value: query.isCallThePolice || '' },
+    { name: 'AlarmType', value: query.isCallThePolice || 0 },
     { name: 'Station', value: praseStrZero(query.substation) },
     { name: 'DevType', value: praseStrZero(query.type) },
     {
