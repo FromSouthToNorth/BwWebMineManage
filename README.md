@@ -110,9 +110,98 @@ src/
 └── permission.ts     # 路由守卫与 SSO 处理
 ```
 
+## 架构与开发约定
+
+### Strategy API 模式
+
+所有后端数据请求统一通过 `src/api/system/helpers.ts` 中的策略辅助函数发起：
+
+| 函数 | 说明 |
+|------|------|
+| `requestStrategyData(id, params, 'data')` | `POST /api/PoininfoSmartValid/GetStrategyData` |
+| `requestStrategyData(id, params, 'page')` | `POST /api/PoininfoSmartValid/GetPageStrategyData`（分页） |
+| `requestStrategyData(id, params, 'json')` | `POST /api/PoininfoSmartValid/GetStrategyJsonData` |
+| `executeStrategy(id, params)` | `POST /api/PoininfoSmartValid/ExecuteStrategyCom` |
+
+各 API 模块导出带类型的函数，内部以数字策略 ID 调用上述辅助函数。
+
+### 数据映射
+
+组件需将原始 API 字段统一映射为展示字段，禁止将原始 API 对象直接传给模板。示例：
+
+```ts
+const mapped = (items || []).map((item: any) => ({
+  devName: item.devLabel || item.devAddress,
+  devValue: item.detectionVal,
+  alarmStatus: item.alarmType === 1 ? '报警' : '',
+  category: item.categoryName,
+  area: item.devArea,
+  substation: item.stationNo,
+}))
+```
+
+### 全局组件
+
+`src/main.ts` 全局注册了 `Pagination`、`SafetyMonitoringStatistics`、`RightToolbar`、`TopShow`、`Setting`，模板中可直接使用。其他共享组件通过 `src/components/index.ts` 导入。
+
+### 状态管理（Pinia）
+
+| Store | 文件 | 用途 |
+|-------|------|------|
+| `app` | `src/stores/app.ts` | 侧边栏、isMobile、size、histPopup |
+| `settings` | `src/stores/settings.ts` | 主题（dark/light） |
+| `user` | `src/stores/user.ts` | Token、登录动作 |
+
+### ECharts 使用
+
+通过 `src/composables/useECharts.ts` 管理图表生命周期：
+
+```ts
+const chartRef = ref<HTMLDivElement>()
+const { chart, init, setOption, resize, dispose } = useECharts(chartRef)
+
+async function initChart() {
+  if (!init()) return
+  setOption({ ...darkChartTheme(), ...chartOptions })
+}
+```
+
+- `chart` 为 `shallowRef`，访问实例时使用 `chart.value`
+- 调用 `setOption()` 前必须先调用 `init()`
+- 组件需自行接入 resize 监听，并在 `onBeforeUnmount` 中调用 `dispose()`
+
+### KPI 常量
+
+KPI 元数据（标签、图标、颜色、顶部栏优先级）集中在 `src/constants/kpi.ts`，通过 `KPI_LIST` / `KPI_CONFIG` / `TOP_KPI_KEYS` 导出，`KpiSection` 等组件直接消费。
+
+### 移动端 / PC 端双模式
+
+- **PC 页面**：位于视图根目录，如 `views/system/safetyMonitoringMore/index.vue`
+- **移动端页面**：
+  - `app/` 子目录，如 `views/system/safetyMonitoring/app/index.vue`
+  - 或 `app.vue` 同级文件，如 `views/system/safetyMonitoringMore/app.vue`
+- 移动端使用 Vant Tabbar 手动实现 `<nav>` + `router.push({ query: route.query })`，以保留 SSO ticket 参数
+- 移动端路由 path 名称形如 `index_phone.cpt`
+
+### 主题系统
+
+- CSS 变量定义在 `src/assets/styles/main.css` 的 `:root` / `[data-theme='theme-dark']` / `[data-theme='theme-light']`
+- 通过设置 `<html>` 的 `data-theme` 属性切换主题
+- 默认主题为 `theme-dark`
+- 图表配色：`--chart-1` 至 `--chart-8`
+
+### 组件规范
+
+- 使用 `<script setup lang="ts">` 并配合 `defineOptions({ name: '...' })`
+- Props：`withDefaults(defineProps<{...}>(), {...})`
+- Emits：`defineEmits<{ eventName: [args] }>()`
+- 样式使用 scoped + CSS 自定义属性
+- 自动刷新在 `onMounted` 中通过 `setInterval` 实现，并在 `onBeforeUnmount` 中清除
+- 异步内容使用 loading 骨架屏，无数据时展示空状态
+
 ## 关键说明
 
 - **SSO 登录**：系统通过 `bw.sso.sdk.js` 与 `mine_key` 查询参数完成单点登录，入口逻辑位于 `src/main.ts` 与 `src/permission.ts`。
-- **移动端适配**：部分页面提供移动端版本，通常以 `app/` 子目录或 `app.vue` 同级文件形式存在。
-- **主题切换**：支持 `theme-dark` / `theme-light`，通过 `data-theme` 属性作用于 `<html>` 元素。
+- **Token 与矿点身份**：`src/utils/auth.ts` 在 `localStorage` 中读写 `token`；`src/utils/cookie.ts` 从 cookie 读取矿点级值（`MineName`、`MineDesc`、`Access-Token`）。
+- **Axios 拦截器**：所有请求设置 `caller: WebMineManage` 与 `token` 请求头，响应状态码行为见 `src/utils/request.ts`。
 - **设计系统**：详见 `design-system/MASTER.md` 与 `design-system/pages/`。
