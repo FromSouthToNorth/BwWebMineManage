@@ -39,9 +39,9 @@
           <span v-html="item.devValue"></span>
         </div>
         <div class="card-tags">
-          <span class="card-tag" v-if="item.category">{{ item.category }}</span>
           <span class="card-tag" :class="item.devLabel.indexOf('F') !== -1 ? 'label-f' : 'label-normal'">{{
             item.devLabel }}</span>
+          <span class="card-tag" v-if="item.category">{{ item.category }}</span>
         </div>
         <div class="card-overlay">
           <div class="card-overlay-btns">
@@ -284,7 +284,7 @@
           <div class="detail-field"><span class="detail-field__label">编辑时间</span><span class="detail-field__value">{{
             detailForm.devUpdateDT ? formatTime(detailForm.devUpdateDT) : '-' }}</span></div>
           <div class="detail-field"><span class="detail-field__label">{{ isSubstationDetail ? '状态变更时间' : '值变更时间'
-          }}</span><span class="detail-field__value">{{ detailForm.valueUpdateDT ?
+              }}</span><span class="detail-field__value">{{ detailForm.valueUpdateDT ?
                 formatTime(detailForm.valueUpdateDT)
                 : '-' }}</span></div>
           <div class="detail-field"><span class="detail-field__label">最后更新时间</span><span class="detail-field__value">{{
