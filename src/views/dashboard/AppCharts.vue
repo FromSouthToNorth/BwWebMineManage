@@ -94,12 +94,20 @@ async function loadCharts() {
     const maxCategoryLen = categories.reduce((max, c) => Math.max(max, c.length), 1)
     const bottomMargin = 36 + maxCategoryLen * fontSize * 1.45
 
+    const textPrimary = getCssVar('--text-primary', '#f0f2f5')
+    const textSecondary = getCssVar('--text-secondary', '#94a3b8')
+    const borderColor = getCssVar('--border-color', 'rgba(148, 163, 184, 0.12)')
+    const borderColorLight = getCssVar('--border-color-light', 'rgba(148, 163, 184, 0.06)')
+
     // 柱状图
     if (initBar()) {
       setBar({
         ...darkChartTheme(),
         tooltip: {
           trigger: 'axis',
+          backgroundColor: getCssVar('--bg-card', '#141d2f'),
+          borderColor,
+          textStyle: { color: textPrimary, fontSize: 12 },
           formatter: (params: any) => {
             if (!params || params.length === 0) return '无数据'
             const p = Array.isArray(params) ? params[0] : params
@@ -111,18 +119,18 @@ async function loadCharts() {
           type: 'category',
           data: categories,
           axisLabel: {
-            color: '#64748b',
+            color: textPrimary,
             fontSize,
             interval: 0,
             formatter: (value: string) => value.split('').join('\n'),
           },
-          axisLine: { lineStyle: { color: 'rgba(148,163,184,0.15)' } },
+          axisLine: { lineStyle: { color: borderColor } },
         },
         yAxis: {
           type: 'value',
-          splitLine: { lineStyle: { color: 'rgba(148,163,184,0.06)', type: 'dashed' } },
+          splitLine: { lineStyle: { color: borderColorLight, type: 'dashed' } },
           axisLabel: {
-            color: '#64748b',
+            color: textSecondary,
             fontSize,
           },
         },
@@ -182,14 +190,18 @@ async function loadKpi() {
     const palette = chartItems.map(item => getKpiColor(KPI_CONFIG[item.key].color))
     const { fontSize } = getAdaptiveSize()
 
+    const textPrimary = getCssVar('--text-primary', '#f0f2f5')
+    const borderColor = getCssVar('--border-color', 'rgba(148, 163, 184, 0.12)')
+    const borderColorLight = getCssVar('--border-color-light', 'rgba(148, 163, 184, 0.06)')
+
     setKpi({
       ...darkChartTheme(),
       tooltip: {
         trigger: 'axis',
         axisPointer: { type: 'shadow' },
-        backgroundColor: 'rgba(15, 23, 42, 0.92)',
-        borderColor: 'rgba(148, 163, 184, 0.15)',
-        textStyle: { color: '#f0f2f5', fontSize: 12 },
+        backgroundColor: getCssVar('--bg-card', '#141d2f'),
+        borderColor,
+        textStyle: { color: textPrimary, fontSize: 12 },
         formatter: (params: any) => {
           if (!params || params.length === 0) return '无数据'
           const p = Array.isArray(params) ? params[0] : params
@@ -213,7 +225,7 @@ async function loadKpi() {
         type: 'category',
         data: kpiLabels,
         axisLabel: {
-          color: '#94a3b8',
+          color: textPrimary,
           fontSize,
           fontWeight: 500,
           interval: 0,
@@ -226,7 +238,7 @@ async function loadKpi() {
         type: 'bar',
         showBackground: true,
         backgroundStyle: {
-          color: 'rgba(148, 163, 184, 0.08)',
+          color: borderColorLight,
           borderRadius: [8, 8, 8, 8],
         },
         data: kpiValues.map((v, i) => ({
@@ -251,7 +263,7 @@ async function loadKpi() {
         label: {
           show: true,
           position: 'right',
-          color: '#e2e8f0',
+          color: textPrimary,
           fontSize,
           fontWeight: 600,
           formatter: (p: any) => {
