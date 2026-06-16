@@ -58,14 +58,6 @@ export function praseArrayStr(arr: string[] | null | undefined): string {
   return arr ? arr.join(',') : ''
 }
 
-export function praseBeginTime(str: string | null | undefined): string {
-  return str ? `${str} 00:00:00` : ''
-}
-
-export function praseEndTime(str: string | null | undefined): string {
-  return str ? `${str} 23:59:59` : ''
-}
-
 /**
  * 使用 dayjs 格式化日期时间
  * @param date 日期值，为空时返回当前时间

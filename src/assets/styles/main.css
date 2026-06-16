@@ -1235,15 +1235,6 @@ ul, ol {
   box-shadow: 0 0 16px var(--color-danger-glow), inset 0 0 16px rgba(239, 68, 68, 0.05);
 }
 
-/* ===================== 无数据提示 ===================== */
-
-.empty-tip {
-  text-align: center;
-  padding: 32px 16px;
-  color: var(--text-muted);
-  font-size: var(--font-size-sm);
-}
-
 /* ===================== 无障碍工具 ===================== */
 
 /* 屏幕阅读器专用 (视觉隐藏) */

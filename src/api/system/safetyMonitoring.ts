@@ -39,8 +39,8 @@ export function typeSelect() {
   return requestStrategyData(1940, [{ name: 'MineName', value: getMineName() }])
 }
 
-export function categorySelect() {
-  return requestStrategyData(1947, [{ name: 'MineName', value: getMineName() }])
+export function categorySelect(typeName?: string) {
+  return requestStrategyData(1947, [{ name: 'MineName', value: getMineName() }, { name: 'CmbDevType', value: praseStrEmpty(typeName) }])
 }
 
 export function areaSelect() {
