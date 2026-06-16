@@ -18,19 +18,8 @@
     </div>
 
     <!-- 报警列表 -->
-    <div class="alarm-scroll">
-      <!-- 骨架 -->
-      <template v-if="loading && alarmData.length === 0">
-        <div v-for="n in 3" :key="'s' + n" class="alarm-skeleton">
-          <div class="sk-row">
-            <div class="sk-line w-30" />
-            <div class="sk-line w-20" />
-          </div>
-          <div class="sk-line w-80" />
-          <div class="sk-line w-40" />
-        </div>
-      </template>
-
+    <div class="alarm-scroll" v-loading="loading" element-loading-text="加载报警数据中..."
+      element-loading-background="rgba(20, 29, 47, 0.6)">
       <!-- 空状态 -->
       <div v-if="!loading && alarmData.length === 0" class="alarm-empty">
         <svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="currentColor" stroke-width="1.5"
@@ -445,57 +434,6 @@ onBeforeUnmount(() => {
 
   50% {
     opacity: 0.4;
-  }
-}
-
-/* 骨架 */
-.alarm-skeleton {
-  padding: 12px 14px;
-  border-bottom: 1px solid rgba(148, 163, 184, 0.05);
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-
-.sk-row {
-  display: flex;
-  gap: 12px;
-}
-
-.sk-line {
-  height: 10px;
-  border-radius: 4px;
-  background: linear-gradient(90deg,
-      rgba(148, 163, 184, 0.06) 25%,
-      rgba(148, 163, 184, 0.12) 50%,
-      rgba(148, 163, 184, 0.06) 75%);
-  background-size: 200% 100%;
-  animation: sk-shimmer 1.5s ease-in-out infinite;
-}
-
-.sk-line.w-20 {
-  width: 20%;
-}
-
-.sk-line.w-30 {
-  width: 30%;
-}
-
-.sk-line.w-40 {
-  width: 40%;
-}
-
-.sk-line.w-80 {
-  width: 80%;
-}
-
-@keyframes sk-shimmer {
-  0% {
-    background-position: 200% 0;
-  }
-
-  100% {
-    background-position: -200% 0;
   }
 }
 
