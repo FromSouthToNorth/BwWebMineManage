@@ -779,6 +779,13 @@ onBeforeUnmount(() => {
   background: rgba(34, 197, 94, 0.1);
 }
 
+/* 报警卡片中的“正常”标签也应提示为红色 */
+.monitor-card.is-alarm .card-tag.label-normal {
+  color: var(--color-danger, #ef4444);
+  background: rgba(239, 68, 68, 0.1);
+  border: 1px solid rgba(239, 68, 68, 0.15);
+}
+
 /* 悬浮毛玻璃浮层 — 从下到上渐变显示 */
 .card-overlay {
   position: absolute;
