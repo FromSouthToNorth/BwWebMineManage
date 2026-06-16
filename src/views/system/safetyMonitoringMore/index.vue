@@ -141,7 +141,8 @@
         <div class="table-card__body">
           <div v-if="!isMobile" class="dual-table">
             <el-table v-for="(list, index) in sMLeftRightLists" :key="index" v-loading="loading" :data="list" stripe
-              size="small" :max-height="tableHeight" :row-class-name="rowClassName" @row-click="handleRowClick">
+              size="small" :max-height="tableHeight" :row-class-name="rowClassName" @row-click="handleRowClick"
+              empty-text="暂无匹配数据">
               <el-table-column label="点号" align="center" min-width="55" show-overflow-tooltip>
                 <template #default="{ row }">
                   <span class="point-label" :class="{ 'point-label--substation': isSubstation(row) }"
@@ -180,7 +181,7 @@
           </div>
 
           <el-table v-else v-loading="loading" :data="tableData" stripe size="small" :max-height="tableHeight"
-            :row-class-name="rowClassName" @row-click="handleRowClick">
+            :row-class-name="rowClassName" @row-click="handleRowClick" empty-text="暂无匹配数据">
             <el-table-column label="点号" align="center" min-width="55" show-overflow-tooltip>
               <template #default="{ row }">
                 <span class="point-label" :class="{ 'point-label--substation': isSubstation(row) }"
@@ -215,11 +216,6 @@
               </template>
             </el-table-column>
           </el-table>
-
-          <!-- 空状态 -->
-          <div v-if="!loading && total === 0" class="empty-tip">
-            暂无匹配数据，可尝试调整筛选条件后刷新
-          </div>
         </div>
 
         <div v-if="total > 0" class="table-card__footer">
