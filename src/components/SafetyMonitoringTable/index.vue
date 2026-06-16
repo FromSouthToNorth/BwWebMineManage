@@ -26,8 +26,7 @@
     </div>
 
     <!-- 监测点卡片网格 -->
-    <div v-loading="loading" class="monitor-grid" element-loading-text="加载监测数据中..."
-      element-loading-background="rgba(20, 29, 47, 0.6)">
+    <div v-loading="loading" class="monitor-grid" element-loading-text="加载监测数据中...">
       <div v-for="(item, idx) in tableData" :key="idx" class="monitor-card glass-card"
         :class="{ 'is-alarm': item.alarmStatus === '报警', 'is-normal': item.alarmStatus !== '报警' }"
         @click="showDetail(item)">

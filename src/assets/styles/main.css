@@ -33,7 +33,7 @@
   --bg-card-hover: #1a2540;
   --bg-elevated: #1e2a45;
   --bg-hover: rgba(59, 130, 246, 0.08);
-  --bg-mask: rgba(0, 0, 0, 0.7);
+  --bg-mask: rgba(15, 23, 42, 0.7);
   --bg-gradient: radial-gradient(ellipse at 50% 0%, rgba(59, 130, 246, 0.06) 0%, transparent 70%);
 
   /* 文字 — 高对比 */
@@ -165,7 +165,7 @@
   --bg-card-hover: #f8fafc;
   --bg-elevated: #ffffff;
   --bg-hover: rgba(37, 99, 235, 0.06);
-  --bg-mask: rgba(0, 0, 0, 0.4);
+  --bg-mask: rgba(255, 255, 255, 0.7);
   --bg-gradient: radial-gradient(ellipse at 50% 0%, rgba(37, 99, 235, 0.03) 0%, transparent 70%);
 
   --text-primary: #1e293b;
@@ -200,6 +200,7 @@
   --table-row-even: #ffffff;
   --table-row-hover: #eff6ff;
   --table-border: #e2e8f0;
+  --table-row-separator: rgba(0, 0, 0, 0.06);
 
   --scrollbar-thumb: rgba(0, 0, 0, 0.12);
   --scrollbar-thumb-hover: rgba(0, 0, 0, 0.2);
@@ -576,7 +577,7 @@ ul, ol {
 
 /* Element Plus Loading 全局暗色毛玻璃 */
 .el-loading-mask {
-  background: rgba(15, 23, 42, 0.7);
+  background: var(--bg-mask);
   backdrop-filter: blur(2px);
 }
 
@@ -1275,6 +1276,108 @@ ul, ol {
     transition-duration: 0.01ms !important;
     scroll-behavior: auto !important;
   }
+}
+
+/* ===================== 浅色主题全局覆盖 ===================== */
+
+[data-theme='theme-light'] .glass-card {
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.85), rgba(241, 245, 249, 0.85));
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.06), inset 0 1px 0 rgba(255, 255, 255, 0.6);
+}
+
+[data-theme='theme-light'] .glass-card.is-alarm {
+  background: linear-gradient(135deg, rgba(239, 68, 68, 0.08), rgba(255, 255, 255, 0.85));
+  border-color: rgba(239, 68, 68, 0.25);
+}
+
+[data-theme='theme-light'] .glass-card.is-normal::before {
+  background: radial-gradient(ellipse at left center, rgba(34, 197, 94, 0.35) 0%, rgba(34, 197, 94, 0.08) 60%, transparent 100%);
+  box-shadow: 0 0 12px var(--color-success-glow), 0 0 24px rgba(34, 197, 94, 0.08);
+}
+
+[data-theme='theme-light'] .glass-card.is-alarm::before {
+  background: radial-gradient(ellipse at left center, rgba(239, 68, 68, 0.4) 0%, rgba(239, 68, 68, 0.08) 60%, transparent 100%);
+  box-shadow: 0 0 14px var(--color-danger-glow), 0 0 28px rgba(239, 68, 68, 0.08);
+}
+
+[data-theme='theme-light'] .glow-orb {
+  opacity: 0.18;
+  filter: blur(20px);
+}
+
+[data-theme='theme-light'] .el-loading-mask {
+  background: rgba(255, 255, 255, 0.7);
+}
+
+[data-theme='theme-light'] .glass-dialog {
+  --el-dialog-bg-color: rgba(255, 255, 255, 0.96);
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  box-shadow: 0 8px 40px rgba(0, 0, 0, 0.12), 0 0 0 1px rgba(0, 0, 0, 0.04);
+}
+
+[data-theme='theme-light'] .dialog-header-icon {
+  background: rgba(37, 99, 235, 0.08);
+}
+
+/* 监测面板容器 */
+[data-theme='theme-light'] .safety-monitor,
+[data-theme='theme-light'] .alarm-panel {
+  background: var(--bg-card);
+  border-color: var(--border-color);
+}
+
+[data-theme='theme-light'] .alarm-panel {
+  border-top-color: var(--color-danger);
+}
+
+[data-theme='theme-light'] .alarm-header {
+  background: linear-gradient(135deg, rgba(239, 68, 68, 0.06) 0%, rgba(239, 68, 68, 0.01) 60%, transparent 100%);
+}
+
+/* 卡片悬浮层 */
+[data-theme='theme-light'] .card-overlay {
+  background: linear-gradient(to top, rgba(255, 255, 255, 0.95) 0%, rgba(255, 255, 255, 0.7) 60%, transparent 100%);
+  backdrop-filter: blur(8px);
+}
+
+/* 详情弹窗主数值区与分组卡片 */
+[data-theme='theme-light'] .detail-hero {
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+}
+
+[data-theme='theme-light'] .detail-section {
+  background: var(--bg-card);
+  border: 1px solid var(--border-color-light);
+}
+
+[data-theme='theme-light'] .detail-section__header {
+  border-bottom-color: var(--border-color-light);
+}
+
+[data-theme='theme-light'] .detail-section--action:hover {
+  background: rgba(37, 99, 235, 0.04);
+  border-color: rgba(37, 99, 235, 0.15);
+}
+
+/* 历史筛选栏 */
+[data-theme='theme-light'] .history-filters {
+  background: var(--bg-card);
+  border: 1px solid var(--border-color-light);
+}
+
+/* 表单输入框在浅色主题下更明显的边框 */
+[data-theme='theme-light'] .el-input__wrapper,
+[data-theme='theme-light'] .el-select__wrapper,
+[data-theme='theme-light'] .el-date-editor .el-input__wrapper {
+  background: var(--bg-card) !important;
+  border-color: rgba(0, 0, 0, 0.1) !important;
+}
+
+[data-theme='theme-light'] .el-input__wrapper.is-focus,
+[data-theme='theme-light'] .el-select__wrapper.is-focus {
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.12) !important;
 }
 
 @font-face {

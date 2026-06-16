@@ -18,8 +18,7 @@
     </div>
 
     <!-- 报警列表 -->
-    <div class="alarm-scroll" v-loading="loading" element-loading-text="加载报警数据中..."
-      element-loading-background="rgba(20, 29, 47, 0.6)">
+    <div class="alarm-scroll" v-loading="loading" element-loading-text="加载报警数据中...">
       <!-- 空状态 -->
       <div v-if="!loading && alarmData.length === 0" class="alarm-empty">
         <svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="currentColor" stroke-width="1.5"
