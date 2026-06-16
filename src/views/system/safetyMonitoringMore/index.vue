@@ -56,7 +56,7 @@
           <span class="filter-label">分站</span>
           <el-select v-model="queryParams.substation" placeholder="全部" size="small" clearable @change="handleQuery"
             class="filter-select">
-            <el-option v-for="item in substationOptions" :key="item.txt" :label="item.txt" :value="item.txt" />
+            <el-option v-for="item in substationOptions" :key="item.txt" :label="item.txt" :value="item.val" />
           </el-select>
         </div>
 
@@ -72,16 +72,22 @@
           <span class="filter-label">类别</span>
           <el-select v-model="queryParams.category" placeholder="全部" size="small" clearable multiple collapse-tags
             @change="handleQuery" class="filter-select">
-            <el-option v-for="item in categoryOptions" :key="item.txt" :label="item.txt" :value="item.txt" />
+            <el-option v-for="item in categoryOptions" :key="item.txt" :label="item.txt" :value="item.val" />
           </el-select>
         </div>
 
         <div class="filter-item">
           <span class="filter-label">区域</span>
-          <el-select v-model="queryParams.area" placeholder="全部" size="small" clearable @change="handleQuery"
-            class="filter-select">
-            <el-option v-for="item in areaOptions" :key="item.txt" :label="item.txt" :value="item.txt" />
-          </el-select>
+          <el-input v-model="queryParams.area" placeholder="输入区域关键词" size="small" clearable @keyup.enter="handleQuery"
+            class="filter-input">
+            <template #prefix>
+              <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"
+                stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="11" cy="11" r="8" />
+                <line x1="21" y1="21" x2="16.65" y2="16.65" />
+              </svg>
+            </template>
+          </el-input>
         </div>
 
         <div class="filter-item">
@@ -232,7 +238,7 @@ import { useRouter } from 'vue-router'
 import { useAppStore } from '@/stores/app'
 import SafetyMonitoringDetail from '@/components/SafetyMonitoringDetail/index.vue'
 import KpiSection from '@/components/KpiSection/index.vue'
-import { listSafetyMonitoring, substationSelect, typeSelect, categorySelect, areaSelect, getKpiData } from '@/api/system/safetyMonitoring'
+import { listSafetyMonitoring, substationSelect, typeSelect, categorySelect, getKpiData } from '@/api/system/safetyMonitoring'
 
 
 const loading = ref(false)
@@ -248,7 +254,6 @@ const isMobile = computed(() => appStore.isMobile)
 const substationOptions = ref<any[]>([])
 const typeOptions = ref<any[]>([])
 const categoryOptions = ref<any[]>([])
-const areaOptions = ref<any[]>([])
 
 const queryParams = reactive({
   pageNum: 1,
@@ -342,16 +347,15 @@ function computeTableHeight() {
 
 async function getSelectOptions() {
   try {
-    const [subRes, typeRes, catRes, areaRes] = await Promise.all([
+    const [subRes, typeRes, catRes] = await Promise.all([
       substationSelect(),
       typeSelect(),
-      categorySelect(),
-      areaSelect(),
+      categorySelect('全部'),
     ])
+    console.log('subRes', subRes, typeRes, catRes)
     substationOptions.value = subRes.data || []
     typeOptions.value = typeRes.data || []
     categoryOptions.value = catRes.data || []
-    areaOptions.value = areaRes.data || []
   } catch (e) {
     console.error('获取筛选选项失败', e)
   }
@@ -925,6 +929,7 @@ onBeforeUnmount(() => {
 }
 
 @media (max-width: 480px) {
+
   .filter-item,
   .filter-item--wide {
     flex: 0 0 100%;
