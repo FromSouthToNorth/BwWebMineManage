@@ -1,124 +1,124 @@
 # CLAUDE.md
 
-This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+本文档为 Claude Code（claude.ai/code）提供本仓库的指引。
 
-## Common Commands
+## 常用命令
 
-| Command | Description |
+| 命令 | 说明 |
 |---|---|
-| `pnpm dev` | Start Vite dev server on `0.0.0.0:8080` |
-| `pnpm build` | Type-check (`vue-tsc --noEmit`) + production build |
-| `pnpm build:prod` | Production build without type-checking |
-| `pnpm preview` | Preview production build |
-| `pnpm test` | Run all Playwright E2E tests |
-| `pnpm test tests/specs/example.spec.ts` | Run single test file |
-| `pnpm test -g "test name"` | Run test by name |
-| `pnpm test --project=chromium` | Desktop Chromium project only |
-| `pnpm test --project=mobile-chrome` | Mobile Chrome project only |
-| `pnpm test:ui` | Run Playwright in UI mode |
-| `pnpm lint` | Auto-fix ESLint issues in `src/` |
+| `pnpm dev` | 启动 Vite 开发服务器 `0.0.0.0:8080` |
+| `pnpm build` | 类型检查（`vue-tsc --noEmit`）+ 生产构建 |
+| `pnpm build:prod` | 跳过类型检查直接构建 |
+| `pnpm preview` | 预览生产构建 |
+| `pnpm test` | 运行所有 Playwright E2E 测试 |
+| `pnpm test tests/specs/example.spec.ts` | 运行单个测试文件 |
+| `pnpm test -g "test name"` | 按名称运行测试 |
+| `pnpm test --project=chromium` | 仅桌面端 Chromium |
+| `pnpm test --project=mobile-chrome` | 仅移动端 Chrome |
+| `pnpm test:ui` | Playwright UI 模式 |
+| `pnpm lint` | 自动修复 `src/` 内的 ESLint 问题 |
 
-> **Note:** The project depends on ESLint v9 but currently has no `eslint.config.(js|mjs|cjs)` file, so `pnpm lint` will fail until a config is added.
+> **注意：** 项目依赖 ESLint v9，但目前没有 `eslint.config.(js|mjs|cjs)` 文件，因此 `pnpm lint` 会失败。
 
-Environment variables are loaded from `.env.development` / `.env.production`:
+环境变量从 `.env.development` / `.env.production` 加载：
 
-- `VITE_APP_BASE_API` — API base path (default `/net`)
-- `VITE_API_TARGET` — Proxy target
-  - Development: `http://192.163.5.10:33382`
-  - Production: `http://192.168.133.110:33382`
+- `VITE_APP_BASE_API` — API 基础路径（默认 `/net`）
+- `VITE_API_TARGET` — 代理目标地址
+  - 开发环境：`http://192.163.5.10:33382`
+  - 生产环境：`http://192.168.133.110:33382`
 
-## High-Level Architecture
+## 架构概览
 
-### Tech Stack
+### 技术栈
 
-- Vue 3.5 + Composition API + `<script setup lang="ts">` (most pages)
+- Vue 3.5 + Composition API + `<script setup lang="ts">`（大多数页面）
 - Vite 6 + TypeScript 5.6 + pnpm 10
-- Element Plus 2.9 (PC, default size `small`, `zh-CN`) + Vant 4.9 (mobile)
-- Pinia 2.3 (setup-style stores)
-- Vue Router 4.5 with `createWebHistory('/WebMineManage')`
+- Element Plus 2.9（PC，默认 size `small`，`zh-CN`）+ Vant 4.9（移动端）
+- Pinia 2.3（setup 风格 store）
+- Vue Router 4.5，使用 `createWebHistory('/WebMineManage')`
 - ECharts 5.6 + vue-echarts 7 + zrender 6
 - Axios 1.7
-- Playwright 1.50+ (Chromium + Mobile Chrome)
+- Playwright 1.50+（Chromium + Mobile Chrome）
 
-`unplugin-auto-import` imports `vue`, `vue-router`, and `pinia` APIs automatically; the declaration file is `src/types/auto-imports.d.ts`.
+`unplugin-auto-import` 自动导入 `vue`、`vue-router`、`pinia` 的 API，声明文件在 `src/types/auto-imports.d.ts`。
 
-### Module Alias
+### 模块别名
 
-`vite.config.ts` maps `@` to `src/`. Always use `@/components/...`, `@/utils/...`, etc.
+`vite.config.ts` 将 `@` 映射到 `src/`。始终使用 `@/components/...`、`@/utils/...` 等路径。
 
-### Views / Route Structure
+### 路由结构
 
-Routes are split between PC and mobile in `src/router/index.ts`:
+PC 和移动端路由在 `src/router/index.ts` 中分开定义：
 
-| Path | Type | Component |
+| 路径 | 类型 | 组件 |
 |---|---|---|
-| `/index.cpt` | PC | Safety monitoring dashboard |
-| `/safetyMonitoringMore` | PC | Expanded safety monitoring |
-| `/statisticalGraph` | PC | Charts & statistics |
-| `/minePressure` | PC | Mine pressure monitoring |
-| `/yieldMonitor` | PC | Yield monitoring |
-| `/production` | PC | Production monitoring |
-| `/personnelLocation.cpt` | PC | Personnel location main |
-| `/index_phone.cpt` | Mobile (4 child routes) | Safety, real-time alerts, charts |
-| `/personnelLocation_phone.cpt` | Mobile (11 child routes) | Personnel location mobile |
+| `/index.cpt` | PC | 安全监测概览 |
+| `/safetyMonitoringMore` | PC | 安全监测更多 |
+| `/statisticalGraph` | PC | 统计图表 |
+| `/minePressure` | PC | 矿压监测 |
+| `/yieldMonitor` | PC | 产量监测 |
+| `/production` | PC | 生产监控 |
+| `/personnelLocation.cpt` | PC | 人员定位主页 |
+| `/index_phone.cpt` | 移动端（4 个子路由） | 安全、实时报警、图表 |
+| `/personnelLocation_phone.cpt` | 移动端（11 个子路由） | 人员定位 |
 
-Most system views are at `src/views/system/<module>/index.vue`. Personnel location has the most complex routing with parameterized paths like `/downholepersonNum/:year/:month/:day/:total`.
+大部分后台页面在 `src/views/system/<module>/index.vue`。人员定位路由最复杂，包含参数化路径如 `/downholepersonNum/:year/:month/:day/:total`。
 
-### PC + Mobile Dual Mode
+### PC + 移动端双模式
 
-- PC pages live at the view root, e.g. `views/system/safetyMonitoringMore/index.vue`.
-- Mobile pages are either:
-  - `app/` sub-directory, e.g. `views/system/safetyMonitoring/app/index.vue` or `components/SafetyMonitoringTable/app/index.vue`
-  - `app.vue` sibling, e.g. `views/system/safetyMonitoringMore/app.vue`
-- Mobile routes use path names like `index_phone.cpt` / `personnelLocation_phone.cpt`.
-- Mobile tab bars are hand-rolled `<nav>` + `router.push({ query: route.query })` to preserve SSO ticket query params. Do **not** use Vant Tabbar's `route` prop.
-- Mobile pages are wrapped in the `<NavBar>` component.
+- PC 页面直接放在 views 根目录，如 `views/system/safetyMonitoringMore/index.vue`。
+- 移动端页面有两种形式：
+  - `app/` 子目录，如 `views/system/safetyMonitoring/app/index.vue` 或 `components/SafetyMonitoringTable/app/index.vue`
+  - `app.vue` 同级文件，如 `views/system/safetyMonitoringMore/app.vue`
+- 移动端路由名使用 `index_phone.cpt` / `personnelLocation_phone.cpt`。
+- 移动端 TabBar 为手写的 `<nav>` + `router.push({ query: route.query })`，以保留 SSO ticket 参数。**不要**使用 Vant Tabbar 的 `route` prop。
+- 移动端页面包裹在 `<NavBar>` 组件内。
 
-### Global Components
+### 全局注册组件
 
-`src/main.ts` globally registers: `Pagination`, `SafetyMonitoringStatistics`, `RightToolbar`, `TopShow`, `Setting`. These can be used in templates without importing. Other shared components are imported via the barrel file `src/components/index.ts`, which exports: `NavBar`, `KpiBar`, `KpiSection`, `StatusBadge`, `GlassCard`, `Hamburger`, `BackToTop`, `SafetyMonitoringTable`, `TimerAlarmTable`.
+`src/main.ts` 全局注册了：`Pagination`、`SafetyMonitoringStatistics`、`RightToolbar`、`TopShow`、`Setting`，可直接在模板中使用。其他共享组件通过 `src/components/index.ts` 导出：`NavBar`、`KpiBar`、`KpiSection`、`StatusBadge`、`GlassCard`、`Hamburger`、`BackToTop`、`SafetyMonitoringTable`、`TimerAlarmTable`。
 
-### SSO Login Flow
+### SSO 登录流程
 
-1. `vite-plugin/injectSsoSdk.ts` injects `<script src="/net/Content/Resource/SDK/bw.sso.sdk.js">`.
-2. `src/main.ts` calls `bwSSOSDKLogin(callback)` from `src/utils/sso.ts` before mounting.
-3. If URL contains `mine_key`, it calls `callback()` immediately; actual login is handled by `src/permission.ts`.
-4. Otherwise, if `BW_SSO_SDK` exists globally, it calls `SSOLogin(hostname, port, callback)`.
-5. If neither SDK nor `mine_key` is available, it warns and does **not** call `callback()`, so the app does not mount.
+1. `vite-plugin/injectSsoSdk.ts` 注入 `<script src="/net/Content/Resource/SDK/bw.sso.sdk.js">`。
+2. `src/main.ts` 在挂载前调用 `bwSSOSDKLogin(callback)`（来自 `src/utils/sso.ts`）。
+3. 如果 URL 中包含 `mine_key`，立即调用 `callback()`；实际登錄由 `src/permission.ts` 处理。
+4. 否则，如果全局存在 `BW_SSO_SDK`，调用 `SSOLogin(hostname, port, callback)`。
+5. 如果既无 SDK 也无 `mine_key`，打印警告且**不**调用 `callback()`，应用不会挂载。
 
-### Route Guard (`src/permission.ts`)
+### 路由守卫（`src/permission.ts`）
 
-The `router.beforeEach` guard handles three scenarios:
-1. **`mine_key` in query** — Base64-decodes a credential string `username;password`, calls `userStore.Login()`, then redirects to the original path without the key.
-2. **Has token** (from cookie `Access-Token`) — allows navigation.
-3. **Neither** — calls `BW_SSO_SDK.SSOLogout()` to redirect to the SSO login page.
+`router.beforeEach` 处理三种场景：
+1. **URL 中有 `mine_key`** — Base64 解码凭证字符串 `username;password`，调用 `userStore.Login()`，然后重定向到原始路径（不带 key）。
+2. **有 token**（从 cookie `Access-Token` 获取）— 允许导航。
+3. **都没有** — 调用 `BW_SSO_SDK.SSOLogout()` 重定向到 SSO 登录页。
 
-`permission.ts` is dynamically imported in `main.ts` after Pinia is installed because it depends on the `user` store.
+`permission.ts` 在 Pinia 安装后动态导入（`main.ts`），因为它依赖 `user` store。
 
 ### Identity & Tokens
 
-- `src/utils/auth.ts` reads/writes the user `token` in `localStorage` for Axios and the `user` store.
-- `src/utils/cookie.ts` reads mine-level values (`MineName`, `MineDesc`, `Access-Token`) from cookies with a `localStorage` fallback under the `pro__` namespace.
+- `src/utils/auth.ts` 在 `localStorage` 中读写用户 `token`，供 Axios 和 `user` store 使用。
+- `src/utils/cookie.ts` 从 cookie 读取矿井级别信息（`MineName`、`MineDesc`、`Access-Token`），`localStorage` 后备存储使用 `pro__` 命名空间。
 
-### App.vue Entry Point
+### App.vue 入口
 
-`src/App.vue` does two things on mount:
-1. **Theme resolution** — checks URL `data-theme` query → `localStorage` → default `theme-dark`. Sets the attribute on `<html>` and syncs to Pinia `settingsStore`.
-2. **Device detection** — checks `navigator.userAgent` for mobile patterns, sets `appStore.setIsMobile()` and dynamic Element Plus `size` based on viewport height.
+`src/App.vue` 在挂载时做两件事：
+1. **主题解析** — URL 参数 `theme` → `localStorage` → 默认 `theme-dark`。设置 `<html>` 的 `data-theme` 属性并同步到 Pinia `settingsStore`。
+2. **设备检测** — 检查 `navigator.userAgent` 判断移动端，设置 `appStore.setIsMobile()` 并动态调整 Element Plus 的 `size`。
 
-### Strategy API Pattern
+### 策略 API 模式
 
-All backend requests go through `src/api/system/helpers.ts`:
+所有后端请求通过 `src/api/system/helpers.ts`：
 
 - `requestStrategyData(id, params, 'data')` → `POST /api/PoininfoSmartValid/GetStrategyData`
-- `requestStrategyData(id, params, 'page')` → `POST /api/PoininfoSmartValid/GetPageStrategyData` (paginated)
+- `requestStrategyData(id, params, 'page')` → `POST /api/PoininfoSmartValid/GetPageStrategyData`（分页）
 - `requestStrategyData(id, params, 'json')` → `POST /api/PoininfoSmartValid/GetStrategyJsonData`
 - `executeStrategy(id, params)` → `POST /api/PoininfoSmartValid/ExecuteStrategyCom`
 
-API modules export typed functions that call these helpers with numeric strategy IDs:
+API 模块导出带类型的函数，内部调用上述辅助函数并传入数字策略 ID：
 
 ```ts
-// src/api/system/bar.ts — strategy ID 1942, used for category statistics
+// src/api/system/bar.ts — 策略 ID 1942，用于分类统计
 import { requestStrategyData, getMineName } from './helpers'
 
 export function getData() {
@@ -126,28 +126,28 @@ export function getData() {
 }
 ```
 
-`getMineName()` reads from `src/utils/cookie.ts` and caches the result for the page lifetime. Parameters follow the `{ name: string, value: string | number }` shape (`StrategyParam` type).
+`getMineName()` 从 `src/utils/cookie.ts` 读取，缓存结果供页面生命周期内使用。参数遵循 `{ name: string, value: string | number }` 格式（`StrategyParam` 类型）。
 
-Backend response format and error message format are documented in `api.md`.
+后端响应格式和错误消息格式见 `api.md`。
 
-### Axios Interceptor Behavior (`src/utils/request.ts`)
+### Axios 拦截器（`src/utils/request.ts`）
 
-Every request sets headers `caller: WebMineManage` and `token` (from `src/utils/auth.ts`).
+每次请求设置请求头 `caller: WebMineManage` 和 `token`（来自 `src/utils/auth.ts`）。
 
-| Code | Behavior |
+| 状态码 | 行为 |
 |---|---|
-| 100 / 200 | Success — returns `res.data` |
-| 401 | Token expired — `ElMessageBox.confirm` then redirect to `/401` |
-| 101 | Business error — `ElMessage.error(msg)` then reject |
-| 500 | Server error — `ElMessage.error(msg)` then reject |
-| Other | Show error message then reject |
-| HTTP error | Prefer `response.data.mesg`; otherwise return network error |
+| 100 / 200 | 成功 — 返回 `res.data` |
+| 401 | Token 过期 — `ElMessageBox.confirm` 后重定向到 `/401` |
+| 101 | 业务错误 — `ElMessage.error(msg)` 后 reject |
+| 500 | 服务端错误 — `ElMessage.error(msg)` 后 reject |
+| 其他 | 显示错误消息后 reject |
+| HTTP 错误 | 优先使用 `response.data.mesg`，否则返回网络错误 |
 
-`cleanMessage()` strips tags like `:提示:`, `:错误:`, `:警告:`, `:信息:` while preserving leading numbers.
+`cleanMessage()` 去除 `:提示:`、`:错误:`、`:警告:`、`:信息:` 等标签前缀，保留前导数字。
 
-### Data Mapping Convention
+### 数据映射约定
 
-Components must map raw API fields to display fields before passing them to templates. Never pass raw API objects directly to templates.
+组件在将数据传给模板前必须将原始 API 字段映射为展示字段，禁止将原始 API 对象直接传入模板。
 
 ```ts
 const mapped = (items || []).map((item: any) => ({
@@ -160,17 +160,17 @@ const mapped = (items || []).map((item: any) => ({
 }))
 ```
 
-### Date Handling
+### 日期处理
 
-`dayjs` is centralized in `src/utils/util.ts`. Use `formatDateTime()` and `getRecentDayRange()` from there; do not import `dayjs` directly in components. Personnel location's `downholeInfoJs.ts` previously had duplicate `formatterDate`/`getCurrDateTime`/`getInitDate` — these have been removed; always use the `util.ts` versions.
+`dayjs` 集中在 `src/utils/util.ts`。使用其中的 `formatDateTime()` 和 `getRecentDayRange()`，不要在组件中直接 `import dayjs`。人员定位的 `downholeInfoJs.ts` 之前有重复的 `formatterDate`/`getCurrDateTime`/`getInitDate`，现已删除，统一使用 `util.ts` 版本。
 
-### KPI Constants
+### KPI 常量
 
-KPI metadata (labels, icons, colors, top-bar priorities) is centralized in `src/constants/kpi.ts` and exported as `KPI_LIST`, `KPI_CONFIG`, and `TOP_KPI_KEYS`. Shared components such as `KpiSection` consume this config directly.
+KPI 元数据（标签、图标、颜色、顶栏优先级）集中在 `src/constants/kpi.ts`，导出 `KPI_LIST`、`KPI_CONFIG`、`TOP_KPI_KEYS`。`KpiSection` 等共享组件直接引用此配置。
 
-### ECharts + Composables Pattern
+### ECharts + Composables 模式
 
-Use `src/composables/useECharts.ts` for chart lifecycle:
+使用 `src/composables/useECharts.ts` 管理图表生命周期：
 
 ```ts
 const chartRef = ref<HTMLDivElement>()
@@ -182,131 +182,131 @@ async function initChart() {
 }
 ```
 
-- `chart` is a `shallowRef`; access the instance via `chart.value`.
-- Always call `init()` before `setOption()` and guard with `if (!init()) return`.
-- `darkChartTheme()` provides the dark-theme base (grid, textStyle, tooltip, axis defaults).
-- The composable exposes `resize()` and `dispose()` but does **not** call them automatically. Components must wire up `ResizeObserver` / `window.resize` and call `dispose()` in `onBeforeUnmount`.
-- For clicks on chart blank areas (not just series), use `chart.value.getZr()` and `convertToPixel` with segment-based Y-axis calculations; recalculate on resize via `ResizeObserver`.
-- Personnel location charts use inline ECharts inits in `src/views/personnel_location/downholeInfoJs.ts` (separate pattern — see below).
+- `chart` 是 `shallowRef`，通过 `chart.value` 访问实例。
+- 必须先调用 `init()` 再 `setOption()`，并用 `if (!init()) return` 保护。
+- `darkChartTheme()` 提供暗色主题基础配置（grid、textStyle、tooltip、axis 默认值）。
+- composable 暴露 `resize()` 和 `dispose()`，但**不**自动调用。组件需自行接入 `ResizeObserver` / `window.resize`，并在 `onBeforeUnmount` 中调用 `dispose()`。
+- 点击图表空白区域（而非系列元素）时，使用 `chart.value.getZr()` + `convertToPixel` 配合分段 Y 轴计算；在 `ResizeObserver` 中重算。
+- 人员定位图表使用 `src/views/personnel_location/downholeInfoJs.ts` 中内联的 ECharts 初始化（不使用 `useECharts` composable），见下方说明。
 
-### Theme System
+### 主题系统
 
-- CSS variables live in `src/assets/styles/main.css` under `:root`, `[data-theme='theme-dark']`, and `[data-theme='theme-light']`.
-- Theme resolution runs in `App.vue` on mount: URL `theme` query → `localStorage` → default `theme-dark`.
-- Chart colors: `--chart-1` … `--chart-8`.
-- Z-index scale: `--z-content` (10), `--z-sticky` (20), `--z-overlay` (30), `--z-modal` (50), `--z-loading` (100).
-- Font sizes: `--font-size-hero`, `--font-size-lg`, `--font-size-base`, `--font-size-sm`, `--font-size-xs`.
-- Element Plus and Vant CSS variables are also overridden in the same file.
-- Respects `prefers-reduced-motion`.
+- CSS 变量定义在 `src/assets/styles/main.css` 的 `:root`、`[data-theme='theme-dark']`、`[data-theme='theme-light']` 中。
+- 主题解析在 `App.vue` 挂载时执行：URL 参数 `theme` → `localStorage` → 默认 `theme-dark`。
+- 图表颜色：`--chart-1` … `--chart-8`。
+- Z-index 层级：`--z-content` (10)、`--z-sticky` (20)、`--z-overlay` (30)、`--z-modal` (50)、`--z-loading` (100)。
+- 字号：`--font-size-hero`、`--font-size-lg`、`--font-size-base`、`--font-size-sm`、`--font-size-xs`。
+- Element Plus 和 Vant 的 CSS 变量也在同一文件中覆写。
+- 支持 `prefers-reduced-motion`。
 
-### Pinia Stores
+### Pinia Store
 
-| Store | File | Purpose |
+| Store | 文件 | 用途 |
 |---|---|---|
-| `app` | `src/stores/app.ts` | Sidebar state, `isMobile`, size, `histPopup` |
-| `settings` | `src/stores/settings.ts` | Theme (dark/light) |
-| `user` | `src/stores/user.ts` | Token, login actions |
+| `app` | `src/stores/app.ts` | 侧边栏状态、`isMobile`、size、`histPopup` |
+| `settings` | `src/stores/settings.ts` | 主题（暗色/浅色） |
+| `user` | `src/stores/user.ts` | Token、登录操作 |
 
-### Vite Configuration Notes
+### Vite 配置说明
 
-- Base path: `/WebMineManage` (matches production deploy and `createWebHistory`).
-- Dev server: `host: '0.0.0.0'`, `port: 8080`.
-- Proxies: `/net`, `/DigitizingMine`, `/cas`, `/bwmes-boot`, `/bwPublic` → `VITE_API_TARGET`.
-- Manual chunks: `chunk-libs`, `chunk-element-plus`, `chunk-vant`, `chunk-echarts`.
-- Production build: terser with `drop_console` and `drop_debugger`, output to `dist/WebMineManage/`.
-- SCSS uses the modern-compiler API.
-- Custom plugins in `vite-plugin/`:
-  - `injectSsoSdk.ts` — injects BW SSO SDK script.
-  - `generateVersionJson.ts` — writes `dist/<VITE_APP_PATH>/version.json` at the end of production build using `VITE_APP_VERSION` and `VITE_APP_PATH`.
+- 基础路径：`/WebMineManage`（与生产部署和 `createWebHistory` 一致）。
+- 开发服务器：`host: '0.0.0.0'`、`port: 8080`。
+- 代理：`/net`、`/DigitizingMine`、`/cas`、`/bwmes-boot`、`/bwPublic` → `VITE_API_TARGET`。
+- 手动分包：`chunk-libs`、`chunk-element-plus`、`chunk-vant`、`chunk-echarts`。
+- 生产构建：terser 压缩（`drop_console`、`drop_debugger`），输出到 `dist/WebMineManage/`。
+- SCSS 使用 modern-compiler API。
+- 自定义插件在 `vite-plugin/` 中：
+  - `injectSsoSdk.ts` — 注入 BW SSO SDK 脚本。
+  - `generateVersionJson.ts` — 生产构建结束时写入 `dist/<VITE_APP_PATH>/version.json`，使用 `VITE_APP_VERSION` 和 `VITE_APP_PATH`。
 
-### Component Conventions (main system)
+### 组件规范（主系统）
 
-- Use `<script setup lang="ts">` with `defineOptions({ name: '...' })`.
-- Props: `withDefaults(defineProps<{...}>(), {...})`.
-- Emits: `defineEmits<{ eventName: [args] }>()`.
-- Styles: scoped + CSS custom properties.
-- Auto-refresh in `onMounted` via `setInterval`, cleared in `onBeforeUnmount`.
-- Show loading skeletons for async content and empty states for no data.
+- 使用 `<script setup lang="ts">` + `defineOptions({ name: '...' })`。
+- Props：`withDefaults(defineProps<{...}>(), {...})`。
+- Emits：`defineEmits<{ eventName: [args] }>()`。
+- 样式：scoped + CSS 自定义属性。
+- 在 `onMounted` 中用 `setInterval` 自动刷新，在 `onBeforeUnmount` 中清除。
+- 异步内容显示 loading 骨架屏，无数据显示空状态。
 
-### Personnel Location Module (legacy migration)
+### 人员定位模块（遗留迁移）
 
-The personnel location module (`src/views/personnel_location/`, `src/components/personnelLocation/`) was migrated from a Vue 2 project (`D:\bw\Bw.WebMineManage`) and uses a **different pattern** from the rest of the codebase:
+人员定位模块（`src/views/personnel_location/`、`src/components/personnelLocation/`）从 Vue 2 项目（`D:\bw\Bw.WebMineManage`）迁移而来，使用与主系统**不同的模式**：
 
-- **Options API** (`export default { data() {...}, methods: {...} }`) — not `<script setup lang="ts">`.
-- **Shared composable** — table/pagination state is provided by `usePersonnelLocation()` from `src/composables/usePersonnelLocation.ts`. Popup components use it via `setup()`: `const { showPopup, table, selectionChange, pageFieldConvert, addDefaultParam } = usePersonnelLocation()`. The composable exposes `table` state (dataSource, total, pageNo, pageSize, loading, queryParam) and helper functions; `search`/`pageChange` methods must be defined in each consuming component.
-- **Scoped styles** via `.personnel-page` class to prevent style leakage to other pages.
-- **CSS variables** prefixed `--pl-*` or aliased in `main.css` under `:root` (global, but most are only referenced inside `.personnel-page` selectors). Light theme overrides at `html[data-theme='theme-light']`.
-- **Inline ECharts** — chart init functions live in `src/views/personnel_location/downholeInfoJs.ts` (not `useECharts` composable), using module-level variables (`myChartBar`, `myChartLine`) and manual resize listeners. Module now written in TypeScript with typed interfaces.
-- **Chart container guard** — must check `clientWidth > 0 && clientHeight > 0` before `echarts.init()` or it fails silently.
+- **Options API**（`export default { data() {...}, methods: {...} }`）— 而非 `<script setup lang="ts">`。
+- **共享 composable** — 表格/分页状态由 `src/composables/usePersonnelLocation.ts` 提供。弹窗组件通过 `setup()` 使用：`const { showPopup, table, selectionChange, pageFieldConvert, addDefaultParam } = usePersonnelLocation()`。composable 暴露 `table` 状态（dataSource、total、pageNo、pageSize、loading、queryParam）和工具函数；`search`/`pageChange` 方法需在每个消费组件中自行定义。
+- **Scoped 样式** — 通过 `.personnel-page` 类限定作用域，防止样式泄漏到其他页面。
+- **CSS 变量** — 以 `--pl-*` 为前缀或在 `main.css` 的 `:root` 中设置别名（全局，但大部分只在 `.personnel-page` 选择器内引用）。浅色主题覆写在 `html[data-theme='theme-light']`。
+- **内联 ECharts** — 图表初始化函数在 `src/views/personnel_location/downholeInfoJs.ts` 中（不使用 `useECharts` composable），使用模块级变量（`myChartBar`、`myChartLine`）和手动 resize 监听。该模块已用 TypeScript 重写并添加类型接口。
+- **容器尺寸检查** — `echarts.init()` 前必须检查 `clientWidth > 0 && clientHeight > 0`，否则会静默失败。
 
-When editing personnel location files, match the existing style (Options API, composable setup pattern) rather than converting to Composition API piecemeal.
+编辑人员定位文件时，请匹配既有风格（Options API + composable setup 模式），不要逐一转为 Composition API。
 
-### Dialog / Popup Pattern (personnel location)
+### 弹窗模式（人员定位）
 
-Personnel location uses a child-ref dialog pattern:
+人员定位使用子组件 ref 弹窗模式：
 
 ```vue
 <trackInfoPopup ref="trackInfoPopup"></trackInfoPopup>
 <userInfoPopup ref="userInfoPopup"></userInfoPopup>
 
 <script>
-// Open from parent:
+// 从父组件打开：
 this.$refs.trackInfoPopup.show(row)
 </script>
 ```
 
-Two dialog approaches exist:
-- **Direct `el-dialog`** — `userInfoPopup.vue` uses `<el-dialog append-to-body>` directly.
-- **Wrapped `trajectoryQuery.vue`** — most popups (`downUserNumInfoPopup`, `deviceStatePopup`, etc.) use `<Popup>` which wraps `el-dialog`. It accepts `:appendToBody` prop (default `false`) and uses `v-model` + `:isShow` prop for visibility control.
+有两种弹窗实现：
+- **直接使用 `el-dialog`** — `userInfoPopup.vue` 直接在模板中使用 `<el-dialog append-to-body>`。
+- **封装 `trajectoryQuery.vue`** — 大部分弹窗（`downUserNumInfoPopup`、`deviceStatePopup` 等）使用 `<Popup>` 组件，该组件封装了 `el-dialog`。接受 `:appendToBody` prop（默认 `false`），通过 `v-model` + `:isShow` prop 控制显隐。
 
-Key rules:
-- Always set `append-to-body` on dialogs inside flex/scroll containers to avoid stacking-context clipping.
-- Scoped `::v-deep` styles don't affect dialogs with `append-to-body` (they're moved outside the component). Use a non-scoped `<style>` block for dialog appearance, scoping selectors to avoid global leakage.
-- Dialog CSS variables (`--popup-bgColor`, `--popup-textColor`, `--user-popup-*`) are defined in `main.css` at `:root` with `html[data-theme='theme-light']` overrides.
+关键规则：
+- 在 flex/scroll 容器内的弹窗**必须**设置 `append-to-body`，否则会被层叠上下文裁剪。
+- Scoped 的 `::v-deep` 样式无法作用于 `append-to-body` 的弹窗（DOM 被移到了组件外）。弹窗外观样式应放在非 scoped `<style>` 块中，并用选择器限定范围防止全局泄漏。
+- 弹窗 CSS 变量（`--popup-bgColor`、`--popup-textColor`、`--user-popup-*`）在 `main.css` 的 `:root` 中定义，`html[data-theme='theme-light']` 中有浅色覆写。
 
-### API Modules
+### API 模块
 
-| File | Module | Notable IDs |
+| 文件 | 模块 | 主要 ID |
 |---|---|---|
-| `safetyMonitoring.ts` | 安全监测 | Recent alarm records |
-| `newSafetyMonitoring.ts` | 新版安全监测 | Area/deviation/pressure |
-| `minePressure.ts` | 矿压监测 | 1942–1987 range |
-| `personnelLocation.ts` | 人员定位 | ~30 functions, IDs 5259–6748 |
-| `production.ts` | 生产监控 | Production metrics |
-| `yieldMonitor.ts` | 产量监测 | Yield data |
-| `statisticalGraph.ts` | 统计图表 | Aggregate queries |
-| `appAlarm.ts` | 移动端报警 | Mobile alarm lists |
-| `ealTimeAlarm.ts` | 实时报警 | Real-time alarms |
-| `bar.ts` | 柱状图数据 | 1942 category stats |
-| `mine.ts` | 矿井信息 | Mine-level queries |
-| `helpers.ts` | 策略 API 辅助 | Shared helpers + `getMineName()` |
+| `safetyMonitoring.ts` | 安全监测 | 报警记录 |
+| `newSafetyMonitoring.ts` | 新版安全监测 | 区域/偏差/压力 |
+| `minePressure.ts` | 矿压监测 | 1942–1987 |
+| `personnelLocation.ts` | 人员定位 | ~30 个函数，ID 5259–6748 |
+| `production.ts` | 生产监控 | 生产指标 |
+| `yieldMonitor.ts` | 产量监测 | 产量数据 |
+| `statisticalGraph.ts` | 统计图表 | 汇总查询 |
+| `appAlarm.ts` | 移动端报警 | 移动报警列表 |
+| `ealTimeAlarm.ts` | 实时报警 | 实时报警 |
+| `bar.ts` | 柱状图数据 | 1942 分类统计 |
+| `mine.ts` | 矿井信息 | 矿井查询 |
+| `helpers.ts` | 策略 API 辅助 | 共享工具 + `getMineName()` |
 
-### Testing
+### 测试
 
-Playwright uses a custom fixture in `tests/utils/setup.ts` that mocks `BW_SSO_SDK` and intercepts API routes with mock data. Two projects: `chromium` (desktop) and `mobile-chrome` (Pixel 5). WebServer runs Vite on port `8081` during tests; tests use `baseURL: http://localhost:8081` while dev runs on `8080`. Screenshots, videos, and traces are retained on failure/first retry.
+Playwright 使用 `tests/utils/setup.ts` 中的自定义 fixture，该 fixture 模拟 `BW_SSO_SDK` 并用 Mock 数据拦截 API 路由。两个测试项目：`chromium`（桌面端）和 `mobile-chrome`（Pixel 5）。WebServer 在测试时以 `8081` 端口运行 Vite；测试使用 `baseURL: http://localhost:8081`，开发时使用 `8080`。失败/首次重试时保留截图、视频和 trace。
 
-### Pagination Component
+### Pagination 分页组件
 
-Use the globally registered `<Pagination>` component (`src/components/Pagination/index.vue`) for all paged tables:
-- Props: `total`, `page`, `limit`, `pageSizes`, `layout`, `small`, `hidden` (hides when total is 0)
-- Event: `@pagination="{ page, limit }"`
-- Personnel location's `tableComponent.vue` uses this component internally
+使用全局注册的 `<Pagination>` 组件（`src/components/Pagination/index.vue`）实现所有分页表格：
+- Props：`total`、`page`、`limit`、`pageSizes`、`layout`、`small`、`hidden`（总数为 0 时隐藏）
+- 事件：`@pagination="{ page, limit }"`
+- 人员定位的 `tableComponent.vue` 内部使用该组件
 
-### Table Component (Personnel Location)
+### TableComponent 表格组件（人员定位）
 
-`src/components/personnelLocation/tableComponent.vue` (`BaseTable`) is the shared table wrapper used by all personnel-location views:
-- Supports selection, index, sort, column slots (action buttons + "更多" dropdown)
-- Emits `tableUpdate` with `{ currentPage, pageSize }` on page/size changes
-- Column configs are typed via `ColumnConfig` interface in `src/components/personnelLocation/config/tableColumns.ts`
-- Uses centralized `Pagination` component (not inline `el-pagination`)
-- Avoid `el-icon-*` CSS classes — they don't work in Element Plus Vue 3. Use inline SVGs instead.
+`src/components/personnelLocation/tableComponent.vue`（`BaseTable`）是人员定位所有视图共用的表格封装组件：
+- 支持选择框、序号、排序、操作列插槽（直接按钮 + "更多"下拉）
+- 分页/尺寸变更时触发 `tableUpdate` 事件，参数 `{ currentPage, pageSize }`
+- 列配置通过 `src/components/personnelLocation/config/tableColumns.ts` 中的 `ColumnConfig` 接口定义类型
+- 使用集中的 `<Pagination>` 组件（而非内联 `el-pagination`）
+- **避免使用 `el-icon-*` CSS 类名** — 它们在 Element Plus Vue 3 中无效。使用内联 SVG 代替。
 
-### Design System
+### 设计系统
 
-`design-system/` contains a hierarchical design system:
+`design-system/` 目录包含分层设计系统：
 
-- `MASTER.md` — global source of truth (CSS variables, palette, typography, z-index, component rules, chart rules, accessibility).
-- `pages/<name>.md` — page-level overrides for specific modules (`safetyMonitoring.md`, `personnelLocation.md`, `minePressure.md`, `dashboard.md`).
-- `guidelines-supplement.md` — supplementary design guidelines.
+- `MASTER.md` — 全局事实标准（CSS 变量、调色板、排版、z-index、组件规则、图表规则、无障碍）。
+- `pages/<name>.md` — 特定模块的页面级覆写（`safetyMonitoring.md`、`personnelLocation.md`、`minePressure.md`、`dashboard.md`）。
+- `guidelines-supplement.md` — 补充设计指南。
 
-Reference these when designing or modifying UI.
+设计或修改 UI 时请参考这些文档。
