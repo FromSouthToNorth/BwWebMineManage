@@ -1,6 +1,6 @@
 <template>
   <div>
-    <el-dialog :title="title" v-model="visible" :width="width" :append-to-body="false" :destroy-on-close="destroy"
+    <el-dialog :title="title" v-model="visible" :width="width" :append-to-body="appendToBody" :destroy-on-close="destroy"
       :close-on-click-modal="false" :modal="modal" @close="close">
       <div class="searchBar" v-if="isQuery">
         <baseQueryBarVue :formItemList="formItemList" :query="isQueryBtn" :queryName="queryName" :showLabel="true"
