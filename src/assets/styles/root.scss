@@ -1,0 +1,80 @@
+:root {
+  /* 全局字体颜色 */
+  --text-color: #bfbfbf;
+
+  /* 页面标题背景色 */
+  --textBgColor: #c2d3ff;
+
+  /* 全局背景色 */
+  --BgColor: #08204d;
+
+  /* 字体 */
+  --font-family: "黑体";
+
+  /* 突出显示文本的颜色 */
+  --highlight-color: #00dfe7;
+
+  /* 按钮样式 */
+  --botton-font-weight: bold;
+  --botton-TextColor: var(--text-color);
+  --botton-BgColor: radial-gradient(
+    45.93% 33.9% at 50% 100%,
+    #62cbff 0%,
+    #1b8bb7 100%
+  );
+
+  /* 公共阴影 */
+  --box-shadow: 0 4px 8px 0 rgb(0 80 115 / 41%) inset;
+
+  /* 下井人数 分割线样式 */
+  --DownNum-fg: linear-gradient(
+    to top,
+    #193a4f 0%,
+    var(--text-color) 50%,
+    #193a4f 100%
+  );
+
+  /* 下拉菜单背景色 */
+  --dropdown-menu: rgb(34 85 143 / 90%);
+
+  /* 警告样式 */
+  --warnBgColor: rgb(109 13 13 / 32%);
+  --warnNumberColor: rgb(255 56 56 / 100%);
+  --warnBorderColor: rgb(123 45 45 / 100%);
+
+  /* 图表按钮样式 */
+  --chart-BtnBgColor: #142737;
+  --chart-BtnBorderColor: rgb(51 205 254 / 24%);
+  --chart_BgColor: #0c254f;
+
+  /* 图表虚线样式 */
+  --chartDashedColor: rgb(55 127 255 / 20%);
+  --chartBarUpGradientColor: rgb(0 201 189 / 100%);
+  --chartBarLoGradientColor: rgb(17 124 184 / 100%);
+
+  /* 表格样式 */
+  --table-HeaderTextColor: #ffcf00;
+  --table-HeaderBgColor: #061b46;
+  --table-ScrollbarColor: #c0c0c0;
+  --table-ScrollbarBgColor: #f1f1f2;
+  --table-OddColor: #0c254f;
+  --table-EvenColor: #041538;
+  --table-HoverBgColor: #454d53;
+  --table-HoverTextColor: #fff;
+  --table-Border: none;
+  --table-page-TextColor: #fff;
+
+  /* 个人详情弹窗背景色 */
+  --popup-BgColor: #061b46;
+
+  /* 分页器样式 */
+  --page-CurrbgColor: #72808b;
+
+  /* 个人出勤页面 个人统计组件样式 */
+  --count-BgColor: rgb(167 167 167 / 8%);
+  --count-BorderColor: rgb(167 167 167 / 20%);
+
+  /* app样式 */
+  --box-BgColor-App: #0c254f;
+  --header-tn-BgColor: rgb(40 59 73);
+}

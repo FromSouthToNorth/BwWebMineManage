@@ -45,3 +45,9 @@ onBeforeUnmount(() => {
   window.removeEventListener('resize', checkDeviceType)
 })
 </script>
+
+<style>
+#app {
+  height: 100%;
+}
+</style>
