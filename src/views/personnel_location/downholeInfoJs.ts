@@ -5,25 +5,47 @@
 import { getDownHoleLineData, getDownHoleBarData } from '@/api/system/personnelLocation'
 import { getMineName } from '@/api/system/helpers'
 import * as echarts from 'echarts'
+import type { ECharts } from 'echarts'
 import router from '@/router'
 import { DATA_THEME } from '@/utils/constants'
 
 /** 检查 DOM 元素是否有有效尺寸（ECharts 渲染的前提条件） */
-function isValidChartContainer(el) {
+function isValidChartContainer(el: HTMLElement | null): boolean {
   if (!el) return false
   const w = el.clientWidth || el.offsetWidth
   const h = el.clientHeight || el.offsetHeight
   return w > 0 && h > 0
 }
-let myChartLine, myChartBar
+
+let myChartLine: ECharts | null = null
+let myChartBar: ECharts | null = null
 let _resizeGuard = false
+
 function ensureGlobalResize() {
   if (_resizeGuard) return
   _resizeGuard = true
   window.addEventListener('resize', () => { if (myChartLine) myChartLine.resize() })
   window.addEventListener('resize', () => { if (myChartBar) myChartBar.resize() })
 }
-let str = [
+
+interface MonthItem {
+  k: number
+  v: string
+}
+
+interface YearData {
+  years: Array<{ value: number; name: number }>
+  year: number
+  month: number
+  day: number
+}
+
+interface LineData {
+  lineXData: string[]
+  lineYData: number[]
+}
+
+const str: MonthItem[] = [
   { k: 1, v: '一月' }, { k: 2, v: '二月' }, { k: 3, v: '三月' },
   { k: 4, v: '四月' }, { k: 5, v: '五月' }, { k: 6, v: '六月' },
   { k: 7, v: '七月' }, { k: 8, v: '八月' }, { k: 9, v: '九月' },
@@ -34,12 +56,12 @@ const rootElement = document.documentElement
 const ComputedStyle = getComputedStyle(rootElement)
 
 /* 获取年份 */
-export function getYear() {
-  let date = new Date()
-  let y = date.getFullYear()
-  let m = date.getMonth() + 1
-  let d = date.getDate()
-  let data = { years: [], year: '', month: '', day: '' }
+export function getYear(): YearData {
+  const date = new Date()
+  const y = date.getFullYear()
+  const m = date.getMonth() + 1
+  const d = date.getDate()
+  const data: YearData = { years: [], year: y, month: m, day: d }
   for (let i = 0; i <= 2; i++) {
     data.years.unshift({ value: y - i, name: y - i })
   }
@@ -50,92 +72,38 @@ export function getYear() {
   return data
 }
 
-/* 获取默认时间 */
-export function getInitDate(numOfDays) {
-  let date = new Date()
-  date.setDate(date.getDate() - numOfDays)
-  let year1 = date.getFullYear()
-  let month1 = date.getMonth() + 1
-  let day1 = date.getDate()
-  let StartTime = `${year1}-${month1 < 10 ? '0' + month1 : month1}-${day1 < 10 ? '0' + day1 : day1}`
-  date = new Date()
-  date.setDate(date.getDate() + 1)
-  let year2 = date.getFullYear()
-  let month2 = date.getMonth() + 1
-  let day2 = date.getDate()
-  let EndTime = `${year2}-${month2 < 10 ? '0' + month2 : month2}-${day2 < 10 ? '0' + day2 : day2}`
-  return { StartTime, EndTime }
-}
-
-function getTheme() {
-  return localStorage.getItem(DATA_THEME) == 'light'
-}
-
-/* 获取当前时间 */
-export function getCurrDateTime() {
-  const now = new Date()
-  const year = now.getFullYear()
-  const month = String(now.getMonth() + 1).padStart(2, '0')
-  const day = String(now.getDate()).padStart(2, '0')
-  const hours = String(now.getHours()).padStart(2, '0')
-  const minutes = String(now.getMinutes()).padStart(2, '0')
-  const seconds = String(now.getSeconds()).padStart(2, '0')
-  return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`
-}
-
-/** 格式化时间 */
-export function formatterDate(timestamps, fmt) {
-  let date = new Date(timestamps)
-  let str = fmt
-  str = str.replace('yyyy', date.getFullYear())
-  str = str.replace('MM', formatNum(date.getMonth() + 1))
-  str = str.replace('dd', formatNum(date.getDate()))
-  str = str.replace('HH', formatNum(date.getHours()))
-  str = str.replace('mm', formatNum(date.getMinutes()))
-  str = str.replace('ss', formatNum(date.getSeconds()))
-  str = str.replace('sss', formatMilliseconds(date.getMilliseconds()))
-  return str
-}
-
-function formatNum(arg0) {
-  let str = arg0.toString()
-  return str.length == 1 ? '0' + str : str
-}
-
-function formatMilliseconds(arg) {
-  var str = arg.toString()
-  if (str.length == 1) return '00' + str
-  else if (str.length == 2) return '0' + str
-  else if (str.length == 3) return str
+function getTheme(): boolean {
+  return localStorage.getItem(DATA_THEME) === 'light'
 }
 
 /** 对象属性转首字母大写（不修改原对象） */
-export const transitionKeyUp = (item) => {
-  const result = { ...item }
-  for (var key in result) {
-    const firstString = key[0].toUpperCase()
-    const leftKey = key.substring(1)
-    const allKey = firstString + leftKey
-    result[allKey] = result[key]
-    if (allKey != key) delete result[key]
+export function transitionKeyUp<T extends Record<string, any>>(item: T): Record<string, any> {
+  const result: Record<string, any> = { ...item }
+  for (const key in result) {
+    if (Object.prototype.hasOwnProperty.call(result, key)) {
+      const firstString = key[0].toUpperCase()
+      const leftKey = key.substring(1)
+      const allKey = firstString + leftKey
+      result[allKey] = result[key]
+      if (allKey !== key) delete result[key]
+    }
   }
   return result
 }
 
-export const upperJSONKey = (arr) => {
-  let upArr = []
+export function upperJSONKey(arr: any[]): Record<string, any>[] {
+  const upArr: Record<string, any>[] = []
   arr.forEach((item) => upArr.push(transitionKeyUp(item)))
   return upArr
 }
 
 /** 数字月转中文月份 */
-export async function getLineData(val, year) {
-  const str = val
-  let datas = { lineXData: [], lineYData: [] }
+export async function getLineData(val: MonthItem[], year: number | string): Promise<LineData> {
+  const datas: LineData = { lineXData: [], lineYData: [] }
   const { data } = await getDownHoleLineData(5260, getMineName(), year)
-  if (data != null && data.length != 0) {
-    data.forEach((item, index) => {
-      datas.lineXData.push(item.month == str[index].k ? str[index].v : item.month)
+  if (data != null && data.length !== 0) {
+    data.forEach((item: any, index: number) => {
+      datas.lineXData.push(item.month === val[index].k ? val[index].v : item.month)
       datas.lineYData.push(item.num)
     })
   }
@@ -143,21 +111,21 @@ export async function getLineData(val, year) {
 }
 
 /** 分页组件返回字段转策略分页字段 */
-export function pageFieldConvert(result) {
+export function pageFieldConvert(result: { currentPage: number; pageSize: number }): { Page: number; Row: number } {
   return { Page: result.currentPage, Row: result.pageSize }
 }
 
 /** 初始化折线图 */
-export function GetinitLine(that, charBox, unit, ShowToolBox) {
+export function GetinitLine(that: any, charBox: HTMLElement | null, unit: string, ShowToolBox?: boolean): void {
   if (myChartLine) myChartLine.dispose()
   if (!isValidChartContainer(charBox)) return
   ensureGlobalResize()
 
-  let chartDom = charBox
+  const chartDom = charBox!
   myChartLine = echarts.init(chartDom)
-  let option = {
+  const option = {
     color: {
-      type: 'linear', x: 0, y: 0, x2: 0, y2: 1,
+      type: 'linear' as const, x: 0, y: 0, x2: 0, y2: 1,
       colorStops: [
         { offset: 0, color: '#00B2BF' },
         { offset: 1, color: '#00B2BF00' },
@@ -165,11 +133,11 @@ export function GetinitLine(that, charBox, unit, ShowToolBox) {
       global: false,
     },
     tooltip: {
-      trigger: 'axis',
+      trigger: 'axis' as const,
       axisPointer: { axis: 'x', color: 'rgba(245, 255, 133, 1)' },
-      formatter: (params) => {
-        var result = params[0].axisValueLabel + '<br>'
-        params.forEach(function (item) {
+      formatter: (params: any) => {
+        let result = params[0].axisValueLabel + '<br>'
+        params.forEach(function (item: any) {
           if (item.value) result += item.marker + `${unit} : ` + item.value + '</br>'
         })
         that.chartsCurrentData = params[0]
@@ -177,7 +145,7 @@ export function GetinitLine(that, charBox, unit, ShowToolBox) {
       },
     },
     toolbox: {
-      show: ShowToolBox == undefined ? true : ShowToolBox,
+      show: ShowToolBox === undefined ? true : ShowToolBox,
       top: 0,
       feature: {
         dataZoom: { yAxisIndex: 'none' },
@@ -211,12 +179,12 @@ export function GetinitLine(that, charBox, unit, ShowToolBox) {
 
   myChartLine.setOption(option)
   myChartLine.off('click')
-  myChartLine.getZr().on('click', (params) => {
+  myChartLine.getZr().on('click', (params: any) => {
     const chickData = that.chartsCurrentData
     const pointInPixel = [params.offsetX, params.offsetY]
-    if (myChartLine.containPixel('grid', pointInPixel)) {
-      let data = { name: chickData.name, value: chickData.value, color: chickData.color }
-      that.str.forEach((item) => {
+    if (myChartLine!.containPixel('grid', pointInPixel)) {
+      const data = { name: chickData.name, value: chickData.value, color: chickData.color }
+      str.forEach((item) => {
         if (data.name === item.v) { that.month = item.k; that.getBarData() }
       })
     }
@@ -224,15 +192,15 @@ export function GetinitLine(that, charBox, unit, ShowToolBox) {
 }
 
 /** 初始化折线图多数据源 */
-export function GetinitLines(that, charBox, unit, ShowToolBox) {
+export function GetinitLines(that: any, charBox: HTMLElement | null, unit: string, ShowToolBox?: boolean): void {
   if (myChartLine) myChartLine.dispose()
   ensureGlobalResize()
-  let dom = charBox
+  const dom = charBox!
   myChartLine = echarts.init(dom)
-  let option = {
-    tooltip: { trigger: 'axis' },
+  const option = {
+    tooltip: { trigger: 'axis' as const },
     toolbox: {
-      show: ShowToolBox == undefined ? true : ShowToolBox, top: 15,
+      show: ShowToolBox === undefined ? true : ShowToolBox, top: 15,
       feature: {
         dataZoom: { yAxisIndex: 'none' },
         dataView: { readOnly: false },
@@ -250,7 +218,7 @@ export function GetinitLines(that, charBox, unit, ShowToolBox) {
     xAxis: {
       type: 'category', boundaryGap: false, data: that.lineXData,
       axisLabel: {
-        show: true, formatter: function (value, index) { return value },
+        show: true, formatter: function (value: string) { return value },
         color: ComputedStyle.getPropertyValue('--text-color'),
       },
     },
@@ -279,15 +247,15 @@ export function GetinitLines(that, charBox, unit, ShowToolBox) {
   }
   myChartLine.setOption(option)
   myChartLine.off('click')
-  myChartLine.getZr().on('click', (params) => {
-    let pointInPixel = [params.offsetX, params.offsetY]
-    if (myChartLine.containPixel('grid', pointInPixel)) {
-      let pointInGrid = myChartLine.convertFromPixel({ seriesIndex: 0 }, pointInPixel)
-      let xIndex = pointInGrid[0]
-      let handleIndex = Number(xIndex)
-      var op = myChartLine.getOption()
-      var month = op.xAxis[0].data[handleIndex]
-      let M = month.substring(0, month.indexOf('月'))
+  myChartLine.getZr().on('click', (params: any) => {
+    const pointInPixel = [params.offsetX, params.offsetY]
+    if (myChartLine!.containPixel('grid', pointInPixel)) {
+      const pointInGrid = myChartLine!.convertFromPixel({ seriesIndex: 0 }, pointInPixel)
+      const xIndex = pointInGrid[0]
+      const handleIndex = Number(xIndex)
+      const op = myChartLine!.getOption()
+      const month = (op as any).xAxis[0].data[handleIndex]
+      const M = month.substring(0, month.indexOf('月'))
       that.params.month = M
       that.month = M
       that.getpolyc5286()
@@ -296,13 +264,13 @@ export function GetinitLines(that, charBox, unit, ShowToolBox) {
 }
 
 /** 初始化柱状图滚动数据 */
-export function getinitBarZoom(that, chartBox, unit) {
-  if (myChartBar != null && myChartBar != '' && myChartBar != undefined) myChartBar.dispose()
+export function getinitBarZoom(that: any, chartBox: HTMLElement | null, unit: string): void {
+  if (myChartBar != null && myChartBar !== '' && myChartBar !== undefined) myChartBar.dispose()
   if (!isValidChartContainer(chartBox)) return
   ensureGlobalResize()
-  let chartDom = chartBox
+  const chartDom = chartBox!
   myChartBar = echarts.init(chartDom)
-  let option = {
+  const option = {
     color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
       { offset: 0, color: 'rgba(0, 201, 189, 1)' },
       { offset: 1, color: 'rgba(17, 124, 184, 1)' },
@@ -319,9 +287,9 @@ export function getinitBarZoom(that, chartBox, unit) {
     },
     tooltip: {
       trigger: 'axis',
-      formatter: (params) => {
-        var result = params[0].axisValueLabel + '<br>'
-        params.forEach(function (item) {
+      formatter: (params: any) => {
+        let result = params[0].axisValueLabel + '<br>'
+        params.forEach(function (item: any) {
           if (item.value) result += item.marker + `${unit} : ` + item.value + '</br>'
         })
         return result
@@ -364,19 +332,26 @@ export function getinitBarZoom(that, chartBox, unit) {
 }
 
 /** 初始化柱状图 */
-export function getinitBar(that, chartBox, unit, routeInfo, width, showToolBox) {
-  if (myChartBar != null && myChartBar != '' && myChartBar != undefined) myChartBar.dispose()
+export function getinitBar(
+  that: any,
+  chartBox: HTMLElement | null,
+  unit: string,
+  routeInfo: { path?: string; param?: Record<string, any> },
+  width?: any,
+  showToolBox?: boolean,
+): void {
+  if (myChartBar != null && myChartBar !== '' && myChartBar !== undefined) myChartBar.dispose()
   if (!isValidChartContainer(chartBox)) return
   ensureGlobalResize()
-  let chartDom = chartBox
+  const chartDom = chartBox!
   myChartBar = echarts.init(chartDom)
-  let option = {
+  const option = {
     color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
       { offset: 0, color: 'rgba(0, 201, 189, 1)' },
       { offset: 1, color: 'rgba(17, 124, 184, 1)' },
     ]),
     toolbox: {
-      show: showToolBox == undefined ? true : showToolBox, top: 0,
+      show: showToolBox === undefined ? true : showToolBox, top: 0,
       feature: {
         dataZoom: { yAxisIndex: 'none' },
         dataView: { readOnly: false },
@@ -387,9 +362,9 @@ export function getinitBar(that, chartBox, unit, routeInfo, width, showToolBox) 
     },
     tooltip: {
       trigger: 'axis',
-      formatter: (params) => {
-        var result = params[0].axisValueLabel + '<br>'
-        params.forEach(function (item) {
+      formatter: (params: any) => {
+        let result = params[0].axisValueLabel + '<br>'
+        params.forEach(function (item: any) {
           if (item.value) result += item.marker + `${unit} :` + item.value + '</br>'
         })
         return result
@@ -416,13 +391,13 @@ export function getinitBar(that, chartBox, unit, routeInfo, width, showToolBox) 
   }
   myChartBar.setOption(option)
   myChartBar.off('click')
-  myChartBar.on('click', (params) => {
+  myChartBar.on('click', (params: any) => {
     if (routeInfo.path) {
-      if (routeInfo.path == 'downholepersonNum') {
-        routeInfo.param.day = params.name.substring(0, params.name.length - 1)
-        routeInfo.param.total = params.data
-      } else if (routeInfo.path == 'turnOutInfo') {
-        routeInfo.param.name = params.name
+      if (routeInfo.path === 'downholepersonNum') {
+        routeInfo.param!.day = params.name.substring(0, params.name.length - 1)
+        routeInfo.param!.total = params.data
+      } else if (routeInfo.path === 'turnOutInfo') {
+        routeInfo.param!.name = params.name
       }
       router.push({ name: routeInfo.path, params: routeInfo.param })
     } else {
@@ -432,30 +407,36 @@ export function getinitBar(that, chartBox, unit, routeInfo, width, showToolBox) 
 }
 
 /** 堆叠柱状图 */
-export function stackbar(that, chartBox, unit, routeInfo, ShowToolBox) {
-  if (myChartBar != null && myChartBar != '' && myChartBar != undefined) myChartBar.dispose()
+export function stackbar(
+  that: any,
+  chartBox: HTMLElement | null,
+  unit: string,
+  routeInfo: { path?: string; param?: Record<string, any> },
+  ShowToolBox?: boolean,
+): void {
+  if (myChartBar != null && myChartBar !== '' && myChartBar !== undefined) myChartBar.dispose()
   if (!isValidChartContainer(chartBox)) return
   ensureGlobalResize()
-  let chartDom = chartBox
+  const chartDom = chartBox!
   myChartBar = echarts.init(chartDom)
-  let xAxisData = new Set()
-  let legend = new Set()
-  let series = []
+  const xAxisData = new Set()
+  const legend = new Set()
+  const series: any[] = []
   let day = ''
-  let colors = [
+  let colors: string[] = [
     'rgba(126, 219, 208, 1)', 'rgba(149, 209, 155, 1)', '#E4FF3E',
     'rgba(121, 207, 89, 1)', 'rgba(27, 174, 134, 1)', 'rgba(48, 131, 157, 1)',
     'rgba(12, 88, 133, 1)', 'rgba(12, 66, 120, 1)',
   ]
   colors = colors.reverse()
-  that.data.forEach((item) => {
+  that.data.forEach((item: any) => {
     day = Number(item.day.substring(item.day.lastIndexOf('-') + 1))
     xAxisData.add(day + '号')
     legend.add(item.shiftName)
   })
-  let days = Array.from(xAxisData)
-  let legends = Array.from(legend).sort(function (a, b) { return a - b })
-  legends.forEach((item, index) => {
+  const days = Array.from(xAxisData) as string[]
+  const legends = Array.from(legend).sort(function (a: any, b: any) { return a - b })
+  legends.forEach((item: any, index: number) => {
     series.push({
       label: {
         show: true, position: 'inside', verticalAlign: 'middle', align: 'center',
@@ -464,10 +445,10 @@ export function stackbar(that, chartBox, unit, routeInfo, ShowToolBox) {
       name: item, type: 'bar', stack: '班次',
       emphasis: { focus: 'series' },
       data: [],
-      itemStyle: { color: item == '' ? '' : colors[index] },
+      itemStyle: { color: item === '' ? '' : colors[index] },
     })
   })
-  let option = {
+  const option: any = {
     color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
       { offset: 0, color: 'rgba(0, 201, 189, 1)' },
       { offset: 1, color: 'rgba(17, 124, 184, 1)' },
@@ -475,7 +456,7 @@ export function stackbar(that, chartBox, unit, routeInfo, ShowToolBox) {
     grid: { left: 10, right: 10, bottom: '15', top: 20, containLabel: true },
     tooltip: { trigger: 'item' },
     toolbox: {
-      show: ShowToolBox == undefined ? true : ShowToolBox, top: 0,
+      show: ShowToolBox === undefined ? true : ShowToolBox, top: 0,
       feature: {
         dataZoom: { yAxisIndex: 'none' },
         dataView: { readOnly: false },
@@ -484,33 +465,49 @@ export function stackbar(that, chartBox, unit, routeInfo, ShowToolBox) {
       },
       iconStyle: { borderWidth: 2 },
     },
-    legend: { itemWidth: 15, itemHeight: 15, data: legends, textStyle: { color: ComputedStyle.getPropertyValue('--text-color') } },
+    legend: {
+      itemWidth: 15, itemHeight: 15, data: legends,
+      textStyle: { color: ComputedStyle.getPropertyValue('--text-color') },
+    },
     xAxis: {
       data: days, splitLine: { show: false },
-      axisLabel: { show: true, formatter: function (value, index) { return value }, color: ComputedStyle.getPropertyValue('--text-color') },
+      axisLabel: {
+        show: true,
+        formatter: function (value: string) { return value },
+        color: ComputedStyle.getPropertyValue('--text-color'),
+      },
     },
     yAxis: {
-      splitLine: { show: true, lineStyle: { type: 'dashed', color: getTheme() ? '#d5d6d8' : 'rgba(0, 178, 191, 0.2)' } },
+      splitLine: {
+        show: true,
+        lineStyle: {
+          type: 'dashed',
+          color: getTheme() ? '#d5d6d8' : 'rgba(0, 178, 191, 0.2)',
+        },
+      },
       axisLabel: { color: ComputedStyle.getPropertyValue('--text-color') },
     },
     series: series,
   }
-  legends.forEach((legend, index) => {
-    that.data.forEach((obj) => {
-      if (legend == obj.shiftName) {
-        option.series[index].data.push({ name: Number(obj.day.substring(obj.day.lastIndexOf('-') + 1)), value: obj.num })
+  legends.forEach((legend: any, index: number) => {
+    that.data.forEach((obj: any) => {
+      if (legend === obj.shiftName) {
+        option.series[index].data.push({
+          name: Number(obj.day.substring(obj.day.lastIndexOf('-') + 1)),
+          value: obj.num,
+        })
       }
     })
   })
   myChartBar.setOption(option)
   myChartBar.off('click')
-  myChartBar.on('click', (params) => {
+  myChartBar.on('click', (params: any) => {
     if (routeInfo.path) {
-      if (routeInfo.path == 'downholepersonNum') {
-        routeInfo.param.day = params.name
-        routeInfo.param.total = params.data.value
-      } else if (routeInfo.path == 'turnOutInfo') {
-        routeInfo.param.name = params.name
+      if (routeInfo.path === 'downholepersonNum') {
+        routeInfo.param!.day = params.name
+        routeInfo.param!.total = params.data.value
+      } else if (routeInfo.path === 'turnOutInfo') {
+        routeInfo.param!.name = params.name
       }
       router.push({ name: routeInfo.path, params: routeInfo.param })
     } else {
@@ -520,24 +517,32 @@ export function stackbar(that, chartBox, unit, routeInfo, ShowToolBox) {
 }
 
 /** 初始化柱状图 App */
-export function getinitBar_app(that, chartBox, unit, routeInfo, width) {
-  if (myChartBar != null && myChartBar != '' && myChartBar != undefined) myChartBar.dispose()
+export function getinitBar_app(
+  that: any,
+  chartBox: HTMLElement | null,
+  unit: string,
+  routeInfo: { path?: string; param?: Record<string, any> },
+  width?: any,
+): void {
+  if (myChartBar != null && myChartBar !== '' && myChartBar !== undefined) myChartBar.dispose()
   if (!isValidChartContainer(chartBox)) return
   ensureGlobalResize()
-  let chartDom = chartBox
+  const chartDom = chartBox!
   myChartBar = echarts.init(chartDom)
   const start = (that.page - 1) * that.size
   const end = that.page * that.size
-  let option = {
+  const option: any = {
     color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
       { offset: 0, color: 'rgba(0, 201, 189, 1)' },
       { offset: 1, color: 'rgba(17, 124, 184, 1)' },
     ]),
     tooltip: {
       trigger: 'axis',
-      formatter: (params) => {
-        var result = params[0].axisValueLabel + '<br>'
-        params.forEach(function (item) { if (item.value) result += item.marker + `${unit} :` + item.value + '</br>' })
+      formatter: (params: any) => {
+        let result = params[0].axisValueLabel + '<br>'
+        params.forEach(function (item: any) {
+          if (item.value) result += item.marker + `${unit} :` + item.value + '</br>'
+        })
         return result
       },
       axisPointer: { type: 'shadow' },
@@ -554,19 +559,22 @@ export function getinitBar_app(that, chartBox, unit, routeInfo, width) {
     },
     series: [{
       name: '人数', type: 'bar', data: that.barYData.slice(start, end), barWidth: '80%',
-      label: { show: true, formatter: '{b}', position: 'left', align: 'left', offset: [10, 0], color: ComputedStyle.getPropertyValue('--text-color'), fontSize: 12 },
+      label: {
+        show: true, formatter: '{b}', position: 'left', align: 'left', offset: [10, 0],
+        color: ComputedStyle.getPropertyValue('--text-color'), fontSize: 12,
+      },
       barCateGoryGap: '0%',
     }],
   }
   myChartBar.setOption(option)
   myChartBar.off('click')
-  myChartBar.on('click', (params) => {
+  myChartBar.on('click', (params: any) => {
     if (routeInfo.path) {
-      if (routeInfo.path == 'downholeNum_app') {
-        routeInfo.param.day = params.name.substring(0, params.name.length - 1)
-        routeInfo.param.total = params.data
-      } else if (routeInfo.path == 'turnOutInfo_app') {
-        routeInfo.param.name = params.name
+      if (routeInfo.path === 'downholeNum_app') {
+        routeInfo.param!.day = params.name.substring(0, params.name.length - 1)
+        routeInfo.param!.total = params.data
+      } else if (routeInfo.path === 'turnOutInfo_app') {
+        routeInfo.param!.name = params.name
       }
       router.push({ name: routeInfo.path, params: routeInfo.param })
     } else {
@@ -576,42 +584,53 @@ export function getinitBar_app(that, chartBox, unit, routeInfo, width) {
 }
 
 /** 堆叠柱状图 App */
-export function stackbar_app(that, chartBox, unit, routeInfo, ShowToolBox) {
-  if (myChartBar != null && myChartBar != '' && myChartBar != undefined) myChartBar.dispose()
+export function stackbar_app(
+  that: any,
+  chartBox: HTMLElement | null,
+  unit: string,
+  routeInfo: { path?: string; param?: Record<string, any> },
+  ShowToolBox?: boolean,
+): void {
+  if (myChartBar != null && myChartBar !== '' && myChartBar !== undefined) myChartBar.dispose()
   if (!isValidChartContainer(chartBox)) return
   ensureGlobalResize()
-  let chartDom = chartBox
+  const chartDom = chartBox!
   myChartBar = echarts.init(chartDom)
   const start = (that.page - 1) * that.size
   const end = that.page * that.size
-  let xAxisData = new Set()
-  let legend = new Set()
-  let series = []
+  const xAxisData = new Set()
+  const legend = new Set()
+  const series: any[] = []
   let day = ''
-  let colors = [
+  let colors: string[] = [
     'rgba(126, 219, 208, 1)', 'rgba(149, 209, 155, 1)', '#E4FF3E',
     'rgba(121, 207, 89, 1)', 'rgba(27, 174, 134, 1)', 'rgba(48, 131, 157, 1)',
     'rgba(12, 88, 133, 1)', 'rgba(12, 66, 120, 1)',
   ]
   colors = colors.reverse()
-  that.data.forEach((item) => {
+  that.data.forEach((item: any) => {
     day = Number(item.day.substring(item.day.lastIndexOf('-') + 1))
     xAxisData.add(day + '号')
     legend.add(item.shiftName)
   })
-  let days = Array.from(xAxisData)
-  let legends = Array.from(legend).sort(function (a, b) { return a - b })
-  legends.forEach((item, index) => {
+  const days = Array.from(xAxisData) as string[]
+  const legends = Array.from(legend).sort(function (a: any, b: any) { return a - b })
+  legends.forEach((item: any, index: number) => {
     series.push({
-      label: { show: true, position: 'inside', verticalAlign: 'middle', align: 'center', formatter: '{c}', color: ComputedStyle.getPropertyValue('--text-color') },
+      label: {
+        show: true, position: 'inside', verticalAlign: 'middle', align: 'center',
+        formatter: '{c}', color: ComputedStyle.getPropertyValue('--text-color'),
+      },
       name: item, type: 'bar', stack: '班次',
       emphasis: { focus: 'series' },
       data: [],
-      itemStyle: { color: item == '' ? '' : colors[index] },
+      itemStyle: { color: item === '' ? '' : colors[index] },
     })
   })
-  that.total = days.length % that.size === 0 ? days.length / that.size : Math.ceil(days.length / that.size)
-  let option = {
+  that.total = days.length % that.size === 0
+    ? days.length / that.size
+    : Math.ceil(days.length / that.size)
+  const option: any = {
     color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
       { offset: 0, color: 'rgba(0, 201, 189, 1)' },
       { offset: 1, color: 'rgba(17, 124, 184, 1)' },
@@ -619,7 +638,7 @@ export function stackbar_app(that, chartBox, unit, routeInfo, ShowToolBox) {
     grid: { left: 20, right: 0, bottom: '15', top: 40, containLabel: true },
     tooltip: { trigger: 'item' },
     toolbox: {
-      show: ShowToolBox == undefined ? true : ShowToolBox, bottom: 5, left: 'right',
+      show: ShowToolBox === undefined ? true : ShowToolBox, bottom: 5, left: 'right',
       feature: { dataView: { readOnly: false }, saveAsImage: {} },
       iconStyle: { borderWidth: 2 },
     },
@@ -631,23 +650,26 @@ export function stackbar_app(that, chartBox, unit, routeInfo, ShowToolBox) {
     yAxis: { splitLine: { show: false }, data: days.slice(start, end) },
     series: series,
   }
-  legends.forEach((legend, index) => {
-    that.data.forEach((obj) => {
-      if (legend == obj.shiftName) {
-        option.series[index].data.push({ name: Number(obj.day.substring(obj.day.lastIndexOf('-') + 1)), value: obj.num })
+  legends.forEach((legend: any, index: number) => {
+    that.data.forEach((obj: any) => {
+      if (legend === obj.shiftName) {
+        option.series[index].data.push({
+          name: Number(obj.day.substring(obj.day.lastIndexOf('-') + 1)),
+          value: obj.num,
+        })
       }
     })
   })
-  option.series.forEach((item) => { item.data = item.data.slice(start, end) })
+  option.series.forEach((item: any) => { item.data = item.data.slice(start, end) })
   myChartBar.setOption(option)
   myChartBar.off('click')
-  myChartBar.on('click', (params) => {
+  myChartBar.on('click', (params: any) => {
     if (routeInfo.path) {
-      if (routeInfo.path == 'downholeNum_app') {
-        routeInfo.param.day = params.name
-        routeInfo.param.total = params.data.value
-      } else if (routeInfo.path == 'turnOutInfo') {
-        routeInfo.param.name = params.name
+      if (routeInfo.path === 'downholeNum_app') {
+        routeInfo.param!.day = params.name
+        routeInfo.param!.total = params.data.value
+      } else if (routeInfo.path === 'turnOutInfo') {
+        routeInfo.param!.name = params.name
       }
       router.push({ name: routeInfo.path, params: routeInfo.param })
     } else {
@@ -656,20 +678,31 @@ export function stackbar_app(that, chartBox, unit, routeInfo, ShowToolBox) {
   })
 }
 
+interface QueryParams {
+  [key: string]: string | undefined
+}
+
 /** 获取URL主题参数 */
-export function GetTheme(url, key) {
+export function GetTheme(url: string, key: string): string | undefined {
   if (!url) throw new Error('参数URL不能为空！')
-  var t, n, r, i = url.split('?')[1], s = {}
-  if (!i) return
-  t = i.split('&'), r = null, n = null
-  for (var o in t) {
-    var u = t[o].indexOf('=')
-    u !== -1 && ((r = t[o].substr(0, u)), (n = t[o].substr(u + 1)), (s[r] = n))
+  const i = url.split('?')[1]
+  if (!i) return undefined
+
+  const t = i.split('&')
+  const s: QueryParams = {}
+
+  for (const o in t) {
+    const u = t[o].indexOf('=')
+    if (u !== -1) {
+      const r = t[o].substr(0, u)
+      const n = t[o].substr(u + 1)
+      s[r] = n
+    }
   }
   return s[key]
 }
 
 /** 公共阴影变量 */
-export function getBoxShadow() {
+export function getBoxShadow(): string {
   return '0 4px 8px 0 rgb(0 80 115 / 41%) inset'
 }

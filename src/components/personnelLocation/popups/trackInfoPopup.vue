@@ -27,14 +27,17 @@
 <script>
 import MyTable from "@/components/personnelLocation/tableComponent.vue";
 import { getpolicy5268 } from "@/api/system/personnelLocation";
-import PLMixin from "@/utils/personnelLocation";
+import { usePersonnelLocation } from '@/composables/usePersonnelLocation';
 export default {
   name: "trackInfoPopup",
   components: { MyTable },
   props: {
     appendToBody: Boolean,
   },
-  mixins: [PLMixin],
+  setup() {
+    const { showPopup, table, selectionChange, pageFieldConvert, addDefaultParam } = usePersonnelLocation()
+    return { showPopup, table, selectionChange, pageFieldConvert, addDefaultParam }
+  },
   data() {
     return {
       result: {},
@@ -71,6 +74,14 @@ export default {
     };
   },
   methods: {
+
+    pageChange(result) {
+      const param = {
+        ...this.table.queryParam,
+        ...this.pageFieldConvert(result),
+      }
+      this.loadData(param)
+    },
     show(result) {
       console.log("show", result);
       this.showPopup = true;

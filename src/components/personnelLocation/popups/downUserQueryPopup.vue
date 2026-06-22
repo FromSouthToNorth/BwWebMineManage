@@ -47,7 +47,7 @@ import Popup from "../trajectoryQuery.vue";
 import downUserNumInfoPopup from "./downUserNumInfoPopup.vue";
 import trackInfoPopup from "./trackInfoPopup.vue";
 import userInfoPopup from "./userInfoPopup.vue";
-import PLMixin from "@/utils/personnelLocation";
+import { usePersonnelLocation } from '@/composables/usePersonnelLocation';
 import {
   getIndexData,
   getPolicy5280,
@@ -72,7 +72,10 @@ export default {
     trackInfoPopup,
     userInfoPopup,
   },
-  mixins: [PLMixin],
+  setup() {
+    const { showPopup, table, selectionChange, pageFieldConvert, addDefaultParam } = usePersonnelLocation()
+    return { showPopup, table, selectionChange, pageFieldConvert, addDefaultParam }
+  },
   data() {
     return {
       downUserType: "部门",
@@ -96,6 +99,14 @@ export default {
     // 组件挂载时的初始化操作
   },
   methods: {
+
+    pageChange(result) {
+      const param = {
+        ...this.table.queryParam,
+        ...this.pageFieldConvert(result),
+      }
+      this.loadData(param)
+    },
     /**
      * 显示弹窗
      */

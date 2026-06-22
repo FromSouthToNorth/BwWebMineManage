@@ -41,10 +41,9 @@ import {
   getPolicy5401,
 } from "@/api/system/personnelLocation";
 import {
-  getInitDate,
-  formatterDate,
   pageFieldConvert,
 } from "@/views/personnel_location/downholeInfoJs";
+import { formatDateTime, getRecentDayRange } from '@/utils/util'
 export default {
   name: "trajectoryquery_app",
   components: { MyTable, headerApp, myDrawer },
@@ -108,12 +107,13 @@ export default {
   mounted() {
     this.param = { ...this.param, ...this.$route.query };
     let type = Number(this.param.typeNum);
-    this.initDate = getInitDate(7);
+    const [initStart, initEnd] = getRecentDayRange(7);
+    this.initDate = { StartTime: initStart, EndTime: initEnd };
 
     /* 设置默认时间 */
     this.formItemList[0].defaultSelect = this.param.day
-      ? formatterDate(this.param.day, "yyyy-MM-dd")
-      : formatterDate(new Date().getTime(), "yyyy-MM-dd");
+      ? formatDateTime(this.param.day, "YYYY-MM-DD")
+      : formatDateTime(new Date(), "YYYY-MM-DD");
     /* type=0:轨迹信息，1：设备历史报警，2：人员历史报警 */
     switch (type) {
       case 0:

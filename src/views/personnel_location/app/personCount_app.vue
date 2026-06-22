@@ -42,10 +42,8 @@ import MyTable from "@/components/personnelLocation/tableComponent.vue";
 import myDrawer from "@/components/personnelLocation/myDrawer.vue";
 import operation from "@/components/personnelLocation/operationPopup.vue";
 import userInfoPopup from "@/components/personnelLocation/popups/userInfoPopup.vue";
-import {
-  transitionKeyUp,
-  getCurrDateTime,
-} from "@/views/personnel_location/downholeInfoJs";
+import { transitionKeyUp } from "@/views/personnel_location/downholeInfoJs";
+import { formatDateTime } from '@/utils/util'
 import {
   getSelectData,
   getDayCountData,
@@ -119,7 +117,7 @@ export default {
           type: "date",
           placeholder: "选择日期",
           param: "date",
-          defaultSelect: getCurrDateTime(),
+          defaultSelect: formatDateTime(),
         },
         {
           type: "select",

@@ -14,7 +14,7 @@
 
 <script>
 import Popup from "../trajectoryQuery.vue";
-import PLMixin from "@/utils/personnelLocation";
+import { usePersonnelLocation } from '@/composables/usePersonnelLocation';
 import powerInfoPopup from "@/components/personnelLocation/popups/powerInfoPopup.vue";
 import {
   getPolicy5303,
@@ -23,17 +23,17 @@ import {
   getPolicy6726,
   getSelectData,
 } from "@/api/system/personnelLocation";
-import {
-  formatterDate,
-  getInitDate,
-} from "@/views/personnel_location/downholeInfoJs";
+import { formatDateTime, getRecentDayRange } from '@/utils/util'
 export default {
   name: "deviceStatePopup",
   components: {
     Popup,
     powerInfoPopup,
   },
-  mixins: [PLMixin],
+  setup() {
+    const { showPopup, table, selectionChange, pageFieldConvert, addDefaultParam } = usePersonnelLocation()
+    return { showPopup, table, selectionChange, pageFieldConvert, addDefaultParam }
+  },
   data() {
     return {
       // 是否显示查询按钮
@@ -86,16 +86,13 @@ export default {
             type: "datetime",
             param: "StartTime",
             label: "开始时间",
-            defaultSelect: formatterDate(
-              getInitDate(6).StartTime,
-              "yyyy-MM-dd"
-            ),
+            defaultSelect: formatDateTime(getRecentDayRange(6)[0], "YYYY-MM-DD"),
           },
           {
             type: "datetime",
             param: "EndTime",
             label: "结束时间",
-            defaultSelect: formatterDate(getInitDate(6).EndTime, "yyyy-MM-dd"),
+            defaultSelect: formatDateTime(getRecentDayRange(6)[1], "YYYY-MM-DD"),
           },
           {
             type: "select",
@@ -180,6 +177,14 @@ export default {
     };
   },
   methods: {
+
+    pageChange(result) {
+      const param = {
+        ...this.table.queryParam,
+        ...this.pageFieldConvert(result),
+      }
+      this.loadData(param)
+    },
     show() {
       this.showPopup = true;
       this.GetSelectData(this.deviceRealForm.item);

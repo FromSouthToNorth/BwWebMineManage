@@ -107,7 +107,7 @@
 </template>
 
 <script>
-import { formatterDate } from "@/views/personnel_location/downholeInfoJs";
+import { formatDateTime } from '@/utils/util'
 import { useAppStore } from '@/stores/app'
 export default {
   name: "BaseQuery",
@@ -225,9 +225,9 @@ export default {
           if (!this.formInline[item.param]) {
             this.formInline[item.param] = null; // 或者设置为空字符串 ''
           } else {
-            this.formInline[item.param] = formatterDate(
+            this.formInline[item.param] = formatDateTime(
               this.formInline[item.param],
-              item.type == "date" ? "yyyy-MM-dd" : "yyyy-MM-dd HH:mm:ss"
+              item.type == "date" ? "YYYY-MM-DD" : "YYYY-MM-DD HH:mm:ss"
             );
           }
         }
@@ -244,9 +244,9 @@ export default {
       let str = null;
       this.formItemList.forEach((item, index) => {
         if (item.type == "date" || item.type == "datetime") {
-          str = formatterDate(
+          str = formatDateTime(
             value,
-            item.type == "date" ? "yyyy-MM-dd" : "yyyy-MM-dd HH:mm:ss"
+            item.type == "date" ? "YYYY-MM-DD" : "YYYY-MM-DD HH:mm:ss"
           );
         }
       });
@@ -259,9 +259,9 @@ export default {
       for (const obj of this.formItemList) {
         if (obj.type == "date" || obj.type == "datetime") {
           if (obj.defaultSelect) {
-            date = formatterDate(
+            date = formatDateTime(
               obj.defaultSelect,
-              obj.type == "date" ? "yyyy-MM-dd" : "yyyy-MM-dd HH:mm:ss"
+              obj.type == "date" ? "YYYY-MM-DD" : "YYYY-MM-DD HH:mm:ss"
             );
             obj.defaultSelect = date;
           }

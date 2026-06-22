@@ -30,7 +30,7 @@
 
 <script>
 import Popup from "../trajectoryQuery.vue";
-import PLMixin from "@/utils/personnelLocation";
+import { usePersonnelLocation } from '@/composables/usePersonnelLocation';
 import userInfoPopup from "@/components/personnelLocation/popups/userInfoPopup.vue";
 import trackInfoPopup from "@/components/personnelLocation/popups/trackInfoPopup.vue";
 import { getpolicy5281 } from "@/api/system/personnelLocation.js";
@@ -42,7 +42,10 @@ export default {
     userInfoPopup,
     trackInfoPopup,
   },
-  mixins: [PLMixin],
+  setup() {
+    const { showPopup, table, selectionChange, pageFieldConvert, addDefaultParam } = usePersonnelLocation()
+    return { showPopup, table, selectionChange, pageFieldConvert, addDefaultParam }
+  },
   props: {
     operation: Boolean,
   },
@@ -132,6 +135,14 @@ export default {
     };
   },
   methods: {
+
+    pageChange(result) {
+      const param = {
+        ...this.table.queryParam,
+        ...this.pageFieldConvert(result),
+      }
+      this.loadData(param)
+    },
     show(rowData, queryType) {
       this.rowData = rowData;
       this.queryType = queryType;

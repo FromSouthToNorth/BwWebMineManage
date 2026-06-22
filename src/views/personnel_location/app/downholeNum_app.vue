@@ -26,7 +26,7 @@
 <script>
 import headerApp from "@/components/personnelLocation/header_app.vue";
 import myDrawer from "@/components/personnelLocation/myDrawer.vue";
-import { getinitBar_app } from "@/views/personnel_location/downholeInfoJs.js";
+import { getinitBar_app } from "@/views/personnel_location/downholeInfoJs";
 import { getpolicy5264 } from "@/api/system/personnelLocation";
 import querybar from "@/components/personnelLocation/baseQueryBar.vue";
 export default {

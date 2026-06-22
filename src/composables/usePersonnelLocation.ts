@@ -13,7 +13,7 @@ export interface TableState {
   selectedRows: any[]
 }
 
-export function usePersonnelLocation(loadData?: (params: any) => void) {
+export function usePersonnelLocation() {
   const showPopup = ref(false)
 
   const table = reactive<TableState>({
@@ -27,20 +27,6 @@ export function usePersonnelLocation(loadData?: (params: any) => void) {
     selectedRowKeys: [],
     selectedRows: [],
   })
-
-  /** 触发查询（委托给组件自己的 loadData） */
-  function search(result: any) {
-    loadData?.(result)
-  }
-
-  /** 分页改变 */
-  function pageChange(result: { currentPage: number; pageSize: number }) {
-    const param = {
-      ...table.queryParam,
-      ...pageFieldConvert(result),
-    }
-    loadData?.(param)
-  }
 
   /** 表格选中事件 */
   function selectionChange(rows: any[]) {
@@ -67,8 +53,6 @@ export function usePersonnelLocation(loadData?: (params: any) => void) {
   return {
     showPopup,
     table,
-    search,
-    pageChange,
     selectionChange,
     pageFieldConvert,
     addDefaultParam,

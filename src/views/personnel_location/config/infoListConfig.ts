@@ -3,8 +3,45 @@
  * 从 D:\bw\Bw.WebMineManage 原始项目移植
  */
 
+interface ColumnConfig {
+  label: string
+  prop: string
+  width?: number | string
+  columnType?: boolean
+  isEvent?: boolean
+  sort?: boolean
+  color?: string
+  slots?: Array<{
+    soltName: string
+    data: string
+    isInMore: boolean
+  }>
+}
+
+interface FormConfigItem {
+  type: string
+  param: string
+  label?: string
+  defaultSelect?: any
+  placeholder?: string
+  selectOptions?: any[]
+  cssVariable?: Array<{ name: string; value: string }>
+}
+
+interface InitialTableConfig {
+  title: string
+  data: any[]
+  props: Array<{
+    label: string
+    prop: string
+    width?: number
+    isEvent?: boolean
+    color?: string
+  }>
+}
+
 // 表格列配置
-export const tableColumns = {
+export const tableColumns: Record<string, ColumnConfig[]> = {
   // 带班领导表格列
   leader: [
     { label: '姓名', prop: 'userName' },
@@ -77,7 +114,7 @@ export const tableColumns = {
 }
 
 // 表单配置
-export const formConfigs = {
+export const formConfigs: Record<string, FormConfigItem[]> = {
   // 设备报警历史查询表单
   deviceAlarmHistory: [
     { type: 'datetime', param: 'StartTime', label: '开始时间', defaultSelect: null },
@@ -105,7 +142,7 @@ export const formConfigs = {
 }
 
 // 初始表格数据配置
-export const initialTables = [
+export const initialTables: InitialTableConfig[] = [
   {
     title: '带班领导', data: [],
     props: [

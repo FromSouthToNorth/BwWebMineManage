@@ -59,7 +59,8 @@
 import { getIndexData, indexTablePopup, getPolicy5400, getPolicy5401 } from '@/api/system/personnelLocation'
 import MyTable from '@/components/personnelLocation/tableComponent.vue'
 import personQuery from '@/components/personnelLocation/trajectoryQuery.vue'
-import { formatterDate, getCurrDateTime, transitionKeyUp } from './downholeInfoJs'
+import { transitionKeyUp } from './downholeInfoJs'
+import { formatDateTime } from '@/utils/util'
 import userInfoPopup from '@/components/personnelLocation/popups/userInfoPopup.vue'
 import trackInfoPopup from '@/components/personnelLocation/popups/trackInfoPopup.vue'
 import { tableColumns, formConfigs, initialTables } from './config/infoListConfig'
@@ -85,7 +86,7 @@ export default {
       total: 0,
       loading: false,
       searchBarData: {},
-      day: formatterDate(new Date().getTime(), 'yyyy-MM-dd'),
+      day: formatDateTime(new Date(), 'YYYY-MM-DD'),
     }
   },
   mounted() {
@@ -179,8 +180,8 @@ export default {
           this.isReset = true
           this.formItemList = JSON.parse(JSON.stringify(formConfigs.deviceAlarmHistory))
           this.formItemList.forEach((item) => {
-            if (item.param === 'StartTime') item.defaultSelect = formatterDate(getCurrDateTime(), 'yyyy-MM-dd 00:00:00')
-            else if (item.param === 'EndTime') item.defaultSelect = formatterDate(getCurrDateTime(), 'yyyy-MM-dd HH:mm:ss')
+            if (item.param === 'StartTime') item.defaultSelect = formatDateTime(undefined, 'YYYY-MM-DD 00:00:00')
+            else if (item.param === 'EndTime') item.defaultSelect = formatDateTime(undefined, 'YYYY-MM-DD HH:mm:ss')
           })
           this.tableColumn = tableColumns.deviceAlarmHistory
           this.searchBarData.type = '设备报警'
@@ -205,8 +206,8 @@ export default {
           this.isReset = true
           this.formItemList = JSON.parse(JSON.stringify(formConfigs.personAlarmHistory))
           this.formItemList.forEach((item) => {
-            if (item.param === 'StartTime') item.defaultSelect = formatterDate(getCurrDateTime(), 'yyyy-MM-dd 00:00:00')
-            else if (item.param === 'EndTime') item.defaultSelect = formatterDate(getCurrDateTime(), 'yyyy-MM-dd HH:mm:ss')
+            if (item.param === 'StartTime') item.defaultSelect = formatDateTime(undefined, 'YYYY-MM-DD 00:00:00')
+            else if (item.param === 'EndTime') item.defaultSelect = formatDateTime(undefined, 'YYYY-MM-DD HH:mm:ss')
           })
           this.tableColumn = tableColumns.personAlarmHistory
           this.pageShow = true

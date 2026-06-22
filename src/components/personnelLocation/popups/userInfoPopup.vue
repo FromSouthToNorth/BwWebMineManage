@@ -135,11 +135,14 @@
 <script>
 import { getpolicy5339 } from "@/api/system/personnelLocation.js";
 import { transitionKeyUp } from "@/views/personnel_location/downholeInfoJs";
-import PLMixin from "@/utils/personnelLocation";
+import { usePersonnelLocation } from '@/composables/usePersonnelLocation';
 import { useAppStore } from '@/stores/app'
 export default {
   name: "userInfoPopup",
-  mixins: [PLMixin],
+  setup() {
+    const { showPopup, table, selectionChange, pageFieldConvert, addDefaultParam } = usePersonnelLocation()
+    return { showPopup, table, selectionChange, pageFieldConvert, addDefaultParam }
+  },
   data() {
     return {
       cliWidth: 0,

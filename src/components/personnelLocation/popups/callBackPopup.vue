@@ -31,7 +31,7 @@
 
 <script>
 import Popup from "../trajectoryQuery.vue";
-import PLMixin from "@/utils/personnelLocation";
+import { usePersonnelLocation } from '@/composables/usePersonnelLocation';
 import {
   getPolicy5280,
   ExecPolicy,
@@ -42,7 +42,10 @@ export default {
   components: {
     Popup,
   },
-  mixins: [PLMixin],
+  setup() {
+    const { showPopup, table, selectionChange, pageFieldConvert, addDefaultParam } = usePersonnelLocation()
+    return { showPopup, table, selectionChange, pageFieldConvert, addDefaultParam }
+  },
   data() {
     return {
       formItemList: {
@@ -124,6 +127,17 @@ export default {
     };
   },
   methods: {
+
+    search(result) {
+      this.loadData(result)
+    },
+    pageChange(result) {
+      const param = {
+        ...this.table.queryParam,
+        ...this.pageFieldConvert(result),
+      }
+      this.loadData(param)
+    },
     show() {
       this.showPopup = true;
       this.loadData();

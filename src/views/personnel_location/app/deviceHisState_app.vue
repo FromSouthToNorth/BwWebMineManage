@@ -35,7 +35,7 @@ import {
   getPolicy2572,
   getPolicy5400
 } from "@/api/system/personnelLocation";
-import {getInitDate} from "@/views/personnel_location/downholeInfoJs"
+import { getRecentDayRange } from '@/utils/util'
 export default {
     name:"devState",
     components:{headerApp,MyTable,myDrawer},
@@ -117,11 +117,11 @@ export default {
     },
     mounted(){
         /* 获取前6天和明天的日期 */
-        const date= getInitDate(6)
-        this.formItemList[0].defaultSelect=date.StartTime
-        this.formItemList[1].defaultSelect=date.EndTime
-        this.param.StartTime=date.StartTime
-        this.param.EndTime=date.EndTime
+        const [startTime, endTime] = getRecentDayRange(6)
+        this.formItemList[0].defaultSelect = startTime
+        this.formItemList[1].defaultSelect = endTime
+        this.param.StartTime = startTime
+        this.param.EndTime = endTime
         this.getDevHisData(this.param)
     },
     methods:{
