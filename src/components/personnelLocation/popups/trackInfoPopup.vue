@@ -6,7 +6,7 @@
       class="pl-track-dialog"
       :title="`${result.UserName} 轨迹信息`"
       :width="'70%'"
-      :append-to-body="false"
+      append-to-body
       :destroy-on-close="true"
       :close-on-click-modal="false"
       :modal="true"
