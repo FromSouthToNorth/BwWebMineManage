@@ -1,81 +1,34 @@
+import { usePersonnelLocation } from '@/composables/usePersonnelLocation'
+
+/**
+ * 人员定位通用混入
+ *
+ * 新代码推荐使用 usePersonnelLocation() composable 替代：
+ *   import { usePersonnelLocation } from '@/composables/usePersonnelLocation'
+ *   const { showPopup, table, search, pageChange, ... } = usePersonnelLocation(loadData)
+ *
+ * @deprecated 优先使用 usePersonnelLocation() composable
+ */
 const personnelLocation = {
-  data() {
-    return {
-      showPopup: false,
-      table: {
-        dataSource: [],
-        total: 0,
-        pageNo: 1,
-        pageSize: 20,
-        loading: false,
-        queryParam: {},
-        currentRow: {},
-        selectedRowKeys: [],
-        selectedRows: [],
-      },
-    };
+  setup() {
+    // 从 composable 获取状态和纯工具方法（不含依赖 this.loadData 的 search/pageChange）
+    const { showPopup, table, selectionChange, pageFieldConvert, addDefaultParam } =
+      usePersonnelLocation()
+    return { showPopup, table, selectionChange, pageFieldConvert, addDefaultParam }
   },
   methods: {
+    /** 触发查询（委托给组件自己的 loadData） */
     search(result) {
-      this.loadData(result);
+      this.loadData(result)
     },
-    /* 分页改变事件 */
+    /** 分页改变事件 */
     pageChange(result) {
-      console.log("pageChange", result);
-      let param = {
+      const param = {
         ...this.table.queryParam,
         ...this.pageFieldConvert(result),
-      };
-      this.loadData(param);
-    },
-    /**
-     * 表格选中事件
-     * @param {Array} rows 当前选中的数据
-     */
-    selectionChange(rows) {
-      this.table.selectedRows = rows;
-    },
-    /* 将分页组件返回的字段转换为策略需要的分页字段 */
-    pageFieldConvert(result) {
-      return { Page: result.currentPage, Row: result.pageSize };
-    },
-    /* 获取设备状态历史报警默认时间参数 */
-    getDeviceHisTimes() {
-      const deviceHis = this.deviceHisForm.item;
-      const startTime = deviceHis.find(
-        (item) => item.param === "StartTime"
-      ).defaultSelect;
-      const endTime = deviceHis.find(
-        (item) => item.param === "EndTime"
-      ).defaultSelect;
-      const Times = {
-        StartTime: startTime,
-        EndTime: endTime,
-      };
-      return Times;
-    },
-    /**
-     * 为查询参数追加分页默认值（仅当不存在时）
-     * @param {Object} queryParam - 现有的查询参数对象
-     * @returns {Object} 修改后的对象
-     */
-    addDefaultParam(queryParam) {
-      if (!queryParam || typeof queryParam !== "object") {
-        queryParam = {};
       }
-
-      // 追加 Page（如果不存在）
-      if (queryParam.Page == null) {
-        queryParam.Page = this.table.pageNo;
-      }
-
-      // 追加 Row（如果不存在）
-      if (queryParam.Row == null) {
-        queryParam.Row = this.table.pageSize;
-      }
-
-      return queryParam;
+      this.loadData(param)
     },
   },
-};
-export default personnelLocation;
+}
+export default personnelLocation
