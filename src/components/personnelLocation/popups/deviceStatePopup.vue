@@ -14,7 +14,7 @@
 
 <script>
 import Popup from "../trajectoryQuery.vue";
-import PLMixin from "@/mixin/personnelLocationMixin";
+import PLMixin from "@/mixin/personnelLocation";
 import powerInfoPopup from "@/components/personnelLocation/popups/powerInfoPopup.vue";
 import {
   getPolicy5303,

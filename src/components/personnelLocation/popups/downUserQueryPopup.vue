@@ -47,7 +47,7 @@ import Popup from "../trajectoryQuery.vue";
 import downUserNumInfoPopup from "./downUserNumInfoPopup.vue";
 import trackInfoPopup from "./trackInfoPopup.vue";
 import userInfoPopup from "./userInfoPopup.vue";
-import PLMixin from "@/mixin/personnelLocationMixin";
+import PLMixin from "@/mixin/personnelLocation";
 import {
   getIndexData,
   getPolicy5280,

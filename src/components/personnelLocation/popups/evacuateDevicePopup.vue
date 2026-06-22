@@ -30,7 +30,7 @@
 
 <script>
 import Popup from "../trajectoryQuery.vue";
-import PLMixin from "@/mixin/personnelLocationMixin";
+import PLMixin from "@/mixin/personnelLocation";
 import {
   getPolicy6748,
   ExecPolicy,
