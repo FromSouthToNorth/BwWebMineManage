@@ -310,6 +310,7 @@ export default {
       operationList: ["人员信息", "轨迹查询", "出勤统计"],
       operation: false,
       timer: null,
+      _refreshing: false,
       /* PaginationMixin data */
       page: 1,
       startX: 0,
@@ -339,20 +340,29 @@ export default {
     this.dataRefrech();
   },
   methods: {
-    /* 定时刷新 */
+    /* 定时刷新 — 避免请求堆积 */
     dataRefrech() {
       if (this.timer != null) return;
-      this.timer = setInterval(() => {
-        this.getWarnData();
-        this.getTableList();
-        this.downUserNum.forEach((item) => {
-          this.getNum(item);
-        });
-      }, 5000);
+      const tick = async () => {
+        if (this._refreshing) return;
+        this._refreshing = true;
+        try {
+          await Promise.all([
+            this.getWarnData(),
+            this.getTableList(),
+            ...this.downUserNum.map(item => this.getNum(item)),
+          ]);
+        } finally {
+          this._refreshing = false;
+          this.timer = setTimeout(tick, 5000);
+        }
+      };
+      tick();
     },
     clear() {
-      clearInterval(this.timer);
+      clearTimeout(this.timer);
       this.timer = null;
+      this._refreshing = false;
     },
     async getWarnData() {
       const { data } = await GetStrategyJsonData(6794, null);
@@ -618,13 +628,15 @@ export default {
       }
     },
     getTableList() {
-      this.tables.forEach((item, index) => {
-        getIndexData(5259, item.title).then(({ data: dataList }) => {
-          if (dataList != null && dataList.length != 0) {
-            this.tables[index].data = dataList;
-          }
-        });
-      });
+      return Promise.all(
+        this.tables.map((item, index) =>
+          getIndexData(5259, item.title).then(({ data: dataList }) => {
+            if (dataList != null && dataList.length != 0) {
+              this.tables[index].data = dataList;
+            }
+          })
+        )
+      );
     },
     async getChartData(type) {
       this.page = 1;

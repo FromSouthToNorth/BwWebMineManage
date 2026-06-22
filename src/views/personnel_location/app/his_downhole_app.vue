@@ -101,7 +101,6 @@ export default {
     this.getYearData();
     this.getLine();
     this.getBarData();
-    this.mountedChart();
   },
   watch: {
     $route: "mountedChart",

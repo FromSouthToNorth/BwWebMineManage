@@ -212,7 +212,7 @@ export default {
       this.trackLoading = false;
     },
     getpolyc5282() {
-      getpolicy(5282, this.params).then(({ data }) => {
+      return getpolicy(5282, this.params).then(({ data }) => {
         this.lineXData = [];
         this.lineYDataAll = [];
         this.lineYDataNormal = [];
@@ -269,8 +269,10 @@ export default {
     },
 
     axiosAll() {
-      this.getpolyc5286();
-      this.getpolyc5282();
+      Promise.all([
+        this.getpolyc5286(),
+        this.getpolyc5282(),
+      ]);
     },
   },
 };

@@ -97,7 +97,7 @@ export default {
   },
   methods:{
     getpolyc5320(){
-      getpolicy(5320,this.params).then(({data})=>{
+      return getpolicy(5320,this.params).then(({data})=>{
         if (data.length != 0) {
           let count=0
           data.forEach(item=>{
@@ -112,7 +112,7 @@ export default {
       })
     },
     getpolyc5287(){
-      getpolicy(5287,this.params).then(({data})=>{
+      return getpolicy(5287,this.params).then(({data})=>{
          this.time=this.$options.data.call().time
          this.content1=this.$options.data.call().content1
          this.count=0;
@@ -138,7 +138,7 @@ export default {
       })
     },
     getpolyc5288(){
-      getpolicy(5288, this.params).then(({data})=>{
+      return getpolicy(5288, this.params).then(({data})=>{
         this.chartVal = 0;
         if (data.length != 0) {
             data.forEach((item) => {
@@ -148,9 +148,11 @@ export default {
       })
     },
     axiosAll(){
-        this.getpolyc5288();
-        this.getpolyc5320();
-        this.getpolyc5287();
+        Promise.all([
+          this.getpolyc5288(),
+          this.getpolyc5320(),
+          this.getpolyc5287(),
+        ]);
     }
   }
 };

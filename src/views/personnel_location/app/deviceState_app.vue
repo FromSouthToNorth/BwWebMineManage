@@ -114,7 +114,6 @@ export default {
   methods: {
     screen() {
       this.getPolicy5308();
-      this.getSelectOptions();
       this.drawer = true;
     },
     search(result) {
