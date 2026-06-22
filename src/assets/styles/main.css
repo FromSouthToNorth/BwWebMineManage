@@ -1867,6 +1867,14 @@ html[data-theme='theme-light'] .el-select__wrapper.is-focus {
   --page-currBorder: #72808b;
   --page-boxBgColor: #061b46;
 
+  /* 分页按钮 */
+  --page-btn-bgColor: transparent;
+  --page-btn-borderColor: rgb(130 153 194 / 40%);
+  --page-btn-textColor: var(--text-color);
+  --page-btn-activeBgColor: #72808b;
+  --page-btn-activeBorderColor: #72808b;
+  --page-btn-activeTextColor: #fff;
+
   /* 统计卡片 */
   --count-bgColor: rgb(167 167 167 / 8%);
   --count-textColor: #00dfe7;
@@ -1919,6 +1927,14 @@ html[data-theme='theme-light'] {
   --user-popup-titleBgColor: #f1f5f9;
   --user-popup-titleColor: #1e293b;
   --user-popup-borderColor: #e2e8f0;
+
+  /* 分页按钮 */
+  --page-btn-bgColor: #ffffff;
+  --page-btn-borderColor: #e2e8f0;
+  --page-btn-textColor: #475569;
+  --page-btn-activeBgColor: var(--color-primary);
+  --page-btn-activeBorderColor: var(--color-primary);
+  --page-btn-activeTextColor: #fff;
 }
 
 /* 人员定位专属按钮/组件样式 → 仅 .personnel-page 内生效，不泄漏到其他页面 */
@@ -1958,6 +1974,20 @@ html[data-theme='theme-light'] {
     color: #409eff;
   }
 
+
+
+  .el-pagination button,
+  .el-pager li {
+    background: var(--page-btn-bgColor) !important;
+    border-color: var(--page-btn-borderColor) !important;
+    color: var(--page-btn-textColor) !important;
+  }
+
+  .el-pager li.active {
+    background: var(--page-btn-activeBgColor) !important;
+    border-color: var(--page-btn-activeBorderColor) !important;
+    color: var(--page-btn-activeTextColor) !important;
+  }
 
   .el-dialog {
     background: var(--user-popup-contentBgColor);
