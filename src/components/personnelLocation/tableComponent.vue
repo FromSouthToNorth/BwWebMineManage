@@ -24,31 +24,33 @@
           <el-table-column v-if="item.columnType" :key="item.label" :prop="item.prop" :label="item.label"
             :width="item.width" :header-align="item.headerAlign || 'center'" :align="item.align || 'center'">
             <template #default="{ row }">
-              <!-- 不显示在更多里面 -->
-              <template :key="OutMore.data" v-for="OutMore in isMore.isOutMore">
-                <span @click="controls(row, OutMore.data)" :style="{ color: OutMore.color, marginRight: '5px' }">
-                  {{ OutMore.data }}
-                </span>
-              </template>
-              <!-- 显示在更多里面 -->
-              <template v-if="isMore.isInMore.length > 1">
-                <el-dropdown @command="controls(row, $event)">
-                  <span class="el-dropdown-link" style="color: var(--highlight-color)">
-                    更多
-                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                      <path d="M6 9l6 6 6-6"/>
-                    </svg>
+              <span class="pl-action-cell">
+                <!-- 不显示在更多里面 -->
+                <template :key="OutMore.data" v-for="OutMore in isMore.isOutMore">
+                  <span @click="controls(row, OutMore.data)" :style="{ color: OutMore.color }">
+                    {{ OutMore.data }}
                   </span>
-                  <template #dropdown>
-                    <el-dropdown-menu>
-                      <el-dropdown-item v-for="inMore in isMore.isInMore" :key="inMore.slotName" :command="inMore.data"
-                        :style="{ color: inMore.color }">
-                        {{ inMore.data }}
-                      </el-dropdown-item>
-                    </el-dropdown-menu>
-                  </template>
-                </el-dropdown>
-              </template>
+                </template>
+                <!-- 显示在更多里面 -->
+                <template v-if="isMore.isInMore.length > 1">
+                  <el-dropdown @command="controls(row, $event)">
+                    <span class="pl-dropdown-link" style="color: var(--highlight-color)">
+                      更多
+                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M6 9l6 6 6-6"/>
+                      </svg>
+                    </span>
+                    <template #dropdown>
+                      <el-dropdown-menu>
+                        <el-dropdown-item v-for="inMore in isMore.isInMore" :key="inMore.slotName" :command="inMore.data"
+                          :style="{ color: inMore.color }">
+                          {{ inMore.data }}
+                        </el-dropdown-item>
+                      </el-dropdown-menu>
+                    </template>
+                  </el-dropdown>
+                </template>
+              </span>
             </template>
           </el-table-column>
         </template>
@@ -366,6 +368,26 @@ export default {
 /* 隐藏 el-table 内部横向滚动条（ElScrollbar 虚拟滚动条） */
 :deep(.el-scrollbar__bar.is-horizontal) {
   display: none;
+}
+
+/* 操作列单元格：所有操作项水平居中 */
+.pl-action-cell {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  white-space: nowrap;
+
+  > span {
+    cursor: pointer;
+  }
+}
+
+/* 更多下拉触发按钮 */
+.pl-dropdown-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  cursor: pointer;
 }
 
 .pagination {
