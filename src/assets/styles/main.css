@@ -1942,6 +1942,9 @@ html[data-theme='theme-light'] .el-select__wrapper.is-focus {
 
 /* ========== 人员定位浅色主题变量覆写 ========== */
 html[data-theme='theme-light'] {
+  /* 页面背景 */
+  --bgColor: #f1f5f9;
+
   /* 弹窗 */
   --popup-bgColor: #ffffff;
   --popup-textColor: #1e293b;
@@ -1963,6 +1966,10 @@ html[data-theme='theme-light'] {
 }
 
 /* 人员定位专属按钮/组件样式 → 仅 .personnel-page 内生效，不泄漏到其他页面 */
+.personnel-page {
+  background: var(--bgColor, #08204d);
+}
+
 .personnel-page,
 .el-overlay.personnel-overlay {
   .el-button--primary,
