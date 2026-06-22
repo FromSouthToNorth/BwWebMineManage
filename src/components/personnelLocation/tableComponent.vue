@@ -34,12 +34,15 @@
               <template v-if="isMore.isInMore.length > 1">
                 <el-dropdown @command="controls(row, $event)">
                   <span class="el-dropdown-link" style="color: var(--highlight-color)">
-                    更多 <i class="el-icon-arrow-down el-icon--right"></i>
+                    更多
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <path d="M6 9l6 6 6-6"/>
+                    </svg>
                   </span>
                   <template #dropdown>
                     <el-dropdown-menu>
                       <el-dropdown-item v-for="inMore in isMore.isInMore" :key="inMore.slotName" :command="inMore.data"
-                        class="custom-dropdown-item" :class="editIcon(inMore.data)" :style="{ color: inMore.color }">
+                        :style="{ color: inMore.color }">
                         {{ inMore.data }}
                       </el-dropdown-item>
                     </el-dropdown-menu>
@@ -54,9 +57,8 @@
 
     <!-- 分页器 -->
     <div class="pagination" v-if="paginationShow">
-      <Pagination :total="tableDataTotal" :page="currentPage" :limit="pageSize"
-        :page-sizes="[20, 50, 100, 500]" :pager-count="pagerCount" :layout="layOut"
-        :small="paginationSize === 'small'" :hidden="isShowPagination"
+      <Pagination :total="tableDataTotal" :page="currentPage" :limit="pageSize" :page-sizes="[20, 50, 100, 500]"
+        :pager-count="pagerCount" :layout="layOut" :small="paginationSize === 'small'" :hidden="isShowPagination"
         @pagination="handlePagination" />
     </div>
   </div>
@@ -214,7 +216,7 @@ export default {
           });
         }
       });
-
+      console.log(result);
       return result;
     },
     dataColumn() {
@@ -255,22 +257,6 @@ export default {
     /* 排序事件 */
     handleSortChange(obj) {
       // console.log('handleSortChange',obj);
-    },
-    /* 操作列icon */
-    editIcon(text) {
-      let icon = "";
-      switch (text) {
-        case "人员":
-          icon = "el-icon-user";
-          break;
-        case "轨迹":
-          icon = "el-icon-s-promotion";
-          break;
-        case "个人出勤":
-          icon = "el-icon-user-solid";
-          break;
-      }
-      return icon;
     },
     /* 列宽 */
     columnWidth(item) {

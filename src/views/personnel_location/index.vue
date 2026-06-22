@@ -33,7 +33,10 @@
           <div class="btn" v-if="dropdownMenuItem.length != 0">
             <el-dropdown @command="dropdownItemClick" class="dropdown">
               <el-button size="small">
-                呼叫控制<i class="el-icon-arrow-down el-icon--right"></i>
+                呼叫控制
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-left:4px">
+                  <path d="M6 9l6 6 6-6"/>
+                </svg>
               </el-button>
               <template #dropdown>
                 <el-dropdown-menu>
