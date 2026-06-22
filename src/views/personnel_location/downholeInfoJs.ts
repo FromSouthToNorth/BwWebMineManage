@@ -10,7 +10,7 @@ import { getMineName } from '@/api/system/helpers'
 import * as echarts from 'echarts'
 import type { ECharts } from 'echarts'
 import router from '@/router'
-import { DATA_THEME } from '@/utils/constants'
+import { getCssVar, createLinearGradient } from '@/composables/useECharts'
 
 // ============================================
 // 类型定义
@@ -58,15 +58,11 @@ const STACKED_BAR_COLORS: string[] = [
   'rgba(149, 209, 155, 1)', 'rgba(126, 219, 208, 1)',
 ]
 
-/** 柱状图渐变色 */
-const BAR_GRADIENT = new echarts.graphic.LinearGradient(0, 0, 0, 1, [
+/** 柱状图渐变色（与 composable 共享 createLinearGradient） */
+const BAR_GRADIENT = createLinearGradient(0, 0, 0, 1, [
   { offset: 0, color: 'rgba(0, 201, 189, 1)' },
   { offset: 1, color: 'rgba(17, 124, 184, 1)' },
 ])
-
-/** CSS 变量缓存（模块加载时快照，主题切换后需刷新页面） */
-const rootElement = document.documentElement
-const computedStyle = getComputedStyle(rootElement)
 
 // ============================================
 // 模块级状态
@@ -86,11 +82,6 @@ function isValidChartContainer(el: HTMLElement | null): boolean {
   const w = el.clientWidth || el.offsetWidth
   const h = el.clientHeight || el.offsetHeight
   return w > 0 && h > 0
-}
-
-/** 判断当前是否为浅色主题 */
-function isLightTheme(): boolean {
-  return localStorage.getItem(DATA_THEME) === 'light'
 }
 
 /** 注册全局 resize 监听器（只注册一次），统一处理所有图表实例 */
@@ -117,16 +108,6 @@ function disposeBarChart(): void {
     myChartBar.dispose()
     myChartBar = null
   }
-}
-
-/** 获取 CSS 变量值 */
-function cssVar(name: string): string {
-  return computedStyle.getPropertyValue(name)
-}
-
-/** 主题色分割线样式 */
-function splitLineStyle(color?: string): object {
-  return { type: 'dashed' as const, color: color ?? 'rgba(0, 178, 191, 0.2)' }
 }
 
 // ============================================
@@ -325,20 +306,20 @@ export function GetinitLine(
     xAxis: {
       type: 'category',
       data: that.lineXData,
-      axisLabel: { show: true, color: cssVar('--text-color') },
+      axisLabel: { show: true, color: getCssVar('--text-color') },
     },
     yAxis: {
       type: 'value',
-      axisLabel: { show: true, color: cssVar('--text-color') },
+      axisLabel: { show: true, color: getCssVar('--text-color') },
       splitLine: {
-        lineStyle: { type: 'dashed', color: isLightTheme() ? '#d5d6d8' : 'rgba(0, 178, 191, 0.2)' },
+        lineStyle: { type: 'dashed', color: document.documentElement.getAttribute("data-theme") === "theme-light" ? '#d5d6d8' : 'rgba(0, 178, 191, 0.2)' },
         show: true,
       },
     },
     series: [{
       data: that.lineYData, type: 'line', areaStyle: {},
       symbol: 'emptyCircle', symbolSize: 10,
-      label: { show: true, color: cssVar('--text-color') },
+      label: { show: true, color: getCssVar('--text-color') },
       lineStyle: { color: 'rgba(0, 178, 191, 1)' },
     }],
   }
@@ -383,32 +364,32 @@ export function GetinitLines(
     color: ['rgba(0, 191, 53, 1)', 'rgba(255, 77, 20, 1)', 'rgba(0, 178, 191, 1)'],
     legend: {
       data: ['正常', '超时', '全部'],
-      textStyle: { color: isLightTheme() ? '#000000' : '#fff' },
+      textStyle: { color: document.documentElement.getAttribute("data-theme") === "theme-light" ? '#000000' : '#fff' },
     },
     grid: { left: '3%', right: '4%', bottom: '3%', containLabel: true },
     xAxis: {
       type: 'category', boundaryGap: false, data: that.lineXData,
-      axisLabel: { show: true, color: cssVar('--text-color') },
+      axisLabel: { show: true, color: getCssVar('--text-color') },
     },
     yAxis: {
       type: 'value',
       splitLine: {
-        lineStyle: { type: 'dashed', color: cssVar('--text-color') },
+        lineStyle: { type: 'dashed', color: getCssVar('--text-color') },
         show: true,
       },
     },
     series: [
       {
         name: '正常', type: 'line', data: that.lineYDataNormal,
-        label: { show: true, position: 'top', color: cssVar('--text-color') },
+        label: { show: true, position: 'top', color: getCssVar('--text-color') },
         lineStyle: { color: 'rgba(0, 178, 191, 1)' },
       },
       {
-        label: { show: true, position: 'top', color: cssVar('--text-color') },
+        label: { show: true, position: 'top', color: getCssVar('--text-color') },
         name: '超时', type: 'line', stack: 'Total', data: that.lineYDataTimeOut,
       },
       {
-        label: { show: true, position: 'top', color: cssVar('--text-color') },
+        label: { show: true, position: 'top', color: getCssVar('--text-color') },
         name: '全部', type: 'line', stack: 'Total', data: that.lineYDataAll,
       },
     ],
@@ -466,12 +447,12 @@ export function getinitBarZoom(that: any, chartBox: HTMLElement | null, unit: st
     xAxis: {
       type: 'category', data: that.barXData,
       splitLine: { show: false },
-      axisLabel: { color: cssVar('--text-color') },
+      axisLabel: { color: getCssVar('--text-color') },
     },
     yAxis: {
       type: 'value',
-      splitLine: { show: true, lineStyle: splitLineStyle() },
-      axisLabel: { color: cssVar('--text-color') },
+      splitLine: { show: true, lineStyle: { type: "dashed" as const, color: "rgba(0, 178, 191, 0.2)" } },
+      axisLabel: { color: getCssVar('--text-color') },
     },
     series: [{
       sort: 'descending', data: that.barYData, type: 'bar',
@@ -512,17 +493,17 @@ export function getinitBar(
       type: 'category', data: that.barXData,
       label: { show: false },
       splitLine: { show: false },
-      axisLabel: { color: cssVar('--text-color'), interval: 0, rotate: 40 },
+      axisLabel: { color: getCssVar('--text-color'), interval: 0, rotate: 40 },
     },
     yAxis: {
       type: 'value',
-      splitLine: { show: true, lineStyle: { type: 'dashed', color: cssVar('--chartDashedColor') } },
-      axisLabel: { color: cssVar('--text-color') },
+      splitLine: { show: true, lineStyle: { type: 'dashed', color: getCssVar('--chartDashedColor') } },
+      axisLabel: { color: getCssVar('--text-color') },
     },
     series: [{
       sort: 'descending', data: that.barYData, type: 'bar',
       showBackground: false,
-      label: { show: true, position: 'top', color: cssVar('--text-color') },
+      label: { show: true, position: 'top', color: getCssVar('--text-color') },
     }],
   }
   myChartBar.setOption(option)
@@ -560,7 +541,7 @@ export function stackbar(
     series.push({
       label: {
         show: true, position: 'inside', verticalAlign: 'middle', align: 'center',
-        formatter: '{c}', color: cssVar('--text-color'),
+        formatter: '{c}', color: getCssVar('--text-color'),
       },
       name: item, type: 'bar', stack: '班次',
       emphasis: { focus: 'series' },
@@ -576,13 +557,13 @@ export function stackbar(
     toolbox: createDefaultToolbox(ShowToolBox),
     legend: {
       itemWidth: 15, itemHeight: 15, data: legends,
-      textStyle: { color: cssVar('--text-color') },
+      textStyle: { color: getCssVar('--text-color') },
     },
     xAxis: {
       data: days, splitLine: { show: false },
       axisLabel: {
         show: true,
-        color: cssVar('--text-color'),
+        color: getCssVar('--text-color'),
       },
     },
     yAxis: {
@@ -590,10 +571,10 @@ export function stackbar(
         show: true,
         lineStyle: {
           type: 'dashed',
-          color: isLightTheme() ? '#d5d6d8' : 'rgba(0, 178, 191, 0.2)',
+          color: document.documentElement.getAttribute("data-theme") === "theme-light" ? '#d5d6d8' : 'rgba(0, 178, 191, 0.2)',
         },
       },
-      axisLabel: { color: cssVar('--text-color') },
+      axisLabel: { color: getCssVar('--text-color') },
     },
     series,
   }
@@ -646,8 +627,8 @@ export function getinitBar_app(
     yAxis: {
       type: 'category', inverse: true,
       axisTick: { show: false },
-      axisLine: { show: false, lineStyle: { color: isLightTheme() ? 'rgb(237 240 249 / 100%)' : '#0a1820' } },
-      axisLabel: { show: false, color: cssVar('--text-color') },
+      axisLine: { show: false, lineStyle: { color: document.documentElement.getAttribute("data-theme") === "theme-light" ? 'rgb(237 240 249 / 100%)' : '#0a1820' } },
+      axisLabel: { show: false, color: getCssVar('--text-color') },
       max: that.size,
       data: that.barXData.slice(start, end),
     },
@@ -655,7 +636,7 @@ export function getinitBar_app(
       name: '人数', type: 'bar', data: that.barYData.slice(start, end), barWidth: '80%',
       label: {
         show: true, formatter: '{b}', position: 'left', align: 'left', offset: [10, 0],
-        color: cssVar('--text-color'), fontSize: 12,
+        color: getCssVar('--text-color'), fontSize: 12,
       },
       barCateGoryGap: '0%',
     }],
@@ -697,7 +678,7 @@ export function stackbar_app(
     series.push({
       label: {
         show: true, position: 'inside', verticalAlign: 'middle', align: 'center',
-        formatter: '{c}', color: cssVar('--text-color'),
+        formatter: '{c}', color: getCssVar('--text-color'),
       },
       name: item, type: 'bar', stack: '班次',
       emphasis: { focus: 'series' },
@@ -721,7 +702,7 @@ export function stackbar_app(
     },
     legend: {
       itemWidth: 15, itemHeight: 15, data: legends, icon: 'circle', itemHeight: 6, left: 'center',
-      textStyle: { color: cssVar('--text-color'), fontSize: 10 },
+      textStyle: { color: getCssVar('--text-color'), fontSize: 10 },
     },
     xAxis: { show: false, splitLine: { show: false } },
     yAxis: { splitLine: { show: false }, data: days.slice(start, end) },
