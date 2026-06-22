@@ -188,6 +188,9 @@ export default {
       id: 0,
     };
   },
+  created() {
+    console.log(this.columnOptions);
+  },
   computed: {
     visible: {
       get() {

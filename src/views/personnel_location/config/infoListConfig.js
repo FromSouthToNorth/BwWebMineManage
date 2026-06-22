@@ -46,7 +46,7 @@ export const tableColumns = {
     { label: '报警时间', prop: 'alarmTime', width: 180 },
     { label: '当前位置', prop: 'devicePosition', width: 200 },
     {
-      label: '操作', prop: 'edit', columnType: true, isEvent: true, width: 100,
+      label: '操作', prop: 'edit', columnType: true, isEvent: true, width: 120,
       slots: [
         { soltName: 'userinfo', data: '人员', isInMore: false },
         { soltName: 'gj', data: '轨迹', isInMore: false },
