@@ -209,6 +209,7 @@ export default {
         color: transparent;
         font-size: 30px;
         font-weight: bold;
+        line-height: 1;
       }
     }
 
