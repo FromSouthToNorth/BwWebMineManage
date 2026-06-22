@@ -30,7 +30,7 @@
 
 <script>
 import Popup from "../trajectoryQuery.vue";
-import PLMixin from "@/mixin/personnelLocation";
+import PLMixin from "@/utils/personnelLocation";
 import userInfoPopup from "@/components/personnelLocation/popups/userInfoPopup.vue";
 import trackInfoPopup from "@/components/personnelLocation/popups/trackInfoPopup.vue";
 import { getpolicy5281 } from "@/api/system/personnelLocation.js";

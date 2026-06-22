@@ -27,7 +27,7 @@
 <script>
 import MyTable from "@/components/personnelLocation/tableComponent.vue";
 import { getpolicy5268 } from "@/api/system/personnelLocation";
-import PLMixin from "@/mixin/personnelLocation";
+import PLMixin from "@/utils/personnelLocation";
 export default {
   name: "trackInfoPopup",
   components: { MyTable },

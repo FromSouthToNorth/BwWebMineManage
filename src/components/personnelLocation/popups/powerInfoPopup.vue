@@ -25,7 +25,7 @@
 
 <script>
 import Popup from "../trajectoryQuery.vue";
-import PLMixin from "@/mixin/personnelLocation";
+import PLMixin from "@/utils/personnelLocation";
 import { getPolicy6726 } from "@/api/system/personnelLocation";
 export default {
   name: "powerInfoPopup",

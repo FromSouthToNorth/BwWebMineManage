@@ -135,7 +135,7 @@
 <script>
 import { getpolicy5339 } from "@/api/system/personnelLocation.js";
 import { transitionKeyUp } from "@/views/personnel_location/downholeInfoJs";
-import PLMixin from "@/mixin/personnelLocation";
+import PLMixin from "@/utils/personnelLocation";
 import { useAppStore } from '@/stores/app'
 export default {
   name: "userInfoPopup",
