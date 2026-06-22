@@ -1,5 +1,5 @@
 <template>
-  <el-dialog class="pl-user-dialog" title="个人信息" v-model="showPopup" :width="cliWidth + 'px'" :append-to-body="false"
+  <el-dialog class="pl-user-dialog" title="个人信息" v-model="showPopup" :width="cliWidth + 'px'" append-to-body
     :modal="true" :close-on-click-modal="false" @close="close">
     <table class="x-table" :style="{ width: `${cliWidth}px` }" cellspacing="0" id="7" cellpadding="0">
       <colgroup :style="{ width: `${cliWidth}px` }">

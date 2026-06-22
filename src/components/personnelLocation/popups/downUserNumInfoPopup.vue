@@ -1,28 +1,10 @@
 <template>
   <div>
-    <Popup
-      v-if="showPopup"
-      :isShow="showPopup"
-      :title="'井下人员信息'"
-      :isQuery="false"
-      :changeSearch="false"
-      :isQueryBtn="false"
-      :isResetBtn="false"
-      :tableData="table.dataSource"
-      :columnOptions="columns"
-      :isShowFooter="false"
-      :hasIndex="false"
-      :width="'80%'"
-      :paginationShow="true"
-      :total="table.total"
-      :appendToBody="true"
-      :loading="table.loading"
-      @columnClick="columnClick"
-      @operationHandle="operationHandle"
-      @tableChange="pageChange"
-      @search="search"
-      @close="close"
-    />
+    <Popup v-if="showPopup" :isShow="showPopup" :title="'井下人员信息'" :isQuery="false" :changeSearch="false"
+      :isQueryBtn="false" :isResetBtn="false" :tableData="table.dataSource" :columnOptions="columns"
+      :isShowFooter="false" :hasIndex="false" :width="'80%'" :paginationShow="true" :total="table.total"
+      :appendToBody="true" :loading="table.loading" @columnClick="columnClick" @operationHandle="operationHandle"
+      @tableChange="pageChange" @search="search" @close="close" />
     <trackInfoPopup ref="trackInfoPopup" :appendToBody="true"></trackInfoPopup>
     <userInfoPopup ref="userInfoPopup"></userInfoPopup>
   </div>

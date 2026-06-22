@@ -84,7 +84,7 @@ export const downUserQueryCustomClo: ColumnConfig[] = [
     prop: 'edit',
     columnType: true,
     isEvent: true,
-    width: 100,
+    width: 120,
     slots: [
       { soltName: 'gj', data: '轨迹', isInMore: false },
       { soltName: 'ry', data: '人员', isInMore: false },
