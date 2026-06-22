@@ -1,7 +1,7 @@
 <template>
   <div>
-    <el-dialog :title="title" v-model="visible" :width="width" :append-to-body="appendToBody" :destroy-on-close="destroy"
-      :close-on-click-modal="false" :modal="modal" @close="close">
+    <el-dialog :title="title" v-model="visible" :width="width" :append-to-body="appendToBody"
+      :destroy-on-close="destroy" :close-on-click-modal="false" :modal="modal" @close="close">
       <div class="searchBar" v-if="isQuery">
         <baseQueryBarVue :formItemList="formItemList" :query="isQueryBtn" :queryName="queryName" :showLabel="true"
           :changeSearch="changeSearch" :reSet="isResetBtn" :resetName="resetName" :isClearble="isClearble"
@@ -244,7 +244,21 @@ export default {
 </script>
 
 <style lang="scss" scoped>
-::v-deep .el-dialog {
+.bottom {
+  margin-top: 10px;
+  text-align: right;
+
+  /* ::v-deep .el-button{
+    border:1px solid #213042;
+    background: transparent;
+  } */
+}
+</style>
+
+<!-- el-dialog append-to-body 时 scoped 样式无法穿透至 <body> 下的弹窗，
+     需非 scoped 样式确保配色正确 -->
+<style lang="scss">
+.el-dialog {
   border: 1px;
   border-radius: 10px;
   background: var(--popup-bgColor) !important;
@@ -256,15 +270,5 @@ export default {
   .el-dialog__body {
     padding: 10px;
   }
-}
-
-.bottom {
-  margin-top: 10px;
-  text-align: right;
-
-  /* ::v-deep .el-button{
-    border:1px solid #213042;
-    background: transparent;
-  } */
 }
 </style>

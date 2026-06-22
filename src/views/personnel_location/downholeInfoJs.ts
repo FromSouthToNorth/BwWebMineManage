@@ -1,6 +1,9 @@
 /**
  * personnel_location 图表初始化工具函数
  * 从 D:\bw\Bw.WebMineManage 原始项目移植，适配 Vue 3 + Pinia
+ *
+ * 注意：本模块使用模块级变量管理图表实例（myChartLine / myChartBar），
+ * 同一时间每种图表类型只能存在一个实例，适合单图表页面场景。
  */
 import { getDownHoleLineData, getDownHoleBarData } from '@/api/system/personnelLocation'
 import { getMineName } from '@/api/system/helpers'
@@ -9,24 +12,9 @@ import type { ECharts } from 'echarts'
 import router from '@/router'
 import { DATA_THEME } from '@/utils/constants'
 
-/** 检查 DOM 元素是否有有效尺寸（ECharts 渲染的前提条件） */
-function isValidChartContainer(el: HTMLElement | null): boolean {
-  if (!el) return false
-  const w = el.clientWidth || el.offsetWidth
-  const h = el.clientHeight || el.offsetHeight
-  return w > 0 && h > 0
-}
-
-let myChartLine: ECharts | null = null
-let myChartBar: ECharts | null = null
-let _resizeGuard = false
-
-function ensureGlobalResize() {
-  if (_resizeGuard) return
-  _resizeGuard = true
-  window.addEventListener('resize', () => { if (myChartLine) myChartLine.resize() })
-  window.addEventListener('resize', () => { if (myChartBar) myChartBar.resize() })
-}
+// ============================================
+// 类型定义
+// ============================================
 
 interface MonthItem {
   k: number
@@ -45,17 +33,187 @@ interface LineData {
   lineYData: number[]
 }
 
-const str: MonthItem[] = [
+interface RouteInfo {
+  path?: string
+  param?: Record<string, any>
+}
+
+// ============================================
+// 常量
+// ============================================
+
+/** 月份中文名称映射 */
+const MONTH_NAMES: MonthItem[] = [
   { k: 1, v: '一月' }, { k: 2, v: '二月' }, { k: 3, v: '三月' },
   { k: 4, v: '四月' }, { k: 5, v: '五月' }, { k: 6, v: '六月' },
   { k: 7, v: '七月' }, { k: 8, v: '八月' }, { k: 9, v: '九月' },
   { k: 10, v: '十月' }, { k: 11, v: '十一月' }, { k: 12, v: '十二月' },
 ]
 
-const rootElement = document.documentElement
-const ComputedStyle = getComputedStyle(rootElement)
+/** 堆叠柱状图配色（已按渲染顺序排列） */
+const STACKED_BAR_COLORS: string[] = [
+  'rgba(12, 88, 133, 1)', 'rgba(12, 66, 120, 1)',
+  'rgba(48, 131, 157, 1)', 'rgba(27, 174, 134, 1)',
+  'rgba(121, 207, 89, 1)', '#E4FF3E',
+  'rgba(149, 209, 155, 1)', 'rgba(126, 219, 208, 1)',
+]
 
-/* 获取年份 */
+/** 柱状图渐变色 */
+const BAR_GRADIENT = new echarts.graphic.LinearGradient(0, 0, 0, 1, [
+  { offset: 0, color: 'rgba(0, 201, 189, 1)' },
+  { offset: 1, color: 'rgba(17, 124, 184, 1)' },
+])
+
+/** CSS 变量缓存（模块加载时快照，主题切换后需刷新页面） */
+const rootElement = document.documentElement
+const computedStyle = getComputedStyle(rootElement)
+
+// ============================================
+// 模块级状态
+// ============================================
+
+let myChartLine: ECharts | null = null
+let myChartBar: ECharts | null = null
+let _resizeGuard = false
+
+// ============================================
+// 内部工具函数
+// ============================================
+
+/** 检查 DOM 元素是否有有效尺寸（ECharts 渲染的前置条件） */
+function isValidChartContainer(el: HTMLElement | null): boolean {
+  if (!el) return false
+  const w = el.clientWidth || el.offsetWidth
+  const h = el.clientHeight || el.offsetHeight
+  return w > 0 && h > 0
+}
+
+/** 判断当前是否为浅色主题 */
+function isLightTheme(): boolean {
+  return localStorage.getItem(DATA_THEME) === 'light'
+}
+
+/** 注册全局 resize 监听器（只注册一次），统一处理所有图表实例 */
+function ensureGlobalResize(): void {
+  if (_resizeGuard) return
+  _resizeGuard = true
+  window.addEventListener('resize', () => {
+    myChartLine?.resize()
+    myChartBar?.resize()
+  })
+}
+
+/** 安全释放折线图实例 */
+function disposeLineChart(): void {
+  if (myChartLine != null) {
+    myChartLine.dispose()
+    myChartLine = null
+  }
+}
+
+/** 安全释放柱状图实例 */
+function disposeBarChart(): void {
+  if (myChartBar != null) {
+    myChartBar.dispose()
+    myChartBar = null
+  }
+}
+
+/** 获取 CSS 变量值 */
+function cssVar(name: string): string {
+  return computedStyle.getPropertyValue(name)
+}
+
+/** 主题色分割线样式 */
+function splitLineStyle(color?: string): object {
+  return { type: 'dashed' as const, color: color ?? 'rgba(0, 178, 191, 0.2)' }
+}
+
+// ============================================
+// 图表选项工厂
+// ============================================
+
+/** 创建通用的轴触发 tooltip 格式化函数 */
+function createAxisTooltipFormatter(unit: string): (params: any[]) => string {
+  return (params: any[]) => {
+    let result = params[0].axisValueLabel + '<br>'
+    params.forEach((item: any) => {
+      if (item.value) {
+        result += item.marker + `${unit} : ${item.value}</br>`
+      }
+    })
+    return result
+  }
+}
+
+/** 创建标准工具箱配置 */
+function createDefaultToolbox(showToolBox: boolean = true) {
+  return {
+    show: showToolBox,
+    top: 0,
+    feature: {
+      dataZoom: { yAxisIndex: 'none' },
+      dataView: { readOnly: false },
+      restore: {},
+      saveAsImage: {},
+    },
+    iconStyle: { borderWidth: 2 },
+  }
+}
+
+/** 创建柱状图通用 click 处理器 */
+function createBarClickHandler(
+  that: any,
+  routeInfo?: RouteInfo,
+): (params: any) => void {
+  return (params: any) => {
+    if (routeInfo?.path) {
+      const { path, param } = routeInfo
+      if (!param) return
+      if (path === 'downholepersonNum' || path === 'downholeNum_app') {
+        param.day = params.name.substring(0, params.name.length - 1)
+        param.total = params.data
+      }
+      else if (path === 'turnOutInfo' || path === 'turnOutInfo_app') {
+        param.name = params.name
+      }
+      router.push({ name: path, params: param })
+    }
+    else {
+      that.barclick(params.name)
+    }
+  }
+}
+
+/** 创建堆叠柱状图通用 click 处理器（与普通柱状图的 data 结构不同） */
+function createStackedBarClickHandler(
+  that: any,
+  routeInfo?: RouteInfo,
+): (params: any) => void {
+  return (params: any) => {
+    if (routeInfo?.path) {
+      const { path, param } = routeInfo
+      if (!param) return
+      if (path === 'downholepersonNum' || path === 'downholeNum_app') {
+        param.day = params.name
+        param.total = params.data.value
+      }
+      else if (path === 'turnOutInfo') {
+        param.name = params.name
+      }
+      router.push({ name: path, params: param })
+    }
+    else {
+      that.barclick(params.name)
+    }
+  }
+}
+
+// ============================================
+// 导出工具函数
+// ============================================
+
+/* 获取年份及年月日信息 */
 export function getYear(): YearData {
   const date = new Date()
   const y = date.getFullYear()
@@ -72,18 +230,12 @@ export function getYear(): YearData {
   return data
 }
 
-function getTheme(): boolean {
-  return localStorage.getItem(DATA_THEME) === 'light'
-}
-
 /** 对象属性转首字母大写（不修改原对象） */
 export function transitionKeyUp<T extends Record<string, any>>(item: T): Record<string, any> {
   const result: Record<string, any> = { ...item }
   for (const key in result) {
     if (Object.prototype.hasOwnProperty.call(result, key)) {
-      const firstString = key[0].toUpperCase()
-      const leftKey = key.substring(1)
-      const allKey = firstString + leftKey
+      const allKey = key[0].toUpperCase() + key.substring(1)
       result[allKey] = result[key]
       if (allKey !== key) delete result[key]
     }
@@ -91,38 +243,62 @@ export function transitionKeyUp<T extends Record<string, any>>(item: T): Record<
   return result
 }
 
+/** 数组内所有对象属性转首字母大写 */
 export function upperJSONKey(arr: any[]): Record<string, any>[] {
-  const upArr: Record<string, any>[] = []
-  arr.forEach((item) => upArr.push(transitionKeyUp(item)))
-  return upArr
+  return arr.map((item) => transitionKeyUp(item))
 }
 
-/** 数字月转中文月份 */
+/** 分页组件返回字段 → 策略分页字段 */
+export function pageFieldConvert(result: { currentPage: number; pageSize: number }): { Page: number; Row: number } {
+  return { Page: result.currentPage, Row: result.pageSize }
+}
+
+/** 获取 URL 中的主题参数 */
+export function GetTheme(url: string, key: string): string | undefined {
+  if (!url) throw new Error('参数URL不能为空！')
+  const queryString = url.split('?')[1]
+  if (!queryString) return undefined
+  return new URLSearchParams(queryString).get(key) ?? undefined
+}
+
+/** 公共阴影变量 */
+export function getBoxShadow(): string {
+  return '0 4px 8px 0 rgb(0 80 115 / 41%) inset'
+}
+
+// ============================================
+// 数据获取
+// ============================================
+
+/** 获取月度折线图数据（数字月 → 中文月份标签） */
 export async function getLineData(val: MonthItem[], year: number | string): Promise<LineData> {
   const datas: LineData = { lineXData: [], lineYData: [] }
   const { data } = await getDownHoleLineData(5260, getMineName(), year)
   if (data != null && data.length !== 0) {
     data.forEach((item: any, index: number) => {
-      datas.lineXData.push(item.month === val[index].k ? val[index].v : item.month)
+      datas.lineXData.push(item.month === val[index]?.k ? val[index].v : item.month)
       datas.lineYData.push(item.num)
     })
   }
   return datas
 }
 
-/** 分页组件返回字段转策略分页字段 */
-export function pageFieldConvert(result: { currentPage: number; pageSize: number }): { Page: number; Row: number } {
-  return { Page: result.currentPage, Row: result.pageSize }
-}
+// ============================================
+// 图表初始化 — 折线图
+// ============================================
 
-/** 初始化折线图 */
-export function GetinitLine(that: any, charBox: HTMLElement | null, unit: string, ShowToolBox?: boolean): void {
-  if (myChartLine) myChartLine.dispose()
+/** 初始化单数据源折线图（点击月份触发回调更新柱状图） */
+export function GetinitLine(
+  that: any,
+  charBox: HTMLElement | null,
+  unit: string,
+  ShowToolBox?: boolean,
+): void {
+  disposeLineChart()
   if (!isValidChartContainer(charBox)) return
   ensureGlobalResize()
 
-  const chartDom = charBox!
-  myChartLine = echarts.init(chartDom)
+  myChartLine = echarts.init(charBox!)
   const option = {
     color: {
       type: 'linear' as const, x: 0, y: 0, x2: 0, y2: 1,
@@ -144,35 +320,25 @@ export function GetinitLine(that: any, charBox: HTMLElement | null, unit: string
         return result
       },
     },
-    toolbox: {
-      show: ShowToolBox === undefined ? true : ShowToolBox,
-      top: 0,
-      feature: {
-        dataZoom: { yAxisIndex: 'none' },
-        dataView: { readOnly: false },
-        restore: {},
-        saveAsImage: {},
-      },
-      iconStyle: { borderWidth: 2 },
-    },
+    toolbox: createDefaultToolbox(ShowToolBox),
     grid: { left: 50, top: 20, bottom: 40, right: 30 },
     xAxis: {
       type: 'category',
       data: that.lineXData,
-      axisLabel: { show: true, color: ComputedStyle.getPropertyValue('--text-color') },
+      axisLabel: { show: true, color: cssVar('--text-color') },
     },
     yAxis: {
       type: 'value',
-      axisLabel: { show: true, color: ComputedStyle.getPropertyValue('--text-color') },
+      axisLabel: { show: true, color: cssVar('--text-color') },
       splitLine: {
-        lineStyle: { type: 'dashed', color: getTheme() ? '#d5d6d8' : 'rgba(0, 178, 191, 0.2)' },
+        lineStyle: { type: 'dashed', color: isLightTheme() ? '#d5d6d8' : 'rgba(0, 178, 191, 0.2)' },
         show: true,
       },
     },
     series: [{
       data: that.lineYData, type: 'line', areaStyle: {},
       symbol: 'emptyCircle', symbolSize: 10,
-      label: { show: true, color: ComputedStyle.getPropertyValue('--text-color') },
+      label: { show: true, color: cssVar('--text-color') },
       lineStyle: { color: 'rgba(0, 178, 191, 1)' },
     }],
   }
@@ -184,19 +350,24 @@ export function GetinitLine(that: any, charBox: HTMLElement | null, unit: string
     const pointInPixel = [params.offsetX, params.offsetY]
     if (myChartLine!.containPixel('grid', pointInPixel)) {
       const data = { name: chickData.name, value: chickData.value, color: chickData.color }
-      str.forEach((item) => {
+      MONTH_NAMES.forEach((item) => {
         if (data.name === item.v) { that.month = item.k; that.getBarData() }
       })
     }
   })
 }
 
-/** 初始化折线图多数据源 */
-export function GetinitLines(that: any, charBox: HTMLElement | null, unit: string, ShowToolBox?: boolean): void {
-  if (myChartLine) myChartLine.dispose()
+/** 初始化多数据源折线图（正常/超时/全部三条线） */
+export function GetinitLines(
+  that: any,
+  charBox: HTMLElement | null,
+  unit: string,
+  ShowToolBox?: boolean,
+): void {
+  disposeLineChart()
   ensureGlobalResize()
-  const dom = charBox!
-  myChartLine = echarts.init(dom)
+
+  myChartLine = echarts.init(charBox!)
   const option = {
     tooltip: { trigger: 'axis' as const },
     toolbox: {
@@ -212,35 +383,32 @@ export function GetinitLines(that: any, charBox: HTMLElement | null, unit: strin
     color: ['rgba(0, 191, 53, 1)', 'rgba(255, 77, 20, 1)', 'rgba(0, 178, 191, 1)'],
     legend: {
       data: ['正常', '超时', '全部'],
-      textStyle: { color: getTheme() ? '#000000' : '#fff' },
+      textStyle: { color: isLightTheme() ? '#000000' : '#fff' },
     },
     grid: { left: '3%', right: '4%', bottom: '3%', containLabel: true },
     xAxis: {
       type: 'category', boundaryGap: false, data: that.lineXData,
-      axisLabel: {
-        show: true, formatter: function (value: string) { return value },
-        color: ComputedStyle.getPropertyValue('--text-color'),
-      },
+      axisLabel: { show: true, color: cssVar('--text-color') },
     },
     yAxis: {
       type: 'value',
       splitLine: {
-        lineStyle: { type: 'dashed', color: ComputedStyle.getPropertyValue('--text-color') },
+        lineStyle: { type: 'dashed', color: cssVar('--text-color') },
         show: true,
       },
     },
     series: [
       {
         name: '正常', type: 'line', data: that.lineYDataNormal,
-        label: { show: true, position: 'top', color: ComputedStyle.getPropertyValue('--text-color') },
+        label: { show: true, position: 'top', color: cssVar('--text-color') },
         lineStyle: { color: 'rgba(0, 178, 191, 1)' },
       },
       {
-        label: { show: true, position: 'top', color: ComputedStyle.getPropertyValue('--text-color') },
+        label: { show: true, position: 'top', color: cssVar('--text-color') },
         name: '超时', type: 'line', stack: 'Total', data: that.lineYDataTimeOut,
       },
       {
-        label: { show: true, position: 'top', color: ComputedStyle.getPropertyValue('--text-color') },
+        label: { show: true, position: 'top', color: cssVar('--text-color') },
         name: '全部', type: 'line', stack: 'Total', data: that.lineYDataAll,
       },
     ],
@@ -251,10 +419,8 @@ export function GetinitLines(that: any, charBox: HTMLElement | null, unit: strin
     const pointInPixel = [params.offsetX, params.offsetY]
     if (myChartLine!.containPixel('grid', pointInPixel)) {
       const pointInGrid = myChartLine!.convertFromPixel({ seriesIndex: 0 }, pointInPixel)
-      const xIndex = pointInGrid[0]
-      const handleIndex = Number(xIndex)
-      const op = myChartLine!.getOption()
-      const month = (op as any).xAxis[0].data[handleIndex]
+      const xIndex = Number(pointInGrid[0])
+      const month = ((myChartLine!.getOption()) as any).xAxis[0].data[xIndex]
       const M = month.substring(0, month.indexOf('月'))
       that.params.month = M
       that.month = M
@@ -263,37 +429,24 @@ export function GetinitLines(that: any, charBox: HTMLElement | null, unit: strin
   })
 }
 
-/** 初始化柱状图滚动数据 */
+// ============================================
+// 图表初始化 — 柱状图
+// ============================================
+
+/** 初始化带滚动缩放滑条的柱状图 */
 export function getinitBarZoom(that: any, chartBox: HTMLElement | null, unit: string): void {
-  if (myChartBar != null && myChartBar !== '' && myChartBar !== undefined) myChartBar.dispose()
+  disposeBarChart()
   if (!isValidChartContainer(chartBox)) return
   ensureGlobalResize()
-  const chartDom = chartBox!
-  myChartBar = echarts.init(chartDom)
+
+  myChartBar = echarts.init(chartBox!)
+  const isLargeData = that.barYData.length >= 100
   const option = {
-    color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
-      { offset: 0, color: 'rgba(0, 201, 189, 1)' },
-      { offset: 1, color: 'rgba(17, 124, 184, 1)' },
-    ]),
-    toolbox: {
-      show: true, top: 0,
-      feature: {
-        dataZoom: { yAxisIndex: 'none' },
-        dataView: { readOnly: false },
-        restore: {},
-        saveAsImage: {},
-      },
-      iconStyle: { borderWidth: 2 },
-    },
+    color: BAR_GRADIENT,
+    toolbox: createDefaultToolbox(),
     tooltip: {
       trigger: 'axis',
-      formatter: (params: any) => {
-        let result = params[0].axisValueLabel + '<br>'
-        params.forEach(function (item: any) {
-          if (item.value) result += item.marker + `${unit} : ` + item.value + '</br>'
-        })
-        return result
-      },
+      formatter: createAxisTooltipFormatter(unit),
       axisPointer: { type: 'shadow' },
     },
     dataZoom: [
@@ -301,7 +454,7 @@ export function getinitBarZoom(that: any, chartBox: HTMLElement | null, unit: st
         type: 'slider', show: true,
         backgroundColor: 'rgb(19, 63, 100)', fillerColor: 'rgb(16, 171, 198)',
         borderColor: 'rgb(19, 63, 100)', showDetail: true,
-        start: 0, end: that.barYData.length >= 100 ? 5 : 30,
+        start: 0, end: isLargeData ? 5 : 30,
         filterMode: 'empty', width: '50%', height: 5, left: 'center',
         zoomLoxk: true, handleSize: 0, bottom: 3,
       },
@@ -313,12 +466,12 @@ export function getinitBarZoom(that: any, chartBox: HTMLElement | null, unit: st
     xAxis: {
       type: 'category', data: that.barXData,
       splitLine: { show: false },
-      axisLabel: { color: ComputedStyle.getPropertyValue('--text-color') },
+      axisLabel: { color: cssVar('--text-color') },
     },
     yAxis: {
       type: 'value',
-      splitLine: { show: true, lineStyle: { type: 'dashed', color: 'rgba(0, 178, 191, 0.2)' } },
-      axisLabel: { color: ComputedStyle.getPropertyValue('--text-color') },
+      splitLine: { show: true, lineStyle: splitLineStyle() },
+      axisLabel: { color: cssVar('--text-color') },
     },
     series: [{
       sort: 'descending', data: that.barYData, type: 'bar',
@@ -327,48 +480,31 @@ export function getinitBarZoom(that: any, chartBox: HTMLElement | null, unit: st
       barWidth: '20%',
     }],
   }
-  if (that.barXData.length <= 100) delete option.dataZoom
+  if (!isLargeData) delete (option as any).dataZoom
   myChartBar.setOption(option)
 }
 
-/** 初始化柱状图 */
+/** 初始化柱状图（PC，带点击导航回调） */
 export function getinitBar(
   that: any,
   chartBox: HTMLElement | null,
   unit: string,
-  routeInfo: { path?: string; param?: Record<string, any> },
+  routeInfo: RouteInfo,
+  /** @deprecated 未使用，保留为兼容参数 */
   width?: any,
   showToolBox?: boolean,
 ): void {
-  if (myChartBar != null && myChartBar !== '' && myChartBar !== undefined) myChartBar.dispose()
+  disposeBarChart()
   if (!isValidChartContainer(chartBox)) return
   ensureGlobalResize()
-  const chartDom = chartBox!
-  myChartBar = echarts.init(chartDom)
+
+  myChartBar = echarts.init(chartBox!)
   const option = {
-    color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
-      { offset: 0, color: 'rgba(0, 201, 189, 1)' },
-      { offset: 1, color: 'rgba(17, 124, 184, 1)' },
-    ]),
-    toolbox: {
-      show: showToolBox === undefined ? true : showToolBox, top: 0,
-      feature: {
-        dataZoom: { yAxisIndex: 'none' },
-        dataView: { readOnly: false },
-        restore: {},
-        saveAsImage: {},
-      },
-      iconStyle: { borderWidth: 2 },
-    },
+    color: BAR_GRADIENT,
+    toolbox: createDefaultToolbox(showToolBox),
     tooltip: {
       trigger: 'axis',
-      formatter: (params: any) => {
-        let result = params[0].axisValueLabel + '<br>'
-        params.forEach(function (item: any) {
-          if (item.value) result += item.marker + `${unit} :` + item.value + '</br>'
-        })
-        return result
-      },
+      formatter: createAxisTooltipFormatter(unit),
       axisPointer: { type: 'shadow' },
     },
     grid: { left: 0, bottom: 0, top: 20, right: 0, height: 'auto', width: 'auto', containLabel: true },
@@ -376,105 +512,77 @@ export function getinitBar(
       type: 'category', data: that.barXData,
       label: { show: false },
       splitLine: { show: false },
-      axisLabel: { color: ComputedStyle.getPropertyValue('--text-color'), interval: 0, rotate: 40 },
+      axisLabel: { color: cssVar('--text-color'), interval: 0, rotate: 40 },
     },
     yAxis: {
       type: 'value',
-      splitLine: { show: true, lineStyle: { type: 'dashed', color: ComputedStyle.getPropertyValue('--chartDashedColor') } },
-      axisLabel: { color: ComputedStyle.getPropertyValue('--text-color') },
+      splitLine: { show: true, lineStyle: { type: 'dashed', color: cssVar('--chartDashedColor') } },
+      axisLabel: { color: cssVar('--text-color') },
     },
     series: [{
       sort: 'descending', data: that.barYData, type: 'bar',
       showBackground: false,
-      label: { show: true, position: 'top', color: ComputedStyle.getPropertyValue('--text-color') },
+      label: { show: true, position: 'top', color: cssVar('--text-color') },
     }],
   }
   myChartBar.setOption(option)
   myChartBar.off('click')
-  myChartBar.on('click', (params: any) => {
-    if (routeInfo.path) {
-      if (routeInfo.path === 'downholepersonNum') {
-        routeInfo.param!.day = params.name.substring(0, params.name.length - 1)
-        routeInfo.param!.total = params.data
-      } else if (routeInfo.path === 'turnOutInfo') {
-        routeInfo.param!.name = params.name
-      }
-      router.push({ name: routeInfo.path, params: routeInfo.param })
-    } else {
-      that.barclick(params.name)
-    }
-  })
+  myChartBar.on('click', createBarClickHandler(that, routeInfo))
 }
 
-/** 堆叠柱状图 */
+/** 初始化堆叠柱状图（PC，班次分组） */
 export function stackbar(
   that: any,
   chartBox: HTMLElement | null,
   unit: string,
-  routeInfo: { path?: string; param?: Record<string, any> },
+  routeInfo: RouteInfo,
   ShowToolBox?: boolean,
 ): void {
-  if (myChartBar != null && myChartBar !== '' && myChartBar !== undefined) myChartBar.dispose()
+  disposeBarChart()
   if (!isValidChartContainer(chartBox)) return
   ensureGlobalResize()
-  const chartDom = chartBox!
-  myChartBar = echarts.init(chartDom)
+
+  myChartBar = echarts.init(chartBox!)
   const xAxisData = new Set()
   const legend = new Set()
   const series: any[] = []
   let day = ''
-  let colors: string[] = [
-    'rgba(126, 219, 208, 1)', 'rgba(149, 209, 155, 1)', '#E4FF3E',
-    'rgba(121, 207, 89, 1)', 'rgba(27, 174, 134, 1)', 'rgba(48, 131, 157, 1)',
-    'rgba(12, 88, 133, 1)', 'rgba(12, 66, 120, 1)',
-  ]
-  colors = colors.reverse()
+
   that.data.forEach((item: any) => {
     day = Number(item.day.substring(item.day.lastIndexOf('-') + 1))
     xAxisData.add(day + '号')
     legend.add(item.shiftName)
   })
   const days = Array.from(xAxisData) as string[]
-  const legends = Array.from(legend).sort(function (a: any, b: any) { return a - b })
+  const legends = Array.from(legend).sort((a: any, b: any) => a - b)
+
   legends.forEach((item: any, index: number) => {
     series.push({
       label: {
         show: true, position: 'inside', verticalAlign: 'middle', align: 'center',
-        formatter: '{c}', color: ComputedStyle.getPropertyValue('--text-color'),
+        formatter: '{c}', color: cssVar('--text-color'),
       },
       name: item, type: 'bar', stack: '班次',
       emphasis: { focus: 'series' },
       data: [],
-      itemStyle: { color: item === '' ? '' : colors[index] },
+      itemStyle: { color: item === '' ? '' : STACKED_BAR_COLORS[index] },
     })
   })
+
   const option: any = {
-    color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
-      { offset: 0, color: 'rgba(0, 201, 189, 1)' },
-      { offset: 1, color: 'rgba(17, 124, 184, 1)' },
-    ]),
+    color: BAR_GRADIENT,
     grid: { left: 10, right: 10, bottom: '15', top: 20, containLabel: true },
     tooltip: { trigger: 'item' },
-    toolbox: {
-      show: ShowToolBox === undefined ? true : ShowToolBox, top: 0,
-      feature: {
-        dataZoom: { yAxisIndex: 'none' },
-        dataView: { readOnly: false },
-        restore: {},
-        saveAsImage: { backgroundColor: '#1d2d3d' },
-      },
-      iconStyle: { borderWidth: 2 },
-    },
+    toolbox: createDefaultToolbox(ShowToolBox),
     legend: {
       itemWidth: 15, itemHeight: 15, data: legends,
-      textStyle: { color: ComputedStyle.getPropertyValue('--text-color') },
+      textStyle: { color: cssVar('--text-color') },
     },
     xAxis: {
       data: days, splitLine: { show: false },
       axisLabel: {
         show: true,
-        formatter: function (value: string) { return value },
-        color: ComputedStyle.getPropertyValue('--text-color'),
+        color: cssVar('--text-color'),
       },
     },
     yAxis: {
@@ -482,16 +590,17 @@ export function stackbar(
         show: true,
         lineStyle: {
           type: 'dashed',
-          color: getTheme() ? '#d5d6d8' : 'rgba(0, 178, 191, 0.2)',
+          color: isLightTheme() ? '#d5d6d8' : 'rgba(0, 178, 191, 0.2)',
         },
       },
-      axisLabel: { color: ComputedStyle.getPropertyValue('--text-color') },
+      axisLabel: { color: cssVar('--text-color') },
     },
-    series: series,
+    series,
   }
-  legends.forEach((legend: any, index: number) => {
+
+  legends.forEach((legendName: any, index: number) => {
     that.data.forEach((obj: any) => {
-      if (legend === obj.shiftName) {
+      if (legendName === obj.shiftName) {
         option.series[index].data.push({
           name: Number(obj.day.substring(obj.day.lastIndexOf('-') + 1)),
           value: obj.num,
@@ -499,52 +608,37 @@ export function stackbar(
       }
     })
   })
+
   myChartBar.setOption(option)
   myChartBar.off('click')
-  myChartBar.on('click', (params: any) => {
-    if (routeInfo.path) {
-      if (routeInfo.path === 'downholepersonNum') {
-        routeInfo.param!.day = params.name
-        routeInfo.param!.total = params.data.value
-      } else if (routeInfo.path === 'turnOutInfo') {
-        routeInfo.param!.name = params.name
-      }
-      router.push({ name: routeInfo.path, params: routeInfo.param })
-    } else {
-      that.barclick(params.name)
-    }
-  })
+  myChartBar.on('click', createStackedBarClickHandler(that, routeInfo))
 }
 
-/** 初始化柱状图 App */
+// ============================================
+// 图表初始化 — 柱状图（App 移动端）
+// ============================================
+
+/** 初始化柱状图（App 移动端，带分页切片） */
 export function getinitBar_app(
   that: any,
   chartBox: HTMLElement | null,
   unit: string,
-  routeInfo: { path?: string; param?: Record<string, any> },
+  routeInfo: RouteInfo,
+  /** @deprecated 未使用，保留为兼容参数 */
   width?: any,
 ): void {
-  if (myChartBar != null && myChartBar !== '' && myChartBar !== undefined) myChartBar.dispose()
+  disposeBarChart()
   if (!isValidChartContainer(chartBox)) return
   ensureGlobalResize()
-  const chartDom = chartBox!
-  myChartBar = echarts.init(chartDom)
+
+  myChartBar = echarts.init(chartBox!)
   const start = (that.page - 1) * that.size
   const end = that.page * that.size
   const option: any = {
-    color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
-      { offset: 0, color: 'rgba(0, 201, 189, 1)' },
-      { offset: 1, color: 'rgba(17, 124, 184, 1)' },
-    ]),
+    color: BAR_GRADIENT,
     tooltip: {
       trigger: 'axis',
-      formatter: (params: any) => {
-        let result = params[0].axisValueLabel + '<br>'
-        params.forEach(function (item: any) {
-          if (item.value) result += item.marker + `${unit} :` + item.value + '</br>'
-        })
-        return result
-      },
+      formatter: createAxisTooltipFormatter(unit),
       axisPointer: { type: 'shadow' },
     },
     grid: { left: 40, top: 5, containLabel: true },
@@ -552,8 +646,8 @@ export function getinitBar_app(
     yAxis: {
       type: 'category', inverse: true,
       axisTick: { show: false },
-      axisLine: { show: false, lineStyle: { color: getTheme() ? 'rgb(237 240 249 / 100%)' : '#0a1820' } },
-      axisLabel: { show: false, color: ComputedStyle.getPropertyValue('--text-color') },
+      axisLine: { show: false, lineStyle: { color: isLightTheme() ? 'rgb(237 240 249 / 100%)' : '#0a1820' } },
+      axisLabel: { show: false, color: cssVar('--text-color') },
       max: that.size,
       data: that.barXData.slice(start, end),
     },
@@ -561,80 +655,63 @@ export function getinitBar_app(
       name: '人数', type: 'bar', data: that.barYData.slice(start, end), barWidth: '80%',
       label: {
         show: true, formatter: '{b}', position: 'left', align: 'left', offset: [10, 0],
-        color: ComputedStyle.getPropertyValue('--text-color'), fontSize: 12,
+        color: cssVar('--text-color'), fontSize: 12,
       },
       barCateGoryGap: '0%',
     }],
   }
   myChartBar.setOption(option)
   myChartBar.off('click')
-  myChartBar.on('click', (params: any) => {
-    if (routeInfo.path) {
-      if (routeInfo.path === 'downholeNum_app') {
-        routeInfo.param!.day = params.name.substring(0, params.name.length - 1)
-        routeInfo.param!.total = params.data
-      } else if (routeInfo.path === 'turnOutInfo_app') {
-        routeInfo.param!.name = params.name
-      }
-      router.push({ name: routeInfo.path, params: routeInfo.param })
-    } else {
-      that.barclick(params.name)
-    }
-  })
+  myChartBar.on('click', createBarClickHandler(that, routeInfo))
 }
 
-/** 堆叠柱状图 App */
+/** 初始化堆叠柱状图（App 移动端，带分页切片） */
 export function stackbar_app(
   that: any,
   chartBox: HTMLElement | null,
   unit: string,
-  routeInfo: { path?: string; param?: Record<string, any> },
+  routeInfo: RouteInfo,
   ShowToolBox?: boolean,
 ): void {
-  if (myChartBar != null && myChartBar !== '' && myChartBar !== undefined) myChartBar.dispose()
+  disposeBarChart()
   if (!isValidChartContainer(chartBox)) return
   ensureGlobalResize()
-  const chartDom = chartBox!
-  myChartBar = echarts.init(chartDom)
+
+  myChartBar = echarts.init(chartBox!)
   const start = (that.page - 1) * that.size
   const end = that.page * that.size
   const xAxisData = new Set()
   const legend = new Set()
   const series: any[] = []
   let day = ''
-  let colors: string[] = [
-    'rgba(126, 219, 208, 1)', 'rgba(149, 209, 155, 1)', '#E4FF3E',
-    'rgba(121, 207, 89, 1)', 'rgba(27, 174, 134, 1)', 'rgba(48, 131, 157, 1)',
-    'rgba(12, 88, 133, 1)', 'rgba(12, 66, 120, 1)',
-  ]
-  colors = colors.reverse()
+
   that.data.forEach((item: any) => {
     day = Number(item.day.substring(item.day.lastIndexOf('-') + 1))
     xAxisData.add(day + '号')
     legend.add(item.shiftName)
   })
   const days = Array.from(xAxisData) as string[]
-  const legends = Array.from(legend).sort(function (a: any, b: any) { return a - b })
+  const legends = Array.from(legend).sort((a: any, b: any) => a - b)
+
   legends.forEach((item: any, index: number) => {
     series.push({
       label: {
         show: true, position: 'inside', verticalAlign: 'middle', align: 'center',
-        formatter: '{c}', color: ComputedStyle.getPropertyValue('--text-color'),
+        formatter: '{c}', color: cssVar('--text-color'),
       },
       name: item, type: 'bar', stack: '班次',
       emphasis: { focus: 'series' },
       data: [],
-      itemStyle: { color: item === '' ? '' : colors[index] },
+      itemStyle: { color: item === '' ? '' : STACKED_BAR_COLORS[index] },
     })
   })
+
   that.total = days.length % that.size === 0
     ? days.length / that.size
     : Math.ceil(days.length / that.size)
+
   const option: any = {
-    color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
-      { offset: 0, color: 'rgba(0, 201, 189, 1)' },
-      { offset: 1, color: 'rgba(17, 124, 184, 1)' },
-    ]),
+    color: BAR_GRADIENT,
     grid: { left: 20, right: 0, bottom: '15', top: 40, containLabel: true },
     tooltip: { trigger: 'item' },
     toolbox: {
@@ -644,15 +721,16 @@ export function stackbar_app(
     },
     legend: {
       itemWidth: 15, itemHeight: 15, data: legends, icon: 'circle', itemHeight: 6, left: 'center',
-      textStyle: { color: ComputedStyle.getPropertyValue('--text-color'), fontSize: 10 },
+      textStyle: { color: cssVar('--text-color'), fontSize: 10 },
     },
     xAxis: { show: false, splitLine: { show: false } },
     yAxis: { splitLine: { show: false }, data: days.slice(start, end) },
-    series: series,
+    series,
   }
-  legends.forEach((legend: any, index: number) => {
+
+  legends.forEach((legendName: any, index: number) => {
     that.data.forEach((obj: any) => {
-      if (legend === obj.shiftName) {
+      if (legendName === obj.shiftName) {
         option.series[index].data.push({
           name: Number(obj.day.substring(obj.day.lastIndexOf('-') + 1)),
           value: obj.num,
@@ -660,49 +738,9 @@ export function stackbar_app(
       }
     })
   })
+
   option.series.forEach((item: any) => { item.data = item.data.slice(start, end) })
   myChartBar.setOption(option)
   myChartBar.off('click')
-  myChartBar.on('click', (params: any) => {
-    if (routeInfo.path) {
-      if (routeInfo.path === 'downholeNum_app') {
-        routeInfo.param!.day = params.name
-        routeInfo.param!.total = params.data.value
-      } else if (routeInfo.path === 'turnOutInfo') {
-        routeInfo.param!.name = params.name
-      }
-      router.push({ name: routeInfo.path, params: routeInfo.param })
-    } else {
-      that.barclick(params.name)
-    }
-  })
-}
-
-interface QueryParams {
-  [key: string]: string | undefined
-}
-
-/** 获取URL主题参数 */
-export function GetTheme(url: string, key: string): string | undefined {
-  if (!url) throw new Error('参数URL不能为空！')
-  const i = url.split('?')[1]
-  if (!i) return undefined
-
-  const t = i.split('&')
-  const s: QueryParams = {}
-
-  for (const o in t) {
-    const u = t[o].indexOf('=')
-    if (u !== -1) {
-      const r = t[o].substr(0, u)
-      const n = t[o].substr(u + 1)
-      s[r] = n
-    }
-  }
-  return s[key]
-}
-
-/** 公共阴影变量 */
-export function getBoxShadow(): string {
-  return '0 4px 8px 0 rgb(0 80 115 / 41%) inset'
+  myChartBar.on('click', createStackedBarClickHandler(that, routeInfo))
 }
