@@ -56,7 +56,7 @@
     <div class="pagination" v-if="paginationShow">
       <!-- <span class="total">共 {{ tableDataTotal }} 条</span> -->
       <el-pagination :hide-on-single-page="isShowPagination" :page-sizes="[20, 50, 100, 500]"
-        :current-page="currentPage" :page-size="pageSize" :total="tableDataTotal" :small="small"
+        :current-page="currentPage" :page-size="pageSize" :total="tableDataTotal" :size="paginationSize"
         :pager-count="pagerCount" background :layout="layOut" @size-change="handleSizeChange"
         @current-change="handleCurrentChange" />
     </div>
@@ -185,6 +185,10 @@ export default {
     },
   },
   computed: {
+    // 分页器尺寸：移动端 small，PC 端 default
+    paginationSize() {
+      return useAppStore().isMobile ? 'small' : 'default'
+    },
     // 计算是否显示分页器
     isShowPagination() {
       const isShow = this.tableDataTotal === 0;
@@ -394,6 +398,8 @@ export default {
 
 .pagination {
   padding: 12px 0;
+  display: flex;
+  justify-content: flex-end;
 }
 
 .custom-dropdown-item {
