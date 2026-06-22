@@ -162,7 +162,7 @@ const mapped = (items || []).map((item: any) => ({
 
 ### Date Handling
 
-`dayjs` is centralized in `src/utils/util.ts`. Use `formatDateTime()` and `getRecentDayRange()` from there; do not import `dayjs` directly in components.
+`dayjs` is centralized in `src/utils/util.ts`. Use `formatDateTime()` and `getRecentDayRange()` from there; do not import `dayjs` directly in components. Personnel location's `downholeInfoJs.ts` previously had duplicate `formatterDate`/`getCurrDateTime`/`getInitDate` — these have been removed; always use the `util.ts` versions.
 
 ### KPI Constants
 
@@ -187,7 +187,7 @@ async function initChart() {
 - `darkChartTheme()` provides the dark-theme base (grid, textStyle, tooltip, axis defaults).
 - The composable exposes `resize()` and `dispose()` but does **not** call them automatically. Components must wire up `ResizeObserver` / `window.resize` and call `dispose()` in `onBeforeUnmount`.
 - For clicks on chart blank areas (not just series), use `chart.value.getZr()` and `convertToPixel` with segment-based Y-axis calculations; recalculate on resize via `ResizeObserver`.
-- Personnel location charts use inline ECharts inits in `src/views/personnel_location/downholeInfoJs.js` (separate pattern — see below).
+- Personnel location charts use inline ECharts inits in `src/views/personnel_location/downholeInfoJs.ts` (separate pattern — see below).
 
 ### Theme System
 
@@ -233,13 +233,13 @@ async function initChart() {
 The personnel location module (`src/views/personnel_location/`, `src/components/personnelLocation/`) was migrated from a Vue 2 project (`D:\bw\Bw.WebMineManage`) and uses a **different pattern** from the rest of the codebase:
 
 - **Options API** (`export default { data() {...}, methods: {...} }`) — not `<script setup lang="ts">`.
-- **Mixins** from `src/mixin/personnelLocationMixin.js` (shared table state, pagination, search).
+- **Shared composable** — table/pagination state is provided by `usePersonnelLocation()` from `src/composables/usePersonnelLocation.ts`. Popup components use it via `setup()`: `const { showPopup, table, selectionChange, pageFieldConvert, addDefaultParam } = usePersonnelLocation()`. The composable exposes `table` state (dataSource, total, pageNo, pageSize, loading, queryParam) and helper functions; `search`/`pageChange` methods must be defined in each consuming component.
 - **Scoped styles** via `.personnel-page` class to prevent style leakage to other pages.
-- **CSS variables** prefixed `--pl-*` or aliased in `main.css` under `:root` (global, but most are only referenced inside `.personnel-page` selectors).
-- **Inline ECharts** — chart init functions live in `downholeInfoJs.js` (not `useECharts` composable), using module-level variables (`myChartBar`, `myChartLine`) and manual resize listeners.
+- **CSS variables** prefixed `--pl-*` or aliased in `main.css` under `:root` (global, but most are only referenced inside `.personnel-page` selectors). Light theme overrides at `html[data-theme='theme-light']`.
+- **Inline ECharts** — chart init functions live in `src/views/personnel_location/downholeInfoJs.ts` (not `useECharts` composable), using module-level variables (`myChartBar`, `myChartLine`) and manual resize listeners. Module now written in TypeScript with typed interfaces.
 - **Chart container guard** — must check `clientWidth > 0 && clientHeight > 0` before `echarts.init()` or it fails silently.
 
-When editing personnel location files, match the existing style (Options API, mixins, this pattern) rather than converting to Composition API piecemeal.
+When editing personnel location files, match the existing style (Options API, composable setup pattern) rather than converting to Composition API piecemeal.
 
 ### Dialog / Popup Pattern (personnel location)
 
@@ -255,7 +255,14 @@ this.$refs.trackInfoPopup.show(row)
 </script>
 ```
 
-Dialogs have class-based CSS overrides via `<style>` (non-scoped) blocks using Element Plus's `--el-dialog-bg-color` variable. The shared `trajectoryQuery.vue` component uses `v-model` + `:isShow` prop pattern for reusability.
+Two dialog approaches exist:
+- **Direct `el-dialog`** — `userInfoPopup.vue` uses `<el-dialog append-to-body>` directly.
+- **Wrapped `trajectoryQuery.vue`** — most popups (`downUserNumInfoPopup`, `deviceStatePopup`, etc.) use `<Popup>` which wraps `el-dialog`. It accepts `:appendToBody` prop (default `false`) and uses `v-model` + `:isShow` prop for visibility control.
+
+Key rules:
+- Always set `append-to-body` on dialogs inside flex/scroll containers to avoid stacking-context clipping.
+- Scoped `::v-deep` styles don't affect dialogs with `append-to-body` (they're moved outside the component). Use a non-scoped `<style>` block for dialog appearance, scoping selectors to avoid global leakage.
+- Dialog CSS variables (`--popup-bgColor`, `--popup-textColor`, `--user-popup-*`) are defined in `main.css` at `:root` with `html[data-theme='theme-light']` overrides.
 
 ### API Modules
 
@@ -277,6 +284,22 @@ Dialogs have class-based CSS overrides via `<style>` (non-scoped) blocks using E
 ### Testing
 
 Playwright uses a custom fixture in `tests/utils/setup.ts` that mocks `BW_SSO_SDK` and intercepts API routes with mock data. Two projects: `chromium` (desktop) and `mobile-chrome` (Pixel 5). WebServer runs Vite on port `8081` during tests; tests use `baseURL: http://localhost:8081` while dev runs on `8080`. Screenshots, videos, and traces are retained on failure/first retry.
+
+### Pagination Component
+
+Use the globally registered `<Pagination>` component (`src/components/Pagination/index.vue`) for all paged tables:
+- Props: `total`, `page`, `limit`, `pageSizes`, `layout`, `small`, `hidden` (hides when total is 0)
+- Event: `@pagination="{ page, limit }"`
+- Personnel location's `tableComponent.vue` uses this component internally
+
+### Table Component (Personnel Location)
+
+`src/components/personnelLocation/tableComponent.vue` (`BaseTable`) is the shared table wrapper used by all personnel-location views:
+- Supports selection, index, sort, column slots (action buttons + "更多" dropdown)
+- Emits `tableUpdate` with `{ currentPage, pageSize }` on page/size changes
+- Column configs are typed via `ColumnConfig` interface in `src/components/personnelLocation/config/tableColumns.ts`
+- Uses centralized `Pagination` component (not inline `el-pagination`)
+- Avoid `el-icon-*` CSS classes — they don't work in Element Plus Vue 3. Use inline SVGs instead.
 
 ### Design System
 
