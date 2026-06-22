@@ -54,11 +54,10 @@
 
     <!-- 分页器 -->
     <div class="pagination" v-if="paginationShow">
-      <!-- <span class="total">共 {{ tableDataTotal }} 条</span> -->
-      <el-pagination :hide-on-single-page="isShowPagination" :page-sizes="[20, 50, 100, 500]"
-        :current-page="currentPage" :page-size="pageSize" :total="tableDataTotal" :size="paginationSize"
-        :pager-count="pagerCount" background :layout="layOut" @size-change="handleSizeChange"
-        @current-change="handleCurrentChange" />
+      <Pagination :total="tableDataTotal" :page="currentPage" :limit="pageSize"
+        :page-sizes="[20, 50, 100, 500]" :pager-count="pagerCount" :layout="layOut"
+        :small="paginationSize === 'small'" :hidden="isShowPagination"
+        @pagination="handlePagination" />
     </div>
   </div>
 </template>
@@ -357,26 +356,13 @@ export default {
       // 默认返回文本颜色
       return { color: textColor };
     },
-    // 修改当前页
-    handleCurrentChange(val) {
-      this.currentPage = val;
-      const params = {
-        currentPage: val,
-        pageSize: this.pageSize,
-      };
-      this.$emit("tableUpdate", params);
+    handlePagination({ page, limit }) {
+      this.currentPage = page;
+      this.pageSize = limit;
+      this.$emit("tableUpdate", { currentPage: page, pageSize: limit });
     },
     updateCurrpage() {
       this.currentPage = 1;
-    },
-    // 修改每页数量
-    handleSizeChange(val) {
-      this.pageSize = val;
-      const params = {
-        currentPage: this.currentPage,
-        pageSize: val,
-      };
-      this.$emit("tableUpdate", params);
     },
     // 选择框改变
     selectionChange(e) {
