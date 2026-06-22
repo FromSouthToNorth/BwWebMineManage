@@ -27,7 +27,7 @@
               <span class="pl-action-cell">
                 <!-- 不显示在更多里面 -->
                 <template :key="OutMore.data" v-for="OutMore in isMore.isOutMore">
-                  <span @click="controls(row, OutMore.data)" :style="{ color: OutMore.color }">
+                  <span @click="controls(row, OutMore.data)">
                     {{ OutMore.data }}
                   </span>
                 </template>
@@ -42,8 +42,7 @@
                     </span>
                     <template #dropdown>
                       <el-dropdown-menu>
-                        <el-dropdown-item v-for="inMore in isMore.isInMore" :key="inMore.slotName" :command="inMore.data"
-                          :style="{ color: inMore.color }">
+                        <el-dropdown-item v-for="inMore in isMore.isInMore" :key="inMore.slotName" :command="inMore.data">
                           {{ inMore.data }}
                         </el-dropdown-item>
                       </el-dropdown-menu>
@@ -182,11 +181,6 @@ export default {
       loadingBgColor: "",
     };
   },
-  watch: {
-    size(newVal) {
-      this.value = newVal;
-    },
-  },
   computed: {
     // 分页器尺寸：移动端 small，PC 端 default
     paginationSize() {
@@ -218,7 +212,6 @@ export default {
           });
         }
       });
-      console.log(result);
       return result;
     },
     dataColumn() {
@@ -370,22 +363,20 @@ export default {
   display: none;
 }
 
-/* 操作列单元格：所有操作项水平居中 */
-.pl-action-cell {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  white-space: nowrap;
-
-  > span {
-    cursor: pointer;
-  }
-}
-
-/* 更多下拉触发按钮 */
+/* 操作列：所有操作项水平居中 */
+.pl-action-cell,
 .pl-dropdown-link {
   display: inline-flex;
   align-items: center;
+}
+
+.pl-action-cell {
+  gap: 8px;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.pl-dropdown-link {
   gap: 2px;
   cursor: pointer;
 }
