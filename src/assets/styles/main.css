@@ -1958,18 +1958,6 @@ html[data-theme='theme-light'] {
     color: #409eff;
   }
 
-  .el-pagination button,
-  .el-pager li {
-    background: transparent !important;
-    border-color: rgb(130 153 194 / 40%) !important;
-    color: var(--text-color) !important;
-  }
-
-  .el-pager li.active {
-    background: var(--page-CurrbgColor) !important;
-    border-color: var(--page-CurrbgColor) !important;
-    color: #fff !important;
-  }
 
   .el-dialog {
     background: var(--user-popup-contentBgColor);
