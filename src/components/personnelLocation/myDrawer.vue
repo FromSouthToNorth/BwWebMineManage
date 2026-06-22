@@ -74,7 +74,6 @@ export default {
 </script>
 
 <style lang="scss" scoped>
-@import "@/assets/styles/root.scss";
 
 
 ::v-deep .dialog-search .el-form.demo-form-inline.el-form--inline{

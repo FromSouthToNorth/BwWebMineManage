@@ -31,7 +31,7 @@ Environment variables are loaded from `.env.development` / `.env.production`:
 
 ### Tech Stack
 
-- Vue 3.5 + Composition API + `<script setup lang="ts">`
+- Vue 3.5 + Composition API + `<script setup lang="ts">` (most pages)
 - Vite 6 + TypeScript 5.6 + pnpm 10
 - Element Plus 2.9 (PC, default size `small`, `zh-CN`) + Vant 4.9 (mobile)
 - Pinia 2.3 (setup-style stores)
@@ -46,6 +46,24 @@ Environment variables are loaded from `.env.development` / `.env.production`:
 
 `vite.config.ts` maps `@` to `src/`. Always use `@/components/...`, `@/utils/...`, etc.
 
+### Views / Route Structure
+
+Routes are split between PC and mobile in `src/router/index.ts`:
+
+| Path | Type | Component |
+|---|---|---|
+| `/index.cpt` | PC | Safety monitoring dashboard |
+| `/safetyMonitoringMore` | PC | Expanded safety monitoring |
+| `/statisticalGraph` | PC | Charts & statistics |
+| `/minePressure` | PC | Mine pressure monitoring |
+| `/yieldMonitor` | PC | Yield monitoring |
+| `/production` | PC | Production monitoring |
+| `/personnelLocation.cpt` | PC | Personnel location main |
+| `/index_phone.cpt` | Mobile (4 child routes) | Safety, real-time alerts, charts |
+| `/personnelLocation_phone.cpt` | Mobile (11 child routes) | Personnel location mobile |
+
+Most system views are at `src/views/system/<module>/index.vue`. Personnel location has the most complex routing with parameterized paths like `/downholepersonNum/:year/:month/:day/:total`.
+
 ### PC + Mobile Dual Mode
 
 - PC pages live at the view root, e.g. `views/system/safetyMonitoringMore/index.vue`.
@@ -58,7 +76,7 @@ Environment variables are loaded from `.env.development` / `.env.production`:
 
 ### Global Components
 
-`src/main.ts` globally registers: `Pagination`, `SafetyMonitoringStatistics`, `RightToolbar`, `TopShow`, `Setting`. These can be used in templates without importing. Other shared components are imported via the barrel file `src/components/index.ts`.
+`src/main.ts` globally registers: `Pagination`, `SafetyMonitoringStatistics`, `RightToolbar`, `TopShow`, `Setting`. These can be used in templates without importing. Other shared components are imported via the barrel file `src/components/index.ts`, which exports: `NavBar`, `KpiBar`, `KpiSection`, `StatusBadge`, `GlassCard`, `Hamburger`, `BackToTop`, `SafetyMonitoringTable`, `TimerAlarmTable`.
 
 ### SSO Login Flow
 
@@ -67,12 +85,26 @@ Environment variables are loaded from `.env.development` / `.env.production`:
 3. If URL contains `mine_key`, it calls `callback()` immediately; actual login is handled by `src/permission.ts`.
 4. Otherwise, if `BW_SSO_SDK` exists globally, it calls `SSOLogin(hostname, port, callback)`.
 5. If neither SDK nor `mine_key` is available, it warns and does **not** call `callback()`, so the app does not mount.
-6. `src/permission.ts` route guard handles `mine_key` auto-login, token validation, and SSO logout redirect. It is dynamically imported in `main.ts` after Pinia is installed because it depends on the `user` store.
+
+### Route Guard (`src/permission.ts`)
+
+The `router.beforeEach` guard handles three scenarios:
+1. **`mine_key` in query** — Base64-decodes a credential string `username;password`, calls `userStore.Login()`, then redirects to the original path without the key.
+2. **Has token** (from cookie `Access-Token`) — allows navigation.
+3. **Neither** — calls `BW_SSO_SDK.SSOLogout()` to redirect to the SSO login page.
+
+`permission.ts` is dynamically imported in `main.ts` after Pinia is installed because it depends on the `user` store.
 
 ### Identity & Tokens
 
 - `src/utils/auth.ts` reads/writes the user `token` in `localStorage` for Axios and the `user` store.
 - `src/utils/cookie.ts` reads mine-level values (`MineName`, `MineDesc`, `Access-Token`) from cookies with a `localStorage` fallback under the `pro__` namespace.
+
+### App.vue Entry Point
+
+`src/App.vue` does two things on mount:
+1. **Theme resolution** — checks URL `data-theme` query → `localStorage` → default `theme-dark`. Sets the attribute on `<html>` and syncs to Pinia `settingsStore`.
+2. **Device detection** — checks `navigator.userAgent` for mobile patterns, sets `appStore.setIsMobile()` and dynamic Element Plus `size` based on viewport height.
 
 ### Strategy API Pattern
 
@@ -94,7 +126,7 @@ export function getData() {
 }
 ```
 
-`getMineName()` reads from `src/utils/cookie.ts` and caches the result for the page lifetime.
+`getMineName()` reads from `src/utils/cookie.ts` and caches the result for the page lifetime. Parameters follow the `{ name: string, value: string | number }` shape (`StrategyParam` type).
 
 Backend response format and error message format are documented in `api.md`.
 
@@ -155,6 +187,7 @@ async function initChart() {
 - `darkChartTheme()` provides the dark-theme base (grid, textStyle, tooltip, axis defaults).
 - The composable exposes `resize()` and `dispose()` but does **not** call them automatically. Components must wire up `ResizeObserver` / `window.resize` and call `dispose()` in `onBeforeUnmount`.
 - For clicks on chart blank areas (not just series), use `chart.value.getZr()` and `convertToPixel` with segment-based Y-axis calculations; recalculate on resize via `ResizeObserver`.
+- Personnel location charts use inline ECharts inits in `src/views/personnel_location/downholeInfoJs.js` (separate pattern — see below).
 
 ### Theme System
 
@@ -182,11 +215,11 @@ async function initChart() {
 - Manual chunks: `chunk-libs`, `chunk-element-plus`, `chunk-vant`, `chunk-echarts`.
 - Production build: terser with `drop_console` and `drop_debugger`, output to `dist/WebMineManage/`.
 - SCSS uses the modern-compiler API.
-- Custom plugins:
-  - `injectSsoSdk` — injects BW SSO SDK script.
-  - `generateVersionJson` — writes `dist/<VITE_APP_PATH>/version.json` at the end of production build using `VITE_APP_VERSION` and `VITE_APP_PATH`.
+- Custom plugins in `vite-plugin/`:
+  - `injectSsoSdk.ts` — injects BW SSO SDK script.
+  - `generateVersionJson.ts` — writes `dist/<VITE_APP_PATH>/version.json` at the end of production build using `VITE_APP_VERSION` and `VITE_APP_PATH`.
 
-### Component Conventions
+### Component Conventions (main system)
 
 - Use `<script setup lang="ts">` with `defineOptions({ name: '...' })`.
 - Props: `withDefaults(defineProps<{...}>(), {...})`.
@@ -194,6 +227,52 @@ async function initChart() {
 - Styles: scoped + CSS custom properties.
 - Auto-refresh in `onMounted` via `setInterval`, cleared in `onBeforeUnmount`.
 - Show loading skeletons for async content and empty states for no data.
+
+### Personnel Location Module (legacy migration)
+
+The personnel location module (`src/views/personnel_location/`, `src/components/personnelLocation/`) was migrated from a Vue 2 project (`D:\bw\Bw.WebMineManage`) and uses a **different pattern** from the rest of the codebase:
+
+- **Options API** (`export default { data() {...}, methods: {...} }`) — not `<script setup lang="ts">`.
+- **Mixins** from `src/mixin/personnelLocationMixin.js` (shared table state, pagination, search).
+- **Scoped styles** via `.personnel-page` class to prevent style leakage to other pages.
+- **CSS variables** prefixed `--pl-*` or aliased in `main.css` under `:root` (global, but most are only referenced inside `.personnel-page` selectors).
+- **Inline ECharts** — chart init functions live in `downholeInfoJs.js` (not `useECharts` composable), using module-level variables (`myChartBar`, `myChartLine`) and manual resize listeners.
+- **Chart container guard** — must check `clientWidth > 0 && clientHeight > 0` before `echarts.init()` or it fails silently.
+
+When editing personnel location files, match the existing style (Options API, mixins, this pattern) rather than converting to Composition API piecemeal.
+
+### Dialog / Popup Pattern (personnel location)
+
+Personnel location uses a child-ref dialog pattern:
+
+```vue
+<trackInfoPopup ref="trackInfoPopup"></trackInfoPopup>
+<userInfoPopup ref="userInfoPopup"></userInfoPopup>
+
+<script>
+// Open from parent:
+this.$refs.trackInfoPopup.show(row)
+</script>
+```
+
+Dialogs have class-based CSS overrides via `<style>` (non-scoped) blocks using Element Plus's `--el-dialog-bg-color` variable. The shared `trajectoryQuery.vue` component uses `v-model` + `:isShow` prop pattern for reusability.
+
+### API Modules
+
+| File | Module | Notable IDs |
+|---|---|---|
+| `safetyMonitoring.ts` | 安全监测 | Recent alarm records |
+| `newSafetyMonitoring.ts` | 新版安全监测 | Area/deviation/pressure |
+| `minePressure.ts` | 矿压监测 | 1942–1987 range |
+| `personnelLocation.ts` | 人员定位 | ~30 functions, IDs 5259–6748 |
+| `production.ts` | 生产监控 | Production metrics |
+| `yieldMonitor.ts` | 产量监测 | Yield data |
+| `statisticalGraph.ts` | 统计图表 | Aggregate queries |
+| `appAlarm.ts` | 移动端报警 | Mobile alarm lists |
+| `ealTimeAlarm.ts` | 实时报警 | Real-time alarms |
+| `bar.ts` | 柱状图数据 | 1942 category stats |
+| `mine.ts` | 矿井信息 | Mine-level queries |
+| `helpers.ts` | 策略 API 辅助 | Shared helpers + `getMineName()` |
 
 ### Testing
 
@@ -204,6 +283,7 @@ Playwright uses a custom fixture in `tests/utils/setup.ts` that mocks `BW_SSO_SD
 `design-system/` contains a hierarchical design system:
 
 - `MASTER.md` — global source of truth (CSS variables, palette, typography, z-index, component rules, chart rules, accessibility).
-- `pages/<name>.md` — page-level overrides with higher priority than `MASTER.md`.
+- `pages/<name>.md` — page-level overrides for specific modules (`safetyMonitoring.md`, `personnelLocation.md`, `minePressure.md`, `dashboard.md`).
+- `guidelines-supplement.md` — supplementary design guidelines.
 
 Reference these when designing or modifying UI.

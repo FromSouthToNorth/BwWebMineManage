@@ -30,8 +30,7 @@ import myTable from '@/components/personnelLocation/tableComponent.vue'
 import myheader from '@/components/personnelLocation/header.vue'
 import { getpolicy5266 } from '@/api/system/personnelLocation'
 import { transitionKeyUp } from './downholeInfoJs'
-
-const DATA_THEME = 'data-theme'
+import { DATA_THEME } from '@/utils/constants'
 
 export default {
   name: 'TurnOutInfo',

@@ -71,8 +71,6 @@ export default {
   data() {
     return {
       titles: initialTables,
-      deviceNum: 0,
-      userNum: 0,
       open: false,
       title: '',
       tableData: [],
@@ -104,8 +102,6 @@ export default {
               } else {
                 this.titles[index].data = []
               }
-              if (index == 1) this.deviceNum = this.titles[index].data.length
-              if (index == 2) this.userNum = this.titles[index].data.length
             },
             (error) => { console.error('获取表格数据失败:', error) }
           )

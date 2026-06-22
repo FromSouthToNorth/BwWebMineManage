@@ -6,8 +6,7 @@ import { getDownHoleLineData, getDownHoleBarData } from '@/api/system/personnelL
 import { getMineName } from '@/api/system/helpers'
 import * as echarts from 'echarts'
 import router from '@/router'
-
-const DATA_THEME = 'data-theme'
+import { DATA_THEME } from '@/utils/constants'
 
 /** 检查 DOM 元素是否有有效尺寸（ECharts 渲染的前提条件） */
 function isValidChartContainer(el) {
@@ -17,6 +16,13 @@ function isValidChartContainer(el) {
   return w > 0 && h > 0
 }
 let myChartLine, myChartBar
+let _resizeGuard = false
+function ensureGlobalResize() {
+  if (_resizeGuard) return
+  _resizeGuard = true
+  window.addEventListener('resize', () => { if (myChartLine) myChartLine.resize() })
+  window.addEventListener('resize', () => { if (myChartBar) myChartBar.resize() })
+}
 let str = [
   { k: 1, v: '一月' }, { k: 2, v: '二月' }, { k: 3, v: '三月' },
   { k: 4, v: '四月' }, { k: 5, v: '五月' }, { k: 6, v: '六月' },
@@ -145,7 +151,7 @@ export function pageFieldConvert(result) {
 export function GetinitLine(that, charBox, unit, ShowToolBox) {
   if (myChartLine) myChartLine.dispose()
   if (!isValidChartContainer(charBox)) return
-  window.addEventListener('resize', () => { myChartLine.resize() })
+  ensureGlobalResize()
 
   let chartDom = charBox
   myChartLine = echarts.init(chartDom)
@@ -220,7 +226,7 @@ export function GetinitLine(that, charBox, unit, ShowToolBox) {
 /** 初始化折线图多数据源 */
 export function GetinitLines(that, charBox, unit, ShowToolBox) {
   if (myChartLine) myChartLine.dispose()
-  window.addEventListener('resize', () => { myChartLine.resize() })
+  ensureGlobalResize()
   let dom = charBox
   myChartLine = echarts.init(dom)
   let option = {
@@ -293,7 +299,7 @@ export function GetinitLines(that, charBox, unit, ShowToolBox) {
 export function getinitBarZoom(that, chartBox, unit) {
   if (myChartBar != null && myChartBar != '' && myChartBar != undefined) myChartBar.dispose()
   if (!isValidChartContainer(chartBox)) return
-  window.addEventListener('resize', () => { myChartBar.resize() })
+  ensureGlobalResize()
   let chartDom = chartBox
   myChartBar = echarts.init(chartDom)
   let option = {
@@ -361,7 +367,7 @@ export function getinitBarZoom(that, chartBox, unit) {
 export function getinitBar(that, chartBox, unit, routeInfo, width, showToolBox) {
   if (myChartBar != null && myChartBar != '' && myChartBar != undefined) myChartBar.dispose()
   if (!isValidChartContainer(chartBox)) return
-  window.addEventListener('resize', () => { myChartBar.resize() })
+  ensureGlobalResize()
   let chartDom = chartBox
   myChartBar = echarts.init(chartDom)
   let option = {
@@ -429,7 +435,7 @@ export function getinitBar(that, chartBox, unit, routeInfo, width, showToolBox) 
 export function stackbar(that, chartBox, unit, routeInfo, ShowToolBox) {
   if (myChartBar != null && myChartBar != '' && myChartBar != undefined) myChartBar.dispose()
   if (!isValidChartContainer(chartBox)) return
-  window.addEventListener('resize', () => { myChartBar.resize() })
+  ensureGlobalResize()
   let chartDom = chartBox
   myChartBar = echarts.init(chartDom)
   let xAxisData = new Set()
@@ -517,7 +523,7 @@ export function stackbar(that, chartBox, unit, routeInfo, ShowToolBox) {
 export function getinitBar_app(that, chartBox, unit, routeInfo, width) {
   if (myChartBar != null && myChartBar != '' && myChartBar != undefined) myChartBar.dispose()
   if (!isValidChartContainer(chartBox)) return
-  window.addEventListener('resize', () => { myChartBar.resize() })
+  ensureGlobalResize()
   let chartDom = chartBox
   myChartBar = echarts.init(chartDom)
   const start = (that.page - 1) * that.size
@@ -573,7 +579,7 @@ export function getinitBar_app(that, chartBox, unit, routeInfo, width) {
 export function stackbar_app(that, chartBox, unit, routeInfo, ShowToolBox) {
   if (myChartBar != null && myChartBar != '' && myChartBar != undefined) myChartBar.dispose()
   if (!isValidChartContainer(chartBox)) return
-  window.addEventListener('resize', () => { myChartBar.resize() })
+  ensureGlobalResize()
   let chartDom = chartBox
   myChartBar = echarts.init(chartDom)
   const start = (that.page - 1) * that.size

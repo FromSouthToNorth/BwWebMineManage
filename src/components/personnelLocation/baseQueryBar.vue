@@ -44,7 +44,7 @@
         <el-input
           v-if="item.type == 'input'"
           v-model="formInline[item.param]"
-          :style="{ width: isMobile() ? '' : '150px' }"
+          :style="{ width: isMobileCache ? '' : '150px' }"
           size="small"
           id="fuck"
           :placeholder="item.placeholder"
@@ -53,7 +53,7 @@
           v-if="item.type == 'date' || item.type == 'datetime'"
           v-model="formInline[item.param]"
           :style="{
-            width: isMobile()
+            width: isMobileCache
               ? ''
               : item.type == 'date'
               ? '150px !important'
@@ -108,6 +108,7 @@
 
 <script>
 import { formatterDate } from "@/views/personnel_location/downholeInfoJs";
+import { useAppStore } from '@/stores/app'
 export default {
   name: "BaseQuery",
   props: {
@@ -195,6 +196,8 @@ export default {
     }
     return {
       formInline,
+      isMobileCache: useAppStore().isMobile,
+      fuckEl: null,
     };
   },
   watch: {
@@ -210,18 +213,9 @@ export default {
     },
   },
   methods: {
-    /* 获取访问设备 */
-    isMobile() {
-      let flag = navigator.userAgent.match(
-        /(phone|pad|pod|iPhone|iPod|ios|iPad|Android|Mobile|BlackBerry|IEMobile|MQQBrowser|JUC|Fennec|wOSBrowser|BrowserNG|WebOS|Symbian|Windows Phone)/i
-      );
-      // localStorage.setItem('isiphone',flag)
-      return flag;
-    },
     /* 去除 readOnly 属性，解决苹果手机下拉框不能唤起软键盘 */
     focus() {
-      const el = document.getElementById("fuck")
-      if (el) el.removeAttribute("readOnly")
+      if (this.fuckEl) this.fuckEl.removeAttribute("readOnly")
     },
     /* 提交 */
     onSubmit() {
@@ -290,15 +284,14 @@ export default {
   mounted() {
     /* 去除 readOnly 属性，解决苹果手机下拉框不能唤起软键盘 */
     if (this.formItemList.length != 0) {
-      const el = document.getElementById("fuck")
-      if (el) el.removeAttribute("readOnly")
+      this.fuckEl = document.getElementById("fuck")
+      if (this.fuckEl) this.fuckEl.removeAttribute("readOnly")
     }
   },
 };
 </script>
 
 <style lang="scss" scoped>
-@import "@/assets/styles/root.scss";
 
 @media screen and (max-width: 700px) {
   /* 当屏幕宽度小于等于700px时应用的样式 */

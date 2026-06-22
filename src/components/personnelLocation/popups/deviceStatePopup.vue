@@ -1,32 +1,13 @@
 <template>
   <div>
     <!-- 设备状态 -->
-    <Popup
-      :isShow="showPopup"
-      :title="'设备状态'"
-      :isQuery="true"
-      :changeSearch="!isQueryBtn"
-      :isQueryBtn="isQueryBtn"
-      :isResetBtn="true"
-      :isClearble="true"
-      :isShowFooter="false"
-      :hasIndex="false"
-      :paginationShow="true"
-      :appendToBody="true"
-      :width="'80%'"
-      :formItemList="deviceBtnState ? deviceRealForm.item : deviceHisForm.item"
-      :customBtn="
-        deviceBtnState ? deviceRealForm.customBtn : deviceHisForm.customBtn
-      "
-      :columnOptions="deviceBtnState ? deviceRealCol : deviceHisCol"
-      :tableData="table.dataSource"
-      :total="table.total"
-      :loading="table.loading"
-      @soltHandel="DeviceSoltHandel"
-      @tableChange="pageChange"
-      @search="DeviceSearch"
-      @close="close"
-    />
+    <Popup :isShow="showPopup" :title="'设备状态'" :isQuery="true" :changeSearch="!isQueryBtn" :isQueryBtn="isQueryBtn"
+      :isResetBtn="true" :isClearble="true" :isShowFooter="false" :hasIndex="false" :paginationShow="true"
+      :appendToBody="true" :width="'80%'" :formItemList="deviceBtnState ? deviceRealForm.item : deviceHisForm.item"
+      :customBtn="deviceBtnState ? deviceRealForm.customBtn : deviceHisForm.customBtn
+        " :columnOptions="deviceBtnState ? deviceRealCol : deviceHisCol" :tableData="table.dataSource"
+      :total="table.total" :loading="table.loading" @soltHandel="DeviceSoltHandel" @tableChange="pageChange"
+      @search="DeviceSearch" @close="close" />
     <powerInfoPopup ref="powerInfoPopup"></powerInfoPopup>
   </div>
 </template>
@@ -44,7 +25,6 @@ import {
 } from "@/api/system/personnelLocation";
 import {
   formatterDate,
-  getCurrDateTime,
   getInitDate,
 } from "@/views/personnel_location/downholeInfoJs";
 export default {

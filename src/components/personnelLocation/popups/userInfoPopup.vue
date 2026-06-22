@@ -136,6 +136,7 @@
 import { getpolicy5339 } from "@/api/system/personnelLocation.js";
 import { transitionKeyUp } from "@/views/personnel_location/downholeInfoJs";
 import PLMixin from "@/mixin/personnelLocationMixin";
+import { useAppStore } from '@/stores/app'
 export default {
   name: "userInfoPopup",
   mixins: [PLMixin],
@@ -155,7 +156,7 @@ export default {
       /* 获取页面宽度 */
       let width =
         document.documentElement.clientWidth || document.body.clientWidth;
-      if (this.isMobile()) {
+      if (useAppStore().isMobile) {
         this.cliWidth = width;
       } else {
         this.cliWidth = width / 3.33;
@@ -195,19 +196,11 @@ export default {
           loadingInstance.close();
         });
     },
-    isMobile() {
-      let flag = navigator.userAgent.match(
-        /(phone|pad|pod|iPhone|iPod|ios|iPad|Android|Mobile|BlackBerry|IEMobile|MQQBrowser|JUC|Fennec|wOSBrowser|BrowserNG|WebOS|Symbian|Windows Phone)/i
-      );
-      // localStorage.setItem('isiphone',flag)
-      return flag;
-    },
   },
 };
 </script>
 
 <style lang="scss" scoped>
-@import "@/assets/styles/root.scss";
 
 table {
   padding: 10px;

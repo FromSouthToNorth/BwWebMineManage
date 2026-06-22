@@ -11,7 +11,7 @@
 <script>
 import * as echarts from "echarts";
 import MyChartHeader from "@/components/personnelLocation/echartsHeader.vue";
-import { DATA_THEME } from "@/store/mutation-types";
+import { DATA_THEME } from "@/utils/constants";
 let MyChart;
 export default {
   name: "userInfoEchart",

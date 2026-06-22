@@ -28,7 +28,6 @@ export default {
 </script>
 
 <style scoped lang="scss">
-@import "@/assets/styles/root.scss";
 
 .header-box {
   display: flex;

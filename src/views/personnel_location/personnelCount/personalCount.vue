@@ -4,18 +4,12 @@
     <div class="query-bar">
       <baseQueryBarVue @search="search" :title="forItemList.title" :formItemList="forItemList.data" :key="active" :reSet="true" />
     </div>
-    <div v-if="active == 0" class="personalCount">
+    <div v-if="active !== 2">
       <myTable :tableData="tableData" :tableColumnOptions="tableColumn" :selectionShow="false" :loading="loading" :paginationShow="true" :tableDataTotal="total" @columnClick="columnClick" @tableUpdate="tableChange" :hasIndex="false" :maxHeight="maxHeight" :key="active" ref="myTable" />
     </div>
-    <div v-if="active == 1" class="classifyCount">
-      <myTable :tableData="tableData" :tableColumnOptions="tableColumn" :selectionShow="false" :loading="loading" :paginationShow="true" :tableDataTotal="total" @columnClick="columnClick" @tableUpdate="tableChange" :hasIndex="false" :maxHeight="maxHeight" :key="active" ref="myTable" />
-    </div>
-    <div v-else-if="active == 2" class="monthCount">
+    <div v-else class="monthCount">
       <echartsHeader :title="`${year}年${month}月 出勤时长统计表`" :unit="'单位/小时'" />
       <div id="chartHeader-bar"></div>
-    </div>
-    <div v-else-if="active == 3" class="dayCount">
-      <myTable :tableData="tableData" :tableColumnOptions="tableColumn" :selectionShow="false" :loading="loading" :paginationShow="true" :tableDataTotal="total" @columnClick="columnClick" @tableUpdate="tableChange" :hasIndex="false" :maxHeight="maxHeight" :key="active" ref="myTable" />
     </div>
     <trajectory :isShow="track" @update:isShow="track = $event" :title="'井下轨迹时长最长的三个地点'" :isQuery="false" :formItemList="[]" :isResetBtn="false" :tableData="trackTabData" :columnOptions="trackColumn" :paginationShow="false" :isShowFooter="false" :hasIndex="true" :width="'80%'" :loading="trackLoding" />
   </div>
@@ -40,14 +34,7 @@ export default {
         { text: '个人统计', path: '' }, { text: '分类统计', path: '' },
         { text: '月统计', path: '' }, { text: '日统计', path: '' },
       ],
-      forItemList: { title: '个人统计列表', data: [
-        { type: 'select', placeholder: '选择部门', selectOptions: [], param: 'Department', defaultSelect: '' },
-        { type: 'select', placeholder: '选择职位', selectOptions: [], param: 'Rank', defaultSelect: '' },
-        { type: 'select', placeholder: '选择工种', selectOptions: [], param: 'WorkType', defaultSelect: '' },
-        { type: 'input', placeholder: '输入卡号', param: 'SenderID' },
-        { type: 'input', placeholder: '输入姓名', param: 'UserRealName' },
-        { type: 'input', placeholder: '输入工号', param: 'WorkNumber' },
-      ]},
+      forItemList: { title: '个人统计列表', data: [] },
       tableData: [], tableColumn: [], total: 0, barXData: [], barYData: [],
       months: [
         { name: '一月', value: 1 }, { name: '二月', value: 2 }, { name: '三月', value: 3 },
@@ -70,10 +57,9 @@ export default {
     this.updateMaxHeight()
     window.addEventListener('resize', this.updateMaxHeight)
     this.countType(this.active)
-    this.getData(this.active)
   },
   beforeDestroy() { window.removeEventListener('resize', this.updateMaxHeight) },
-  watch: { active(val) { this.getData(val) } },
+  watch: { active: { immediate: true, handler(val) { this.getData(val) } } },
   methods: {
     updateMaxHeight() { this.maxHeight = window.innerHeight - 250 },
     countType(index) {

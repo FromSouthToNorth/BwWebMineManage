@@ -72,7 +72,6 @@ export default {
 </script>
 
 <style lang="scss" scoped>
-@import "@/assets/styles/root.scss";
 
 .timebox{
   display: flex;

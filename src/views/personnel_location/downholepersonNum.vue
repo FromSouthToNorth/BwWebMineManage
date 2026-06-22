@@ -35,9 +35,11 @@ export default {
     this.getdata()
   },
   watch: {
-    immediate: true,
-    barXData: function (val) {
-      this.initBar()
+    barXData: {
+      immediate: true,
+      handler(val) {
+        this.initBar()
+      },
     },
   },
   methods: {
@@ -46,7 +48,6 @@ export default {
         path: 'turnOutInfo',
         param: { year: this.year, month: this.month, day: this.day, type: this.type },
       }
-      routeInfo.param.type = this.type
       getinitBar(this, document.getElementById('persionBar'), '人数', routeInfo)
     },
     async getdata() {

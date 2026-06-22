@@ -64,6 +64,7 @@
 </template>
 <script>
 import { tableRowClassName } from "@/utils/style";
+import { useAppStore } from '@/stores/app'
 
 export default {
   name: "BaseTable",
@@ -98,7 +99,6 @@ export default {
       type: Object,
       default() {
         return {
-          // color:localStorage.getItem(DATA_THEME)=='light'?'rgba(255, 255, 255, 1)':'var(--table-HeaderTextColor)'
           color: "var(--table-HeaderTextColor)",
         };
       },
@@ -232,7 +232,7 @@ export default {
     },
   },
   mounted() {
-    if (this.isMobile()) {
+    if (useAppStore().isMobile) {
       return;
     }
     this.$props.tableColumnOptions.forEach((item) => {
@@ -245,12 +245,6 @@ export default {
     });
   },
   created() {
-    // 遮罩层背景色
-    // if(localStorage.getItem(DATA_THEME)=='light'){
-    //   this.loadingBgColor='#fff'
-    // }else{
-    //    this.loadingBgColor='rgba(23, 73, 94, 1)'
-    // }
     this.loadingBgColor = "var(--BgColor)";
   },
   methods: {
@@ -285,13 +279,6 @@ export default {
         align = "center";
       }
       return align;
-    },
-    isMobile() {
-      let flag = navigator.userAgent.match(
-        /(phone|pad|pod|iPhone|iPod|ios|iPad|Android|Mobile|BlackBerry|IEMobile|MQQBrowser|JUC|Fennec|wOSBrowser|BrowserNG|WebOS|Symbian|Windows Phone)/i
-      );
-      // localStorage.setItem('isiphone',flag)
-      return flag;
     },
     widthHandel(item) {
       let width = "auto";
@@ -395,6 +382,20 @@ export default {
 };
 </script>
 <style scoped lang="scss">
+.tabBox {
+  width: 100%;
+  overflow: hidden;
+}
+
+/* 隐藏 el-table 内部横向滚动条（ElScrollbar 虚拟滚动条） */
+:deep(.el-scrollbar__bar.is-horizontal) {
+  display: none;
+}
+
+.pagination {
+  padding: 12px 0;
+}
+
 .custom-dropdown-item {
   display: flex;
   /* 使用 flexbox */

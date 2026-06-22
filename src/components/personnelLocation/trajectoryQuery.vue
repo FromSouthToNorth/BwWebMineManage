@@ -28,7 +28,7 @@
 <script>
 import MyTable from "@/components/personnelLocation/tableComponent.vue";
 import baseQueryBarVue from "@/components/personnelLocation/baseQueryBar.vue";
-import { DATA_THEME } from "@/store/mutation-types.js";
+import { DATA_THEME } from "@/utils/constants";
 export default {
   name: "trajectoryQuery",
   components: { MyTable, baseQueryBarVue },
@@ -57,7 +57,6 @@ export default {
       type: Boolean,
       default: false,
     },
-    params: Object,
     title: String,
     width: String,
     changeSearch: {
@@ -188,27 +187,14 @@ export default {
       id: 0,
     };
   },
-  created() {
-    console.log(this.columnOptions);
-  },
   computed: {
     visible: {
       get() {
         return this.isShow;
       },
       set(val) {
-        this.$emit("update:isShow", false);
+        this.$emit("update:isShow", val);
       },
-    },
-  },
-  watch: {
-    visible(val) {
-      // 在此做显示与隐藏的交互
-      if (!val) {
-        this.$emit("close");
-      } else {
-        this.$emit("open");
-      }
     },
   },
   methods: {
@@ -217,8 +203,6 @@ export default {
     },
     /* 日期改变时 */
     search(result) {
-      console.log(result);
-      // console.log(this.$refs);
       this.$refs.myTable.updateCurrpage();
       this.$emit("search", result);
     },
@@ -250,12 +234,9 @@ export default {
      * @param value 值
      */
     operationHandle(result, value) {
-      console.log("operationHandle", result, value);
-
       this.$emit("operationHandle", result, value);
     },
     close() {
-      console.log(11111);
       this.$emit("close");
     },
   },
@@ -263,8 +244,6 @@ export default {
 </script>
 
 <style lang="scss" scoped>
-@import "../../assets/styles/root.scss";
-
 ::v-deep .el-dialog {
   border: 1px;
   border-radius: 10px;

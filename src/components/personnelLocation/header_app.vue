@@ -24,7 +24,6 @@
 </template>
 
 <script>
-import { getImgPath } from "@/views/personnel_location/downholeInfoJs";
 export default {
   name: "header_app",
   components: {},
@@ -53,7 +52,7 @@ export default {
     }
   },
   mounted(){
-    this.imgUrl=getImgPath()
+    this.imgUrl = new URL('@/assets/icon/full.png', import.meta.url).href
   },
   methods: {
     /* 路径跳转 */
@@ -69,7 +68,6 @@ export default {
 </script>
 
 <style lang="scss" scoped>
-@import "@/assets/styles/root.scss";
 
 .header {
   display: flex;

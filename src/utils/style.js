@@ -6,10 +6,3 @@ export function tableRowClassName({ row, rowIndex }) {
     return "evenColor";
   }
 }
-
-const rootElement = document.documentElement;
-const ComputedStyle = getComputedStyle(rootElement);
-
-export function getPropertyValue() {
-  return ComputedStyle.getPropertyValue("--text-color");
-}
