@@ -665,10 +665,11 @@ ul, ol {
   transition: all var(--transition-base);
 }
 
-/* ===================== Element Plus 弹出面板（日期选择器／下拉）统一覆写 ===================== */
+/* ===================== Element Plus 弹出面板（日期选择器／下拉／菜单）统一覆写 ===================== */
 .el-popper,
 .el-picker__popper,
-.el-select-dropdown {
+.el-select-dropdown,
+.el-dropdown-menu {
   --el-bg-color-overlay: var(--bg-secondary);
   --el-fill-color-light: var(--bg-hover);
   --el-border-color-light: var(--border-color);
@@ -676,6 +677,17 @@ ul, ol {
   --el-text-color-regular: var(--text-secondary);
   --el-text-color-placeholder: var(--text-muted);
   --el-bg-color: var(--bg-card);
+  background: var(--bg-secondary);
+  border-color: var(--border-color);
+}
+
+.el-dropdown-menu__item {
+  color: var(--text-secondary);
+}
+
+.el-dropdown-menu__item:not(.is-disabled):hover {
+  background: var(--bg-hover);
+  color: var(--color-primary-light);
 }
 
 .el-card:hover {
