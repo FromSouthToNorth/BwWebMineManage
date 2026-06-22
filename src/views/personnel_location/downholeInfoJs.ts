@@ -10,7 +10,7 @@ import { getMineName } from '@/api/system/helpers'
 import * as echarts from 'echarts'
 import type { ECharts } from 'echarts'
 import router from '@/router'
-import { getCssVar, createLinearGradient } from '@/composables/useECharts'
+import { getCssVar, createLinearGradient, isLightTheme } from '@/composables/useECharts'
 
 // ============================================
 // 类型定义
@@ -234,19 +234,6 @@ export function pageFieldConvert(result: { currentPage: number; pageSize: number
   return { Page: result.currentPage, Row: result.pageSize }
 }
 
-/** 获取 URL 中的主题参数 */
-export function GetTheme(url: string, key: string): string | undefined {
-  if (!url) throw new Error('参数URL不能为空！')
-  const queryString = url.split('?')[1]
-  if (!queryString) return undefined
-  return new URLSearchParams(queryString).get(key) ?? undefined
-}
-
-/** 公共阴影变量 */
-export function getBoxShadow(): string {
-  return '0 4px 8px 0 rgb(0 80 115 / 41%) inset'
-}
-
 // ============================================
 // 数据获取
 // ============================================
@@ -312,7 +299,7 @@ export function GetinitLine(
       type: 'value',
       axisLabel: { show: true, color: getCssVar('--text-color') },
       splitLine: {
-        lineStyle: { type: 'dashed', color: document.documentElement.getAttribute("data-theme") === "theme-light" ? '#d5d6d8' : 'rgba(0, 178, 191, 0.2)' },
+        lineStyle: { type: 'dashed', color: isLightTheme() ? '#d5d6d8' : 'rgba(0, 178, 191, 0.2)' },
         show: true,
       },
     },
@@ -364,7 +351,7 @@ export function GetinitLines(
     color: ['rgba(0, 191, 53, 1)', 'rgba(255, 77, 20, 1)', 'rgba(0, 178, 191, 1)'],
     legend: {
       data: ['正常', '超时', '全部'],
-      textStyle: { color: document.documentElement.getAttribute("data-theme") === "theme-light" ? '#000000' : '#fff' },
+      textStyle: { color: isLightTheme() ? '#000000' : '#fff' },
     },
     grid: { left: '3%', right: '4%', bottom: '3%', containLabel: true },
     xAxis: {
@@ -471,8 +458,6 @@ export function getinitBar(
   chartBox: HTMLElement | null,
   unit: string,
   routeInfo: RouteInfo,
-  /** @deprecated 未使用，保留为兼容参数 */
-  width?: any,
   showToolBox?: boolean,
 ): void {
   disposeBarChart()
@@ -571,7 +556,7 @@ export function stackbar(
         show: true,
         lineStyle: {
           type: 'dashed',
-          color: document.documentElement.getAttribute("data-theme") === "theme-light" ? '#d5d6d8' : 'rgba(0, 178, 191, 0.2)',
+          color: isLightTheme() ? '#d5d6d8' : 'rgba(0, 178, 191, 0.2)',
         },
       },
       axisLabel: { color: getCssVar('--text-color') },
@@ -605,8 +590,6 @@ export function getinitBar_app(
   chartBox: HTMLElement | null,
   unit: string,
   routeInfo: RouteInfo,
-  /** @deprecated 未使用，保留为兼容参数 */
-  width?: any,
 ): void {
   disposeBarChart()
   if (!isValidChartContainer(chartBox)) return
@@ -627,7 +610,7 @@ export function getinitBar_app(
     yAxis: {
       type: 'category', inverse: true,
       axisTick: { show: false },
-      axisLine: { show: false, lineStyle: { color: document.documentElement.getAttribute("data-theme") === "theme-light" ? 'rgb(237 240 249 / 100%)' : '#0a1820' } },
+      axisLine: { show: false, lineStyle: { color: isLightTheme() ? 'rgb(237 240 249 / 100%)' : '#0a1820' } },
       axisLabel: { show: false, color: getCssVar('--text-color') },
       max: that.size,
       data: that.barXData.slice(start, end),

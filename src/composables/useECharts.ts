@@ -21,6 +21,11 @@ export function getCssVar(name: string, fallback = ''): string {
   return value || fallback
 }
 
+/** 判断当前是否为浅色主题 */
+export function isLightTheme(): boolean {
+  return document.documentElement.getAttribute('data-theme') === 'theme-light'
+}
+
 /** 创建线性渐变 */
 export function createLinearGradient(
   x0: number,
