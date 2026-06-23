@@ -2046,6 +2046,308 @@ html[data-theme='theme-light'] {
   --page-btn-activeTextColor: #fff;
 }
 
+/* ===================== 人员定位安全监测样式（通过 ?view=safety 切换） ===================== */
+html[data-view-style='safety'] .personnel-page {
+  /* 页面背景 & 文字 */
+  --pl-BgColor: var(--bg-primary, #070b15);
+  --pl-text-color: var(--text-primary, #f0f2f5);
+  --pl-textBgColor: var(--color-primary-light, #60a5fa);
+  --pl-highlight-color: var(--color-primary, #3b82f6);
+  --bgColor: var(--bg-primary, #070b15);
+  --BgColor: var(--bg-primary, #070b15);
+  --textColor: var(--text-primary, #f0f2f5);
+  --text-color: var(--text-primary, #f0f2f5);
+  --textBgColor: var(--color-primary-light, #60a5fa);
+  --highlight-color: var(--color-primary, #3b82f6);
+
+  /* 按钮 */
+  --pl-botton-BgColor: var(--color-primary-gradient, linear-gradient(135deg, #3b82f6, #2563eb));
+  --pl-botton-TextColor: #ffffff;
+  --botton-BgColor: var(--color-primary-gradient, linear-gradient(135deg, #3b82f6, #2563eb));
+  --botton-bgColor: var(--color-primary-gradient, linear-gradient(135deg, #3b82f6, #2563eb));
+  --box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.03);
+
+  /* 下井人数统计卡片 */
+  --personDownNum-border: rgba(148, 163, 184, 0.12);
+  --personDownNum-bgColor: rgba(20, 29, 47, 0.6);
+  --personDownNum-fg: rgba(148, 163, 184, 0.15);
+  --personDownNum-numberColor: var(--color-success, #22c55e);
+
+  /* 报警提示 */
+  --warn-borderColor: rgba(239, 68, 68, 0.25);
+  --warn-bgColor: rgba(239, 68, 68, 0.06);
+  --warn-textColor: var(--text-primary, #f0f2f5);
+  --warn-numberColor: var(--color-danger, #ef4444);
+  --warn-iconColor: transparent;
+
+  /* 图表区域 */
+  --chart-bgColor: rgba(20, 29, 47, 0.4);
+  --chart_BgColor: rgba(20, 29, 47, 0.4);
+  --chart-btn-bgColor: rgba(20, 29, 47, 0.6);
+  --chart-btn-borderColor: rgba(148, 163, 184, 0.12);
+  --chart-btn-activeBgColor: var(--color-primary, #3b82f6);
+  --chart-btn-activeColor: #ffffff;
+  --chartDashedColor: rgba(148, 163, 184, 0.12);
+  --chartBarUpGradientColor: var(--color-primary, #3b82f6);
+  --chartBarLoGradientColor: var(--color-primary-dark, #2563eb);
+
+  /* 表格 */
+  --table-bgColor: rgba(20, 29, 47, 0.4);
+  --table-oddColor: rgba(255, 255, 255, 0.02);
+  --table-evenColor: transparent;
+  --table-headerBgColor: rgba(59, 130, 246, 0.08);
+  --table-headerTextColor: var(--color-primary-light, #60a5fa);
+  --table-textColor: var(--text-primary, #f0f2f5);
+  --table-hoverBgColor: rgba(59, 130, 246, 0.08);
+  --table-hoverTextColor: var(--text-primary, #f0f2f5);
+  --table-border: rgba(148, 163, 184, 0.08);
+  --table-ScrollbarColor: #475569;
+  --table-ScrollbarBgColor: #0f172a;
+  --table-page-TextColor: var(--text-primary, #f0f2f5);
+
+  /* 分页 */
+  --page-color: var(--text-primary, #f0f2f5);
+  --page-bgColor: #334155;
+  --page-currColor: var(--text-primary, #f0f2f5);
+  --page-currBorder: #334155;
+  --page-boxBgColor: #0f172a;
+  --page-btn-bgColor: transparent;
+  --page-btn-borderColor: rgba(148, 163, 184, 0.15);
+  --page-btn-textColor: var(--text-primary, #f0f2f5);
+  --page-btn-activeBgColor: var(--color-primary, #3b82f6);
+  --page-btn-activeBorderColor: var(--color-primary, #3b82f6);
+  --page-btn-activeTextColor: #ffffff;
+
+  /* 弹窗 */
+  --popup-bgColor: rgba(15, 23, 42, 0.92);
+  --popup-textColor: var(--text-primary, #f0f2f5);
+  --user-popup-contentBgColor: rgba(15, 23, 42, 0.92);
+  --user-popup-contentColor: var(--text-primary, #f0f2f5);
+  --user-popup-titleBgColor: rgba(20, 29, 47, 0.8);
+  --user-popup-titleColor: var(--text-primary, #f0f2f5);
+  --user-popup-borderColor: rgba(148, 163, 184, 0.12);
+
+  /* 统计卡片 */
+  --count-bgColor: rgba(20, 29, 47, 0.4);
+  --count-textColor: var(--color-success, #22c55e);
+  --count-borderColor: rgba(148, 163, 184, 0.08);
+  --count-bottomText: #f8c43e;
+
+  /* Tab 切换 */
+  --tab-bgColor: rgba(20, 29, 47, 0.6);
+  --tab-textColor: #94a3b8;
+  --tab-activeBgColor: var(--color-primary-gradient, linear-gradient(135deg, #3b82f6, #2563eb));
+  --tab-activeTextColor: #ffffff;
+
+  /* 返回按钮 */
+  --back-btn-border: rgba(148, 163, 184, 0.12);
+  --back-btn-bgColor: rgba(20, 29, 47, 0.4);
+  --back-btn-color: #94a3b8;
+
+  /* 输入框 */
+  --input-textColor: var(--text-primary, #f0f2f5);
+  --input-bgColor: rgba(20, 29, 47, 0.6);
+
+  /* 下拉菜单 */
+  --pl-dropdown-menu: rgba(20, 29, 47, 0.95);
+  --dropdown-menu: rgba(20, 29, 47, 0.95);
+
+  /* App 移动端 */
+  --bgColor-app: var(--bg-primary, #070b15);
+  --box-bgColor-app: rgba(20, 29, 47, 0.4);
+  --menu-active-bgColor: rgba(20, 29, 47, 0.6);
+  --menu-active-color: var(--color-primary, #3b82f6);
+  --menu-color: var(--text-primary, #f0f2f5);
+  --menu-bgColor: var(--bg-primary, #070b15);
+  --header-btn-bgColor: rgba(20, 29, 47, 0.6);
+  --header-btn-textColor: var(--text-primary, #f0f2f5);
+  --header-btn-BgColor: rgba(20, 29, 47, 0.6);
+  --drawer-bgColor: rgba(15, 23, 42, 0.92);
+  --drawer-textColor: var(--text-primary, #f0f2f5);
+  --drawer-inputBgColor: var(--bg-primary, #070b15);
+  --drawer-btnBgColor: var(--color-primary-gradient, linear-gradient(135deg, #3b82f6, #2563eb));
+
+  /* 日期选择器 App */
+  --date-bgColor: var(--bg-primary, #070b15);
+  --date-textColor: var(--text-primary, #f0f2f5);
+  --date-btn-bgColor: var(--color-primary-gradient, linear-gradient(135deg, #3b82f6, #2563eb));
+  --date-btn-okTextColor: var(--text-primary, #f0f2f5);
+  --date-btn-nowTextColor: var(--color-primary, #3b82f6);
+  --date-input-bgColor: var(--bg-primary, #070b15);
+  --date-footer-borderColor: rgba(148, 163, 184, 0.12);
+
+  background: var(--bgColor);
+}
+
+/* 页面级玻璃容器 */
+html[data-view-style='safety'] .personnel-page .header-info,
+html[data-view-style='safety'] .personnel-page .box,
+html[data-view-style='safety'] .personnel-page .line,
+html[data-view-style='safety'] .personnel-page .bar,
+html[data-view-style='safety'] .personnel-page .chart-wrapper,
+html[data-view-style='safety'] .personnel-page .table,
+html[data-view-style='safety'] .personnel-page .count,
+html[data-view-style='safety'] .personnel-page .header-box {
+  position: relative;
+  background: linear-gradient(135deg, rgba(20, 29, 47, 0.45), rgba(15, 23, 42, 0.45));
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(148, 163, 184, 0.1);
+  border-radius: 10px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.03);
+  overflow: hidden;
+  transition: transform 0.25s ease, border-color 0.25s ease, box-shadow 0.25s ease;
+}
+
+html[data-view-style='safety'] .personnel-page .box:hover,
+html[data-view-style='safety'] .personnel-page .line:hover,
+html[data-view-style='safety'] .personnel-page .bar:hover,
+html[data-view-style='safety'] .personnel-page .header-box:hover {
+  transform: translateY(-2px);
+  border-color: rgba(59, 130, 246, 0.2);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.05);
+}
+
+/* 顶部状态条 */
+html[data-view-style='safety'] .personnel-page .header-info::before,
+html[data-view-style='safety'] .personnel-page .box::before,
+html[data-view-style='safety'] .personnel-page .line::before,
+html[data-view-style='safety'] .personnel-page .bar::before,
+html[data-view-style='safety'] .personnel-page .chart-wrapper::before,
+html[data-view-style='safety'] .personnel-page .header-box::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: rgba(59, 130, 246, 0.5);
+  box-shadow: 0 0 8px rgba(59, 130, 246, 0.25);
+  border-radius: 10px 10px 0 0;
+  z-index: 1;
+}
+
+/* 下井人数统计卡片 — 成功绿 */
+html[data-view-style='safety'] .personnel-page .loca-number {
+  border-left: none;
+}
+
+html[data-view-style='safety'] .personnel-page .loca-number::before {
+  background: var(--color-success, #22c55e);
+  box-shadow: 0 0 8px var(--color-success-glow, rgba(34, 197, 94, 0.3));
+}
+
+/* 报警统计 — 危险红 + glow orb */
+html[data-view-style='safety'] .personnel-page .warn {
+  position: relative;
+  border-left: none;
+  overflow: hidden;
+}
+
+html[data-view-style='safety'] .personnel-page .warn::before {
+  background: var(--color-danger, #ef4444);
+  box-shadow: 0 0 12px var(--color-danger-glow, rgba(239, 68, 68, 0.35));
+}
+
+html[data-view-style='safety'] .personnel-page .warn::after {
+  content: '';
+  position: absolute;
+  top: -20px;
+  right: -20px;
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  background: var(--color-danger, #ef4444);
+  filter: blur(24px);
+  opacity: 0.12;
+  pointer-events: none;
+}
+
+html[data-view-style='safety'] .personnel-page .warn-num {
+  text-shadow: 0 0 16px var(--color-danger-glow, rgba(239, 68, 68, 0.35));
+}
+
+/* 标题区域 */
+html[data-view-style='safety'] .personnel-page .location-info span {
+  background: none;
+  background-clip: unset;
+  color: var(--text-primary, #f0f2f5);
+  font-weight: 600;
+  letter-spacing: 0.5px;
+}
+
+/* 按钮 */
+html[data-view-style='safety'] .personnel-page .el-button--primary,
+html[data-view-style='safety'] .personnel-page .el-button.btn-primary,
+html[data-view-style='safety'] .personnel-page .btn-primary.el-button {
+  background: var(--color-primary-gradient, linear-gradient(135deg, #3b82f6, #2563eb));
+  border-color: transparent;
+  box-shadow: 0 4px 14px rgba(59, 130, 246, 0.25);
+  font-weight: 500;
+  transition: all 0.25s ease;
+}
+
+html[data-view-style='safety'] .personnel-page .el-button--primary:hover,
+html[data-view-style='safety'] .personnel-page .el-button--primary:focus {
+  background: linear-gradient(135deg, #60a5fa 0%, #3b82f6 100%);
+  box-shadow: 0 6px 20px rgba(59, 130, 246, 0.35);
+  transform: translateY(-1px);
+}
+
+/* 图表按钮 */
+html[data-view-style='safety'] .personnel-page .btnList li {
+  transition: all 0.2s ease;
+}
+
+html[data-view-style='safety'] .personnel-page .btnList li:hover {
+  border-color: rgba(59, 130, 246, 0.3);
+}
+
+html[data-view-style='safety'] .personnel-page .btnList li.active {
+  box-shadow: 0 0 12px rgba(59, 130, 246, 0.25);
+}
+
+/* 弹窗 */
+html[data-view-style='safety'] .personnel-page .el-dialog {
+  background: var(--user-popup-contentBgColor);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(148, 163, 184, 0.12);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+}
+
+/* 表格行状态色条 */
+html[data-view-style='safety'] .personnel-page .el-table__row {
+  position: relative;
+}
+
+html[data-view-style='safety'] .personnel-page .el-table__row td:first-child::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 4px;
+  bottom: 4px;
+  width: 3px;
+  border-radius: 0 2px 2px 0;
+  background: rgba(59, 130, 246, 0.4);
+  opacity: 0;
+  transition: opacity 0.2s ease;
+}
+
+html[data-view-style='safety'] .personnel-page .el-table__row:hover td:first-child::before {
+  opacity: 1;
+}
+
+/* 安全监测样式下的浅色主题保持深色玻璃风（覆盖浅色 personnel 变量） */
+html[data-theme='theme-light'][data-view-style='safety'] .personnel-page {
+  --pl-text-color: var(--text-primary, #f0f2f5);
+  --text-color: var(--text-primary, #f0f2f5);
+  --textColor: var(--text-primary, #f0f2f5);
+  --pl-BgColor: var(--bg-primary, #070b15);
+  --bgColor: var(--bg-primary, #070b15);
+  --BgColor: var(--bg-primary, #070b15);
+}
+
 /* 人员定位专属按钮/组件样式 → 仅 .personnel-page 内生效，不泄漏到其他页面 */
 .personnel-page {
   background: var(--bgColor, #08204d);
