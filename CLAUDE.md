@@ -40,7 +40,13 @@
 - Axios 1.7
 - Playwright 1.50+（Chromium + Mobile Chrome）
 
-`unplugin-auto-import` 自动导入 `vue`、`vue-router`、`pinia` 的 API，声明文件在 `src/types/auto-imports.d.ts`。
+`unplugin-auto-import` 自动导入 `vue`、`vue-router`、`pinia` 的 API（`ref`、`computed`、`watch`、`useRoute`、`useRouter`、`defineStore` 等），声明文件在 `src/types/auto-imports.d.ts`。**不**自动导入自定义 composable（如 `usePersonnelLocation`、`useECharts`），这些需要显式 import。
+
+全局类型声明：
+- `src/types/global.d.ts` — `BWSSOSDK` 接口
+- `src/types/env.d.ts` — Vite 环境变量类型
+- `src/types/kpi.ts` — KPI 配置类型
+- `src/types/auto-imports.d.ts` — 自动导入的 API 类型（由 `unplugin-auto-import` 生成）
 
 ### 模块别名
 
@@ -164,6 +170,24 @@ const mapped = (items || []).map((item: any) => ({
 
 `dayjs` 集中在 `src/utils/util.ts`。使用其中的 `formatDateTime()` 和 `getRecentDayRange()`，不要在组件中直接 `import dayjs`。人员定位的 `downholeInfoJs.ts` 之前有重复的 `formatterDate`/`getCurrDateTime`/`getInitDate`，现已删除，统一使用 `util.ts` 版本。
 
+### 工具函数
+
+`src/utils/` 中的重要工具模块：
+
+| 文件 | 关键导出 | 用途 |
+|---|---|---|
+| `util.ts` | `formatDateTime()`、`getRecentDayRange()`、`parseTime()`、`addDateRange()` | dayjs 日期格式化；`parseTime()` 为旧版 |
+| `auth.ts` | `getToken()`/`setToken()`/`removeToken()` | localStorage token 管理 |
+| `cookie.ts` | `getMineName()`、`getToken()`、`getMineDesc()` | cookie 读取，`pro__` 命名空间兜底 |
+| `constants.ts` | `DATA_THEME`、`TOKEN_KEY` | — |
+| `errorCode.ts` | `{ '401': '...', '403': '...', ... }` | 错误码 → 中文消息 |
+| `style.ts` | `tableRowClassName()` | 表格隔行变色 |
+| `request.ts` | Axios 实例 | 含拦截器、错误处理、401 重定向 |
+| `sso.ts` | `bwSSOSDKLogin(callback)` | SSO SDK 登录 |
+| `personnelLocationUtils.ts` | `handleApiResponse()`、`handleColumnClick()`、`handleOperationClick()` | 人员定位模块辅助函数 |
+
+`formatDateTime()` 和 `getRecentDayRange()` 使用 dayjs，**优先使用**。`parseTime()` 为旧版实现，新代码不要使用。
+
 ### KPI 常量
 
 KPI 元数据（标签、图标、颜色、顶栏优先级）集中在 `src/constants/kpi.ts`，导出 `KPI_LIST`、`KPI_CONFIG`、`TOP_KPI_KEYS`。`KpiSection` 等共享组件直接引用此配置。
@@ -187,7 +211,6 @@ async function initChart() {
 - `darkChartTheme()` 提供暗色主题基础配置（grid、textStyle、tooltip、axis 默认值）。
 - composable 暴露 `resize()` 和 `dispose()`，但**不**自动调用。组件需自行接入 `ResizeObserver` / `window.resize`，并在 `onBeforeUnmount` 中调用 `dispose()`。
 - 点击图表空白区域（而非系列元素）时，使用 `chart.value.getZr()` + `convertToPixel` 配合分段 Y 轴计算；在 `ResizeObserver` 中重算。
-- 人员定位图表使用 `src/views/personnel_location/downholeInfoJs.ts` 中内联的 ECharts 初始化（不使用 `useECharts` composable），见下方说明。
 
 ### 主题系统
 
@@ -233,11 +256,24 @@ async function initChart() {
 人员定位模块（`src/views/personnel_location/`、`src/components/personnelLocation/`）从 Vue 2 项目（`D:\bw\Bw.WebMineManage`）迁移而来，使用与主系统**不同的模式**：
 
 - **Options API**（`export default { data() {...}, methods: {...} }`）— 而非 `<script setup lang="ts">`。
+- **Hybrid `setup()` + Options 模式** — 组件通常同时使用 `setup()` 和 `data()`/`methods()`。`setup()` 中调用 composable 并将返回值 return 出去；本地状态和业务方法在 `data()`/`methods()` 中定义。两种生命周期互不冲突。
 - **共享 composable** — 表格/分页状态由 `src/composables/usePersonnelLocation.ts` 提供。弹窗组件通过 `setup()` 使用：`const { showPopup, table, selectionChange, pageFieldConvert, addDefaultParam } = usePersonnelLocation()`。composable 暴露 `table` 状态（dataSource、total、pageNo、pageSize、loading、queryParam）和工具函数；`search`/`pageChange` 方法需在每个消费组件中自行定义。
 - **Scoped 样式** — 通过 `.personnel-page` 类限定作用域，防止样式泄漏到其他页面。
-- **CSS 变量** — 以 `--pl-*` 为前缀或在 `main.css` 的 `:root` 中设置别名（全局，但大部分只在 `.personnel-page` 选择器内引用）。浅色主题覆写在 `html[data-theme='theme-light']`。
-- **内联 ECharts** — 图表初始化函数在 `src/views/personnel_location/downholeInfoJs.ts` 中（不使用 `useECharts` composable），使用模块级变量（`myChartBar`、`myChartLine`）和手动 resize 监听。该模块已用 TypeScript 重写并添加类型接口。
-- **容器尺寸检查** — `echarts.init()` 前必须检查 `clientWidth > 0 && clientHeight > 0`，否则会静默失败。
+
+#### 页面结构
+
+`src/views/personnel_location/` 包含：`index.vue`（主布局，含头部报警数/下井人数 + 图表区域 + 底部 infoList 表格 + 弹窗引用）、`echarts.vue` + `infoList.vue` + `downholeInfoJs.ts`（图表子模块）、以及三个历史查询报表页面（`downholepersonNum.vue`、`turnOutInfo.vue`、`downholeInfo.vue`）。`app/` 目录下有 12 个移动端子页面。配置项在 `config/` 子目录下。
+
+#### 内联 ECharts 模块（`downholeInfoJs.ts`）
+
+该文件管理人员定位图表，**不**使用 `useECharts` composable，而是使用模块级变量（`myChartBar`、`myChartLine`）。导出 7 个图表初始化函数（`GetinitLine`、`GetinitLines`、`getinitBar`、`getinitBarZoom`、`stackbar`、以及对应的 `_app` 移动端变体）、`getYear()`（年份选择器）和 `pageFieldConvert()`（注意：后者的功能与 `usePersonnelLocation` 的 `pageFieldConvert` 重复）。
+
+关键规则：
+- `echarts.init()` 前必须检查 `clientWidth > 0 && clientHeight > 0`，否则会静默失败。
+- 使用 `getCssVar()`、`createLinearGradient()`、`isLightTheme()`（来自 `useECharts.ts`）获取主题变量。
+- `BAR_GRADIENT` 通过 `createLinearGradient()` 创建。
+- 通过 `window.addEventListener('resize', ...)` 手动监听 resize。`_resizeGuard` 防止 resize 事件风暴。
+- CSS 变量以 `--pl-*` 为前缀，在 `main.css` 的 `:root` 中定义，浅色覆写在 `html[data-theme='theme-light']` 中。
 
 编辑人员定位文件时，请匹配既有风格（Options API + composable setup 模式），不要逐一转为 Composition API。
 
@@ -305,8 +341,15 @@ Playwright 使用 `tests/utils/setup.ts` 中的自定义 fixture，该 fixture �
 
 `design-system/` 目录包含分层设计系统：
 
-- `MASTER.md` — 全局事实标准（CSS 变量、调色板、排版、z-index、组件规则、图表规则、无障碍）。
-- `pages/<name>.md` — 特定模块的页面级覆写（`safetyMonitoring.md`、`personnelLocation.md`、`minePressure.md`、`dashboard.md`）。
+- `MASTER.md` — 全局事实标准（CSS 变量映射表、调色板（深色/浅色）、排版、z-index、布局栅格、组件规则、图表规则、动效规范、无障碍）。
+- `pages/safetyMonitoring.md` — 安全监测模块的页面级覆写（布局、表格、图表、报警规则）。
+- `pages/personnelLocation.md` — 人员定位模块的页面级覆写（配色、图表、表格、弹窗）。
+- `pages/minePressure.md` — 矿压监测的页面级覆写。
+- `pages/dashboard.md` — 概览仪表盘的设计规则。
 - `guidelines-supplement.md` — 补充设计指南。
 
 设计或修改 UI 时请参考这些文档。
+
+## 已知问题
+
+- **`src/views/system/newSafetyMonitoring/app.vue`**：预存在的 TS 解析错误（`TS1005: ';' expected`），不影响功能，与本次改动无关。不要尝试修复。
