@@ -1,7 +1,9 @@
 <template>
   <el-dialog class="pl-user-dialog" title="个人信息" v-model="showPopup" :width="cliWidth + 'px'" append-to-body
     :modal="true" :close-on-click-modal="false" @close="close">
-    <table class="x-table" :style="{ width: `${cliWidth}px` }" cellspacing="0" id="7" cellpadding="0">
+    <div v-loading="loading" element-loading-text="加载中..."
+      :element-loading-background="isLightTheme() ? 'rgba(255, 255, 255, 0.7)' : 'rgba(0, 0, 0, 0.7)'">
+      <table class="x-table" :style="{ width: `${cliWidth}px` }" cellspacing="0" id="7" cellpadding="0">
       <colgroup :style="{ width: `${cliWidth}px` }">
         <col style="width: 25%" col="0" />
         <col style="width: 25%" col="1" />
@@ -129,6 +131,7 @@
         </tr>
       </tbody>
     </table>
+    </div>
   </el-dialog>
 </template>
 
@@ -137,6 +140,7 @@ import { getpolicy5339 } from "@/api/system/personnelLocation.js";
 import { transitionKeyUp } from "@/views/personnel_location/downholeInfoJs";
 import { usePersonnelLocation } from '@/composables/usePersonnelLocation';
 import { useAppStore } from '@/stores/app'
+import { isLightTheme } from '@/composables/useECharts'
 export default {
   name: "userInfoPopup",
   setup() {
@@ -148,10 +152,12 @@ export default {
       cliWidth: 0,
       result: { photo: "" },
       userInfo: {},
+      loading: false,
     };
   },
   mounted() { },
   methods: {
+    isLightTheme,
     show(userInfo) {
       // 清空之前的用户数据，避免显示上一个用户的信息
       this.result = { photo: "" };
@@ -173,13 +179,7 @@ export default {
     loadData() {
       console.log("loadData");
       let userObj = transitionKeyUp(this.userInfo);
-      let options = {
-        text: "加载中...",
-        target: document.querySelector(".x-table"),
-        background: "rgba(255, 255, 255, 0)",
-      };
-
-      let loadingInstance = this.$loading(options);
+      this.loading = true;
       getpolicy5339(5339, userObj.SenderID)
         .then(({ data }) => {
           if (data.length != 0) {
@@ -195,8 +195,8 @@ export default {
           // 加载失败时保持空对象结构
           this.result = { photo: "" };
         })
-        .finally((res) => {
-          loadingInstance.close();
+        .finally(() => {
+          this.loading = false;
         });
     },
   },
