@@ -50,6 +50,8 @@ const MONTH_NAMES: MonthItem[] = [
   { k: 10, v: '十月' }, { k: 11, v: '十一月' }, { k: 12, v: '十二月' },
 ]
 
+const MONTH_MAP = new Map(MONTH_NAMES.map(item => [item.v, item.k]))
+
 /** 堆叠柱状图配色（已按渲染顺序排列） */
 const STACKED_BAR_COLORS: string[] = [
   'rgba(12, 88, 133, 1)', 'rgba(12, 66, 120, 1)',
@@ -128,10 +130,10 @@ function createAxisTooltipFormatter(unit: string): (params: any[]) => string {
 }
 
 /** 创建标准工具箱配置 */
-function createDefaultToolbox(showToolBox: boolean = true) {
+function createDefaultToolbox(showToolBox: boolean = true, top: number = 0) {
   return {
     show: showToolBox,
-    top: 0,
+    top,
     feature: {
       dataZoom: { yAxisIndex: 'none' },
       dataView: { readOnly: false },
@@ -142,18 +144,25 @@ function createDefaultToolbox(showToolBox: boolean = true) {
   }
 }
 
-/** 创建柱状图通用 click 处理器 */
+/** 创建柱状图通用 click 处理器
+ * @param extract 从 params 中提取 day/total 的函数；默认用于普通柱状图
+ */
 function createBarClickHandler(
   that: any,
   routeInfo?: RouteInfo,
+  extract: (params: any) => { day?: string; total?: any } = params => ({
+    day: params.name.substring(0, params.name.length - 1),
+    total: params.data,
+  }),
 ): (params: any) => void {
   return (params: any) => {
     if (routeInfo?.path) {
       const { path, param } = routeInfo
       if (!param) return
       if (path === 'downholepersonNum' || path === 'downholeNum_app') {
-        param.day = params.name.substring(0, params.name.length - 1)
-        param.total = params.data
+        const { day, total } = extract(params)
+        param.day = day
+        param.total = total
       }
       else if (path === 'turnOutInfo' || path === 'turnOutInfo_app') {
         param.name = params.name
@@ -166,28 +175,47 @@ function createBarClickHandler(
   }
 }
 
-/** 创建堆叠柱状图通用 click 处理器（与普通柱状图的 data 结构不同） */
-function createStackedBarClickHandler(
-  that: any,
-  routeInfo?: RouteInfo,
-): (params: any) => void {
-  return (params: any) => {
-    if (routeInfo?.path) {
-      const { path, param } = routeInfo
-      if (!param) return
-      if (path === 'downholepersonNum' || path === 'downholeNum_app') {
-        param.day = params.name
-        param.total = params.data.value
-      }
-      else if (path === 'turnOutInfo') {
-        param.name = params.name
-      }
-      router.push({ name: path, params: param })
-    }
-    else {
-      that.barclick(params.name)
-    }
-  }
+/** 堆叠柱状图数据提取器 */
+const stackedBarExtractor = (params: any) => ({
+  day: params.name,
+  total: params.data.value,
+})
+
+interface StackedBarSeries {
+  days: string[]
+  legends: any[]
+  series: any[]
+}
+
+/** 构建堆叠柱状图通用 series 数据（按班次分组） */
+function buildStackedBarSeries(data: any[]): StackedBarSeries {
+  const daySet = new Set<string>()
+  const legendSet = new Set<any>()
+  const grouped: Record<string, any[]> = {}
+
+  data.forEach((item: any) => {
+    const day = Number(item.day.substring(item.day.lastIndexOf('-') + 1))
+    daySet.add(day + '号')
+    legendSet.add(item.shiftName)
+    if (!grouped[item.shiftName]) grouped[item.shiftName] = []
+    grouped[item.shiftName].push({ name: day, value: item.num })
+  })
+
+  const days = Array.from(daySet)
+  const legends = Array.from(legendSet).sort((a: any, b: any) => a - b)
+  const textColor = getCssVar('--text-color')
+  const series = legends.map((legendName: any, index: number) => ({
+    label: {
+      show: true, position: 'inside', verticalAlign: 'middle', align: 'center',
+      formatter: '{c}', color: textColor,
+    },
+    name: legendName, type: 'bar', stack: '班次',
+    emphasis: { focus: 'series' },
+    data: grouped[legendName] || [],
+    itemStyle: { color: legendName === '' ? '' : STACKED_BAR_COLORS[index] },
+  }))
+
+  return { days, legends, series }
 }
 
 // ============================================
@@ -200,25 +228,20 @@ export function getYear(): YearData {
   const y = date.getFullYear()
   const m = date.getMonth() + 1
   const d = date.getDate()
-  const data: YearData = { years: [], year: y, month: m, day: d }
-  for (let i = 0; i <= 2; i++) {
-    data.years.unshift({ value: y - i, name: y - i })
+  return {
+    years: Array.from({ length: 3 }, (_, i) => ({ value: y - i, name: y - i })),
+    year: y,
+    month: m,
+    day: d,
   }
-  data.years.reverse()
-  data.year = data.years[0].value
-  data.month = m
-  data.day = d
-  return data
 }
 
 /** 对象属性转首字母大写（不修改原对象） */
 export function transitionKeyUp<T extends Record<string, any>>(item: T): Record<string, any> {
-  const result: Record<string, any> = { ...item }
-  for (const key in result) {
-    if (Object.prototype.hasOwnProperty.call(result, key)) {
-      const allKey = key[0].toUpperCase() + key.substring(1)
-      result[allKey] = result[key]
-      if (allKey !== key) delete result[key]
+  const result: Record<string, any> = {}
+  for (const key in item) {
+    if (Object.prototype.hasOwnProperty.call(item, key)) {
+      result[key[0].toUpperCase() + key.substring(1)] = item[key]
     }
   }
   return result
@@ -267,6 +290,7 @@ export function GetinitLine(
   ensureGlobalResize()
 
   myChartLine = echarts.init(charBox!)
+  const baseFormatter = createAxisTooltipFormatter(unit)
   const option = {
     color: {
       type: 'linear' as const, x: 0, y: 0, x2: 0, y2: 1,
@@ -280,12 +304,8 @@ export function GetinitLine(
       trigger: 'axis' as const,
       axisPointer: { axis: 'x', color: 'rgba(245, 255, 133, 1)' },
       formatter: (params: any) => {
-        let result = params[0].axisValueLabel + '<br>'
-        params.forEach(function (item: any) {
-          if (item.value) result += item.marker + `${unit} : ` + item.value + '</br>'
-        })
         that.chartsCurrentData = params[0]
-        return result
+        return baseFormatter(params)
       },
     },
     toolbox: createDefaultToolbox(ShowToolBox),
@@ -317,10 +337,11 @@ export function GetinitLine(
     const chickData = that.chartsCurrentData
     const pointInPixel = [params.offsetX, params.offsetY]
     if (myChartLine!.containPixel('grid', pointInPixel)) {
-      const data = { name: chickData.name, value: chickData.value, color: chickData.color }
-      MONTH_NAMES.forEach((item) => {
-        if (data.name === item.v) { that.month = item.k; that.getBarData() }
-      })
+      const month = MONTH_MAP.get(chickData.name)
+      if (month != null) {
+        that.month = month
+        that.getBarData()
+      }
     }
   })
 }
@@ -333,21 +354,13 @@ export function GetinitLines(
   ShowToolBox?: boolean,
 ): void {
   disposeLineChart()
+  if (!isValidChartContainer(charBox)) return
   ensureGlobalResize()
 
   myChartLine = echarts.init(charBox!)
   const option = {
     tooltip: { trigger: 'axis' as const },
-    toolbox: {
-      show: ShowToolBox === undefined ? true : ShowToolBox, top: 15,
-      feature: {
-        dataZoom: { yAxisIndex: 'none' },
-        dataView: { readOnly: false },
-        restore: {},
-        saveAsImage: {},
-      },
-      iconStyle: { borderWidth: 2 },
-    },
+    toolbox: createDefaultToolbox(ShowToolBox, 15),
     color: ['rgba(0, 191, 53, 1)', 'rgba(255, 77, 20, 1)', 'rgba(0, 178, 191, 1)'],
     legend: {
       data: ['正常', '超时', '全部'],
@@ -409,6 +422,21 @@ export function getinitBarZoom(that: any, chartBox: HTMLElement | null, unit: st
 
   myChartBar = echarts.init(chartBox!)
   const isLargeData = that.barYData.length >= 100
+  const dataZoom = isLargeData
+    ? [
+        {
+          type: 'slider' as const, show: true,
+          backgroundColor: 'rgb(19, 63, 100)', fillerColor: 'rgb(16, 171, 198)',
+          borderColor: 'rgb(19, 63, 100)', showDetail: true,
+          start: 0, end: 5,
+          filterMode: 'empty', width: '50%', height: 5, left: 'center',
+          zoomLock: true, handleSize: 0, bottom: 3,
+        },
+        {
+          type: 'inside' as const, zoomOnMouseWheel: false, moveOnMouseMove: true, moveOnMouseWheel: true,
+        },
+      ]
+    : undefined
   const option = {
     color: BAR_GRADIENT,
     toolbox: createDefaultToolbox(),
@@ -417,19 +445,7 @@ export function getinitBarZoom(that: any, chartBox: HTMLElement | null, unit: st
       formatter: createAxisTooltipFormatter(unit),
       axisPointer: { type: 'shadow' },
     },
-    dataZoom: [
-      {
-        type: 'slider', show: true,
-        backgroundColor: 'rgb(19, 63, 100)', fillerColor: 'rgb(16, 171, 198)',
-        borderColor: 'rgb(19, 63, 100)', showDetail: true,
-        start: 0, end: isLargeData ? 5 : 30,
-        filterMode: 'empty', width: '50%', height: 5, left: 'center',
-        zoomLoxk: true, handleSize: 0, bottom: 3,
-      },
-      {
-        type: 'inside', zoomOnMouseWheel: false, moveOnMouseMove: true, moveOnMouseWheel: true,
-      },
-    ],
+    ...(dataZoom ? { dataZoom } : {}),
     grid: { left: 0, bottom: 10, top: 20, right: 0, height: 'auto', width: 'auto', containLabel: true },
     xAxis: {
       type: 'category', data: that.barXData,
@@ -442,13 +458,10 @@ export function getinitBarZoom(that: any, chartBox: HTMLElement | null, unit: st
       axisLabel: { color: getCssVar('--text-color') },
     },
     series: [{
-      sort: 'descending', data: that.barYData, type: 'bar',
-      showBackground: false,
-      backgroundStyle: { color: 'rgba(180, 180, 180, 0.2)' },
+      data: that.barYData, type: 'bar',
       barWidth: '20%',
     }],
   }
-  if (!isLargeData) delete (option as any).dataZoom
   myChartBar.setOption(option)
 }
 
@@ -476,7 +489,6 @@ export function getinitBar(
     grid: { left: 0, bottom: 0, top: 20, right: 0, height: 'auto', width: 'auto', containLabel: true },
     xAxis: {
       type: 'category', data: that.barXData,
-      label: { show: false },
       splitLine: { show: false },
       axisLabel: { color: getCssVar('--text-color'), interval: 0, rotate: 40 },
     },
@@ -486,7 +498,7 @@ export function getinitBar(
       axisLabel: { color: getCssVar('--text-color') },
     },
     series: [{
-      sort: 'descending', data: that.barYData, type: 'bar',
+      data: that.barYData, type: 'bar',
       showBackground: false,
       label: { show: true, position: 'top', color: getCssVar('--text-color') },
     }],
@@ -509,31 +521,7 @@ export function stackbar(
   ensureGlobalResize()
 
   myChartBar = echarts.init(chartBox!)
-  const xAxisData = new Set()
-  const legend = new Set()
-  const series: any[] = []
-  let day = ''
-
-  that.data.forEach((item: any) => {
-    day = Number(item.day.substring(item.day.lastIndexOf('-') + 1))
-    xAxisData.add(day + '号')
-    legend.add(item.shiftName)
-  })
-  const days = Array.from(xAxisData) as string[]
-  const legends = Array.from(legend).sort((a: any, b: any) => a - b)
-
-  legends.forEach((item: any, index: number) => {
-    series.push({
-      label: {
-        show: true, position: 'inside', verticalAlign: 'middle', align: 'center',
-        formatter: '{c}', color: getCssVar('--text-color'),
-      },
-      name: item, type: 'bar', stack: '班次',
-      emphasis: { focus: 'series' },
-      data: [],
-      itemStyle: { color: item === '' ? '' : STACKED_BAR_COLORS[index] },
-    })
-  })
+  const { days, legends, series } = buildStackedBarSeries(that.data)
 
   const option: any = {
     color: BAR_GRADIENT,
@@ -564,20 +552,9 @@ export function stackbar(
     series,
   }
 
-  legends.forEach((legendName: any, index: number) => {
-    that.data.forEach((obj: any) => {
-      if (legendName === obj.shiftName) {
-        option.series[index].data.push({
-          name: Number(obj.day.substring(obj.day.lastIndexOf('-') + 1)),
-          value: obj.num,
-        })
-      }
-    })
-  })
-
   myChartBar.setOption(option)
   myChartBar.off('click')
-  myChartBar.on('click', createStackedBarClickHandler(that, routeInfo))
+  myChartBar.on('click', createBarClickHandler(that, routeInfo, stackedBarExtractor))
 }
 
 // ============================================
@@ -611,7 +588,7 @@ export function getinitBar_app(
       type: 'category', inverse: true,
       axisTick: { show: false },
       axisLine: { show: false, lineStyle: { color: isLightTheme() ? 'rgb(237 240 249 / 100%)' : '#0a1820' } },
-      axisLabel: { show: false, color: getCssVar('--text-color') },
+      axisLabel: { show: false },
       max: that.size,
       data: that.barXData.slice(start, end),
     },
@@ -644,35 +621,9 @@ export function stackbar_app(
   myChartBar = echarts.init(chartBox!)
   const start = (that.page - 1) * that.size
   const end = that.page * that.size
-  const xAxisData = new Set()
-  const legend = new Set()
-  const series: any[] = []
-  let day = ''
+  const { days, legends, series } = buildStackedBarSeries(that.data)
 
-  that.data.forEach((item: any) => {
-    day = Number(item.day.substring(item.day.lastIndexOf('-') + 1))
-    xAxisData.add(day + '号')
-    legend.add(item.shiftName)
-  })
-  const days = Array.from(xAxisData) as string[]
-  const legends = Array.from(legend).sort((a: any, b: any) => a - b)
-
-  legends.forEach((item: any, index: number) => {
-    series.push({
-      label: {
-        show: true, position: 'inside', verticalAlign: 'middle', align: 'center',
-        formatter: '{c}', color: getCssVar('--text-color'),
-      },
-      name: item, type: 'bar', stack: '班次',
-      emphasis: { focus: 'series' },
-      data: [],
-      itemStyle: { color: item === '' ? '' : STACKED_BAR_COLORS[index] },
-    })
-  })
-
-  that.total = days.length % that.size === 0
-    ? days.length / that.size
-    : Math.ceil(days.length / that.size)
+  that.total = Math.ceil(days.length / that.size)
 
   const option: any = {
     color: BAR_GRADIENT,
@@ -684,27 +635,15 @@ export function stackbar_app(
       iconStyle: { borderWidth: 2 },
     },
     legend: {
-      itemWidth: 15, itemHeight: 15, data: legends, icon: 'circle', itemHeight: 6, left: 'center',
+      itemWidth: 15, itemHeight: 6, data: legends, icon: 'circle', left: 'center',
       textStyle: { color: getCssVar('--text-color'), fontSize: 10 },
     },
     xAxis: { show: false, splitLine: { show: false } },
     yAxis: { splitLine: { show: false }, data: days.slice(start, end) },
-    series,
+    series: series.map((item: any) => ({ ...item, data: item.data.slice(start, end) })),
   }
 
-  legends.forEach((legendName: any, index: number) => {
-    that.data.forEach((obj: any) => {
-      if (legendName === obj.shiftName) {
-        option.series[index].data.push({
-          name: Number(obj.day.substring(obj.day.lastIndexOf('-') + 1)),
-          value: obj.num,
-        })
-      }
-    })
-  })
-
-  option.series.forEach((item: any) => { item.data = item.data.slice(start, end) })
   myChartBar.setOption(option)
   myChartBar.off('click')
-  myChartBar.on('click', createStackedBarClickHandler(that, routeInfo))
+  myChartBar.on('click', createBarClickHandler(that, routeInfo, stackedBarExtractor))
 }
