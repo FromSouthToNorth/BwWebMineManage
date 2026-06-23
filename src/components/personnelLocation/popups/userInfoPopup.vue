@@ -248,8 +248,6 @@ td {
 }
 
 .x-table {
-  position: absolute;
-  left: 0;
   width: 100% !important;
   border-bottom: 1px;
   border-bottom-right-radius: 10px;
