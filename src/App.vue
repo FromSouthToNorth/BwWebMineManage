@@ -9,7 +9,7 @@ import { onMounted, onBeforeUnmount } from 'vue'
 import { useRouter } from 'vue-router'
 import { useSettingsStore } from '@/stores/settings'
 import { useAppStore } from '@/stores/app'
-import { DATA_THEME } from '@/utils/constants'
+import { DATA_THEME, DATA_VIEW_STYLE } from '@/utils/constants'
 
 const router = useRouter()
 const settingsStore = useSettingsStore()
@@ -35,8 +35,22 @@ function getTheme() {
   }
 }
 
+function getViewStyle() {
+  const queryView = router.currentRoute.value.query.view as string | undefined
+  const localView = localStorage.getItem(DATA_VIEW_STYLE)
+  const view = queryView === 'safety' || queryView === 'legacy'
+    ? queryView
+    : localView === 'safety' || localView === 'legacy'
+      ? localView
+      : 'legacy'
+  document.documentElement.setAttribute(DATA_VIEW_STYLE, view)
+  settingsStore.changeViewStyle(view)
+  localStorage.setItem(DATA_VIEW_STYLE, view)
+}
+
 onMounted(() => {
   getTheme()
+  getViewStyle()
   checkDeviceType()
   window.addEventListener('resize', checkDeviceType)
 })
