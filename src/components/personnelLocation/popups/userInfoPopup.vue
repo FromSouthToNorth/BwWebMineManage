@@ -1,7 +1,7 @@
 <template>
   <el-dialog class="pl-user-dialog" title="个人信息" v-model="showPopup" :width="cliWidth + 'px'" append-to-body
     :modal="true" :close-on-click-modal="false" @close="close">
-    <div v-loading="loading" element-loading-text="加载中..."
+    <div class="user-info-content" v-loading="loading" element-loading-text="加载中..."
       :element-loading-background="isLightTheme() ? 'rgba(255, 255, 255, 0.7)' : 'rgba(0, 0, 0, 0.7)'">
       <table class="x-table" :style="{ width: `${cliWidth}px` }" cellspacing="0" id="7" cellpadding="0">
       <colgroup :style="{ width: `${cliWidth}px` }">
@@ -240,6 +240,11 @@ td {
   border-color: var(--user-popup-borderColor);
   background-color: var(--popup-bgColor);
   color: var(--text-color);
+}
+
+.user-info-content {
+  position: relative;
+  min-height: 400px;
 }
 
 .x-table {
