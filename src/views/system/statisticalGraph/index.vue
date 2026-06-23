@@ -20,7 +20,7 @@
           <el-button type="primary" @click="handleQuery">查询</el-button>
         </el-form-item>
       </el-form>
-    </el-card>
+    </div>
 
     <el-row :gutter="16">
       <el-col :span="12">
