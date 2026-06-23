@@ -1,5 +1,7 @@
 # CLAUDE.md
 
+This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+
 本文档为 Claude Code（claude.ai/code）提供本仓库的指引。
 
 ## 常用命令
@@ -88,16 +90,17 @@ PC 和移动端路由在 `src/router/index.ts` 中分开定义：
 
 1. `vite-plugin/injectSsoSdk.ts` 注入 `<script src="/net/Content/Resource/SDK/bw.sso.sdk.js">`。
 2. `src/main.ts` 在挂载前调用 `bwSSOSDKLogin(callback)`（来自 `src/utils/sso.ts`）。
-3. 如果 URL 中包含 `mine_key`，立即调用 `callback()`；实际登錄由 `src/permission.ts` 处理。
+3. 如果 URL 中包含 `mine_key`，立即调用 `callback()`；实际登录由 `src/permission.ts` 处理。
 4. 否则，如果全局存在 `BW_SSO_SDK`，调用 `SSOLogin(hostname, port, callback)`。
 5. 如果既无 SDK 也无 `mine_key`，打印警告且**不**调用 `callback()`，应用不会挂载。
 
 ### 路由守卫（`src/permission.ts`）
 
-`router.beforeEach` 处理三种场景：
+`router.beforeEach` 处理以下场景：
 1. **URL 中有 `mine_key`** — Base64 解码凭证字符串 `username;password`，调用 `userStore.Login()`，然后重定向到原始路径（不带 key）。
-2. **有 token**（从 cookie `Access-Token` 获取）— 允许导航。
-3. **都没有** — 调用 `BW_SSO_SDK.SSOLogout()` 重定向到 SSO 登录页。
+2. **有 token**（从 cookie `Access-Token` 获取，后备 `localStorage`）— 允许导航。
+3. **白名单路径**（当前仅 `/login`）— 允许导航。
+4. **都没有** — 若存在 `BW_SSO_SDK`，调用 `SSOLogout()`；否则放行（`next()`），由后续逻辑或后端拦截处理。
 
 `permission.ts` 在 Pinia 安装后动态导入（`main.ts`），因为它依赖 `user` store。
 
@@ -134,7 +137,7 @@ export function getData() {
 
 `getMineName()` 从 `src/utils/cookie.ts` 读取，缓存结果供页面生命周期内使用。参数遵循 `{ name: string, value: string | number }` 格式（`StrategyParam` 类型）。
 
-后端响应格式和错误消息格式见 `api.md`。
+后端响应格式和错误消息格式见项目根目录 `api.md`。
 
 ### Axios 拦截器（`src/utils/request.ts`）
 
@@ -325,7 +328,7 @@ Playwright 使用 `tests/utils/setup.ts` 中的自定义 fixture，该 fixture �
 
 使用全局注册的 `<Pagination>` 组件（`src/components/Pagination/index.vue`）实现所有分页表格：
 - Props：`total`、`page`、`limit`、`pageSizes`、`layout`、`small`、`hidden`（总数为 0 时隐藏）
-- 事件：`@pagination="{ page, limit }"`
+- 事件：`@pagination "{ page, limit }"`
 - 人员定位的 `tableComponent.vue` 内部使用该组件
 
 ### TableComponent 表格组件（人员定位）
