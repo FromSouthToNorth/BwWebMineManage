@@ -1942,8 +1942,16 @@ html[data-theme='theme-light'] .el-select__wrapper.is-focus {
 
 /* ========== 人员定位浅色主题变量覆写 ========== */
 html[data-theme='theme-light'] {
-  /* 页面背景 */
+  /* 页面背景 & 文字 */
+  --pl-BgColor: #f1f5f9;
+  --pl-text-color: #1e293b;
+  --pl-highlight-color: #2563eb;
   --bgColor: #f1f5f9;
+  --textColor: #1e293b;
+  --BgColor: #f1f5f9;
+  --text-color: #1e293b;
+  --highlight-color: #2563eb;
+  --box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
 
   /* 弹窗 */
   --popup-bgColor: #ffffff;
@@ -1955,6 +1963,79 @@ html[data-theme='theme-light'] {
   --user-popup-titleBgColor: #f1f5f9;
   --user-popup-titleColor: #1e293b;
   --user-popup-borderColor: #e2e8f0;
+
+  /* 图表区域 */
+  --chart-bgColor: #ffffff;
+  --chart_BgColor: #ffffff;
+  --chart-btn-bgColor: #e2e8f0;
+  --chart-btn-borderColor: rgba(37, 99, 235, 0.2);
+  --chart-btn-activeBgColor: #2563eb;
+  --chart-btn-activeColor: #ffffff;
+  --chartDashedColor: rgba(0, 0, 0, 0.1);
+
+  /* 表格（深色→浅色） */
+  --table-bgColor: #ffffff;
+  --table-oddColor: #f8fafc;
+  --table-evenColor: #ffffff;
+  --table-headerBgColor: #f1f5f9;
+  --table-headerTextColor: #475569;
+  --table-textColor: #1e293b;
+  --table-hoverBgColor: #eff6ff;
+  --table-hoverTextColor: #1e293b;
+  --table-border: #e2e8f0;
+  --table-ScrollbarColor: #cbd5e1;
+  --table-ScrollbarBgColor: #f1f5f9;
+  --table-page-TextColor: #475569;
+
+  /* 输入框 */
+  --input-textColor: #1e293b;
+  --input-bgColor: #ffffff;
+
+  /* 统计卡片 */
+  --count-bgColor: #ffffff;
+  --count-textColor: #2563eb;
+  --count-borderColor: #e2e8f0;
+  --count-bottomText: #d97706;
+
+  /* Tab 切换 */
+  --tab-bgColor: #e2e8f0;
+  --tab-textColor: #475569;
+  --tab-activeBgColor: #2563eb;
+  --tab-activeTextColor: #ffffff;
+
+  /* 按钮 */
+  --back-btn-border: #e2e8f0;
+  --back-btn-bgColor: #ffffff;
+  --back-btn-color: #475569;
+
+  /* 下井人数 */
+  --personDownNum-border: #e2e8f0;
+  --personDownNum-bgColor: #ffffff;
+  --personDownNum-fg: linear-gradient(to top, #e2e8f0 0%, #94a3b8 50%, #e2e8f0 100%);
+  --personDownNum-numberColor: #2563eb;
+
+  /* 告警 */
+  --warn-borderColor: rgb(220 38 38 / 30%);
+  --warn-bgColor: rgb(254 226 226 / 50%);
+  --warn-textColor: #1e293b;
+  --warn-numberColor: #dc2626;
+
+  /* 下拉菜单 */
+  --dropdown-menu: #ffffff;
+  --pl-dropdown-menu: #ffffff;
+
+  /* App 移动端 */
+  --bgColor-app: #f1f5f9;
+  --box-bgColor-app: #ffffff;
+  --menu-active-bgColor: #eff6ff;
+  --menu-active-color: #2563eb;
+  --menu-color: #475569;
+  --menu-bgColor: #ffffff;
+  --header-btn-bgColor: #e2e8f0;
+  --header-btn-textColor: #475569;
+  --drawer-bgColor: #ffffff;
+  --drawer-textColor: #1e293b;
+  --drawer-inputBgColor: #f1f5f9;
 
   /* 分页按钮 */
   --page-btn-bgColor: #ffffff;
